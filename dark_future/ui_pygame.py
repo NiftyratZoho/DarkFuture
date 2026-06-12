@@ -274,6 +274,20 @@ class App:
             self._set_screen("tactical")
             self.ui_status = f"Started {scenario} mission."
             return
+        if action_id == "start_campaign_contract":
+            scenario = self.state.campaign.current_scenario
+            campaign = self.state.campaign
+            self.state = new_game(scenario, campaign)
+            self.state.save_path = str(DEFAULT_MISSION_SAVE_PATH)
+            self.state.campaign.last_save_path = str(DEFAULT_MISSION_SAVE_PATH)
+            self._set_screen("tactical")
+            self.ui_status = f"Started campaign {SCENARIOS[scenario]['label']} contract."
+            return
+        if action_id in {"settle_campaign", "new_contract"}:
+            self._apply_game_action(action_id)
+            if action_id == "new_contract":
+                self._set_screen("tactical")
+            return
         if action_id == "continue_mission":
             if self._load_mission_save(Path(self.state.campaign.last_save_path or self.state.save_path)):
                 self.ui_status = "Loaded last saved mission."
@@ -534,6 +548,13 @@ class App:
             42,
             472,
         )
+        self._draw_large_menu_button(
+            "Campaign Contract",
+            f"Start the campaign's {SCENARIOS[self.state.campaign.current_scenario]['label']} contract.",
+            "start_campaign_contract",
+            42,
+            598,
+        )
         self._draw_current_mission_summary(650, 220)
 
     def _draw_mission_new(self) -> None:
@@ -566,7 +587,7 @@ class App:
             rect = pygame.Rect(42, y, 560, 42)
             pygame.draw.rect(self.screen, COLORS["button"], rect, border_radius=4)
             self.screen.blit(self.font.render(save_path.stem, True, COLORS["text"]), (rect.x + 14, rect.y + 8))
-            self.screen.blit(self.small.render(str(save_path), True, COLORS["muted"]), (rect.x + 250, rect.y + 12))
+            self.screen.blit(self.small.render(self._mission_save_summary(save_path)[:42], True, COLORS["muted"]), (rect.x + 250, rect.y + 12))
             self.buttons.append(Button(rect, f"load_mission:{save_path}", save_path.name))
         self._draw_large_menu_button("Back", "Return to Mission menu.", "open_mission", 650, 472)
 
@@ -587,6 +608,7 @@ class App:
             f"Scenario: {SCENARIOS[self.state.scenario_id]['label']}",
             f"Turn {self.state.turn}, phase {self.state.phase}",
             f"Objective: {self.state.objective}",
+            f"Status: {'complete' if self.state.game_over else 'active'}",
             f"Save: {self.state.save_path}",
         ]
         for index, line in enumerate(lines):
@@ -596,6 +618,16 @@ class App:
         pygame.draw.rect(self.screen, COLORS["button"], rect, border_radius=4)
         self.screen.blit(self.small.render("Resume Current", True, COLORS["text"]), (rect.x + 16, rect.y + 7))
         self.buttons.append(Button(rect, "resume_current_mission", "Resume Current"))
+        if self.state.game_over and self.state.campaign.settlement_pending:
+            settle = pygame.Rect(x + 218, y + 286, 136, 30)
+            pygame.draw.rect(self.screen, COLORS["button"], settle, border_radius=4)
+            self.screen.blit(self.small.render("Settle", True, COLORS["text"]), (settle.x + 34, settle.y + 7))
+            self.buttons.append(Button(settle, "settle_campaign", "Settle"))
+        if self.state.game_over:
+            contract = pygame.Rect(x + 366, y + 286, 120, 30)
+            pygame.draw.rect(self.screen, COLORS["button"], contract, border_radius=4)
+            self.screen.blit(self.small.render("Next", True, COLORS["text"]), (contract.x + 38, contract.y + 7))
+            self.buttons.append(Button(contract, "new_contract", "Next"))
 
     def _draw_board(self) -> None:
         board = build_tactical_board_model(self.state)
@@ -880,6 +912,7 @@ class App:
 
         self._panel((830, 82, 426, 498), "Campaign Actions")
         actions = [
+            ("Start Contract", f"Launch {SCENARIOS[self.state.campaign.current_scenario]['label']}.", "start_campaign_contract"),
             ("Recruit Driver", "Hire into roster.", "recruit_driver"),
             ("Repair Agency", "Resolve current repair bill.", "repair_agency"),
             ("Cycle Scenario", "Step to next solo contract.", "cycle_scenario"),
@@ -887,8 +920,12 @@ class App:
             ("Save Campaign", "Save current state.", "save_game"),
             ("Load Campaign", "Load saved state.", "load_game"),
         ]
+        if self.state.game_over:
+            actions.insert(0, ("New Contract", "Start another roadfight.", "new_contract"))
+            if self.state.campaign.settlement_pending:
+                actions.insert(0, ("Settle Campaign", "Apply rewards and repairs.", "settle_campaign"))
         for index, (title, body, action_id) in enumerate(actions):
-            self._command_row(852, 132 + index * 62, 374, title, body, action_id)
+            self._command_row(852, 126 + index * 52, 374, title, body, action_id)
         self.screen.blit(self.small.render(c.placeholder[:52], True, COLORS["speed_text"]), (852, 530))
 
     def _draw_garage(self) -> None:
@@ -1361,6 +1398,15 @@ class App:
             )
         unique: dict[str, Path] = {str(path.resolve()): path for path in paths}
         return sorted(unique.values(), key=lambda path: path.stat().st_mtime, reverse=True)
+
+    def _mission_save_summary(self, save_path: Path) -> str:
+        try:
+            saved = load_game(save_path)
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+            return "Unreadable save"
+        scenario = SCENARIOS.get(saved.scenario_id, {}).get("label", saved.scenario_id)
+        result = f", winner {saved.winner}" if saved.game_over and saved.winner else ""
+        return f"{scenario} T{saved.turn} P{saved.phase}, ${saved.campaign.funds}{result}"
 
     def _load_mission_save(self, save_path: Path) -> bool:
         if not save_path.exists():

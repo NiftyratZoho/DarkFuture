@@ -22,6 +22,7 @@ from .track import (
     forward_position as track_forward_position,
     lane_pair_safety_limit,
     lane_pair_section_count,
+    piece_max_spaces,
 )
 from .track_generation import TrackInventory, build_initial_track
 
@@ -29,7 +30,6 @@ from .track_generation import TrackInventory, build_initial_track
 Side = Literal["agency", "outlaw"]
 Direction = Literal[1, -1]
 MarkerKind = Literal["oil", "smoke", "spikes", "mines"]
-SECTION_DISTANCE_STRIDE = 4
 
 
 @dataclass(frozen=True)
@@ -106,7 +106,7 @@ class Vehicle:
 class CampaignState:
     name: str = "Roadside Sanction"
     player_kind: str = "Sanctioned Op agency"
-    funds: int = 50000
+    funds: int = 100000
     roster: list[str] = field(default_factory=lambda: ["Alex Decker", "Mara Voss"])
     garage: list[str] = field(default_factory=lambda: ["agency-1"])
     kudos: int = 0
@@ -127,6 +127,7 @@ class PassiveMarker:
     space: int
     lane_pair: int
     owner_side: Side
+    trigger_on_exit_vehicle_id: str | None = None
 
 
 @dataclass
@@ -720,10 +721,30 @@ def take_hazard_test(state: GameState, vehicle: Vehicle, safety_limit_mph: int, 
     return not result.control_lost
 
 
-def check_movement_hazards(state: GameState, vehicle: Vehicle, action_id: str) -> None:
+def check_movement_hazards(
+    state: GameState,
+    vehicle: Vehicle,
+    action_id: str,
+    *,
+    old_section: int | None = None,
+    old_lane_pair: int | None = None,
+) -> None:
+    curve_hazards: list[tuple[int, str]] = []
+    old_position_changed = old_section != vehicle.section or old_lane_pair != vehicle.lane_pair
+    if old_position_changed and old_section is not None and old_lane_pair is not None and 0 <= old_section < state.track_sections:
+        old_limit = lane_pair_safety_limit(state.track_section_types[old_section], old_lane_pair)
+        if old_limit is not None:
+            curve_hazards.append((old_limit, f"exiting curve safety limit {old_limit} mph"))
     safety_limit = curve_safety_limit(state, vehicle)
     if safety_limit is not None:
-        take_hazard_test(state, vehicle, safety_limit, f"curve safety limit {safety_limit} mph")
+        curve_hazards.append((safety_limit, f"curve safety limit {safety_limit} mph"))
+    seen_curve_hazards: set[tuple[int, str]] = set()
+    for limit, reason in sorted(curve_hazards, reverse=True):
+        key = (limit, reason)
+        if key in seen_curve_hazards:
+            continue
+        seen_curve_hazards.add(key)
+        take_hazard_test(state, vehicle, limit, reason)
     if action_id.startswith("drift") and vehicle.mph > 80:
         take_hazard_test(state, vehicle, 80, "drift over 80 mph")
     hit_markers = [
@@ -732,6 +753,26 @@ def check_movement_hazards(state: GameState, vehicle: Vehicle, action_id: str) -
         if marker.section == vehicle.section
         and marker.space == vehicle.space
         and bool(set((marker.lane_pair, marker.lane_pair + 1)).intersection(vehicle.lane_rows))
+    ]
+    for marker in hit_markers:
+        resolve_marker_hit(state, vehicle, marker)
+
+
+def check_passive_markers_on_exit(
+    state: GameState,
+    vehicle: Vehicle,
+    old_section: int,
+    old_space: int,
+    old_lane_pair: int,
+) -> None:
+    old_lanes = {old_lane_pair, old_lane_pair + 1}
+    hit_markers = [
+        marker
+        for marker in state.passive_markers
+        if marker.trigger_on_exit_vehicle_id == vehicle.id
+        and marker.section == old_section
+        and marker.space == old_space
+        and bool({marker.lane_pair, marker.lane_pair + 1}.intersection(old_lanes))
     ]
     for marker in hit_markers:
         resolve_marker_hit(state, vehicle, marker)
@@ -772,6 +813,14 @@ def drop_marker(state: GameState, vehicle: Vehicle, kind: MarkerKind) -> None:
         state.logs.append(LogEntry(f"{vehicle.label} cannot drop {kind}; rear space is off road.", "passive"))
         _finish_activation(state, vehicle)
         return
+    trigger_vehicle = next(
+        (
+            other
+            for other in state.vehicles
+            if _overlap(vehicle, section, space, vehicle.lane_pair, other)
+        ),
+        None,
+    )
     marker = PassiveMarker(
         id=f"marker-{state.next_marker_id}",
         kind=kind,
@@ -779,10 +828,12 @@ def drop_marker(state: GameState, vehicle: Vehicle, kind: MarkerKind) -> None:
         space=space,
         lane_pair=vehicle.lane_pair,
         owner_side=vehicle.side,
+        trigger_on_exit_vehicle_id=trigger_vehicle.id if trigger_vehicle is not None else None,
     )
     state.next_marker_id += 1
     state.passive_markers.append(marker)
-    state.logs.append(LogEntry(f"{vehicle.label} drops {kind} at section {section + 1}, space {space}, LP{vehicle.lane_pair}.", "passive"))
+    tailgater = f" under {trigger_vehicle.label}" if trigger_vehicle is not None else ""
+    state.logs.append(LogEntry(f"{vehicle.label} drops {kind} at section {section + 1}, space {space}, LP{vehicle.lane_pair}{tailgater}.", "passive"))
     _finish_activation(state, vehicle)
 
 
@@ -917,32 +968,44 @@ def apply_critical_hit(state: GameState, target: Vehicle, source: SourceRef, rea
     state.logs.append(LogEntry(f"{reason} critical on {target.label}: {note}.", "critical", source))
 
 
-def _distance_spaces(a: Vehicle, b: Vehicle) -> int:
-    return abs((a.section * SECTION_DISTANCE_STRIDE + a.space) - (b.section * SECTION_DISTANCE_STRIDE + b.space))
+def _section_start_distance(state: GameState, section: int) -> int:
+    return sum(piece_max_spaces(piece) for piece in state.track_section_types[:section])
+
+
+def _track_distance_position(state: GameState, section: int, space: int) -> int:
+    return _section_start_distance(state, section) + space
+
+
+def _vehicle_distance_position(state: GameState, vehicle: Vehicle) -> int:
+    return _track_distance_position(state, vehicle.section, vehicle.space)
+
+
+def _distance_spaces(state: GameState, a: Vehicle, b: Vehicle) -> int:
+    return abs(_vehicle_distance_position(state, a) - _vehicle_distance_position(state, b))
 
 
 def _lane_overlap(a: Vehicle, b: Vehicle) -> bool:
     return bool(set(a.lane_rows).intersection(b.lane_rows))
 
 
-def _ahead_of(shooter: Vehicle, target: Vehicle) -> bool:
-    shooter_pos = shooter.section * SECTION_DISTANCE_STRIDE + shooter.space
-    target_pos = target.section * SECTION_DISTANCE_STRIDE + target.space
+def _ahead_of(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
+    shooter_pos = _vehicle_distance_position(state, shooter)
+    target_pos = _vehicle_distance_position(state, target)
     return (target_pos - shooter_pos) * shooter.direction > 0
 
 
 def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
-    shooter_pos = shooter.section * SECTION_DISTANCE_STRIDE + shooter.space
-    target_pos = target.section * SECTION_DISTANCE_STRIDE + target.space
+    shooter_pos = _vehicle_distance_position(state, shooter)
+    target_pos = _vehicle_distance_position(state, target)
     low, high = sorted((shooter_pos, target_pos))
     for other in state.vehicles:
         if other.id in {shooter.id, target.id} or other.destroyed:
             continue
-        other_pos = other.section * SECTION_DISTANCE_STRIDE + other.space
+        other_pos = _vehicle_distance_position(state, other)
         if low < other_pos < high and _lane_overlap(shooter, other):
             return True
     for marker in state.passive_markers:
-        marker_pos = marker.section * SECTION_DISTANCE_STRIDE + marker.space
+        marker_pos = _track_distance_position(state, marker.section, marker.space)
         if marker.kind == "smoke" and low < marker_pos < high:
             marker_lanes = {marker.lane_pair, marker.lane_pair + 1}
             if marker_lanes.intersection(shooter.lane_rows):
@@ -957,8 +1020,8 @@ def shoot_targets(state: GameState, shooter: Vehicle) -> list[Vehicle]:
         if target.side != shooter.side
         and not target.destroyed
         and abs(target.lane_pair - shooter.lane_pair) <= 1
-        and _ahead_of(shooter, target)
-        and _distance_spaces(shooter, target) <= 8
+        and _ahead_of(state, shooter, target)
+        and _distance_spaces(state, shooter, target) <= 8
         and not _line_of_fire_blocked(state, shooter, target)
     ]
 
@@ -969,7 +1032,7 @@ def _objective_target(state: GameState, vehicle: Vehicle) -> Vehicle | None:
         return None
     if state.scenario_id == "pursuit" and vehicle.side == "outlaw":
         return None
-    return min(enemies, key=lambda target: _distance_spaces(vehicle, target))
+    return min(enemies, key=lambda target: _distance_spaces(state, vehicle, target))
 
 
 def _lane_pair_hits_marker(
@@ -999,14 +1062,11 @@ def _drift_action_toward_lane(state: GameState, vehicle: Vehicle, target_lane_pa
     if vehicle.lane_pair > target_lane_pair:
         action_id = "drift_left"
         target_pair = vehicle.lane_pair - 1
-        drift_direction = "left"
     else:
         action_id = "drift_right"
         target_pair = vehicle.lane_pair + 1
-        drift_direction = "right"
-    try:
-        legal_target = drift_lane_pair(current_section_type(state, vehicle), vehicle.lane_pair, drift_direction)
-    except ValueError:
+    legal_target, blocked_reason = _legal_drift_lane_pair(state, vehicle, action_id, section)
+    if blocked_reason is not None or legal_target is None:
         return None
     if legal_target != target_pair:
         return None
@@ -1078,9 +1138,9 @@ def apply_shoot(state: GameState, shooter: Vehicle) -> None:
         state.logs.append(LogEntry(f"{shooter.label} has no target in its forward corridor.", "shoot", SHOOT_SOURCE))
         _finish_activation(state, shooter)
         return
-    target = min(targets, key=lambda item: _distance_spaces(shooter, item))
+    target = min(targets, key=lambda item: _distance_spaces(state, shooter, item))
     hit_roll = state.dice.d6()
-    range_penalty = 1 if _distance_spaces(shooter, target) > 4 else 0
+    range_penalty = 1 if _distance_spaces(state, shooter, target) > 4 else 0
     total = hit_roll + shooter.weapon_accuracy - range_penalty
     state.logs.append(
         LogEntry(
@@ -1399,7 +1459,10 @@ def apply_action(state: GameState, action_id: str) -> None:
             return
         lane_pair = drift_lane
 
+    old = (vehicle.section, vehicle.space, vehicle.lane_pair)
+
     if section < 0 or section >= state.track_sections:
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
         state.logs.append(LogEntry(f"{vehicle.label} exits the test road.", "scenario"))
         vehicle.acted_this_phase = True
         if vehicle.side == "agency" and state.scenario_id in {"intercept", "ambush"}:
@@ -1417,11 +1480,11 @@ def apply_action(state: GameState, action_id: str) -> None:
 
     for other in state.vehicles:
         if _overlap(vehicle, section, space, lane_pair, other):
+            check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
             resolve_ram(state, vehicle, other)
             _finish_activation(state, vehicle)
             return
 
-    old = (vehicle.section, vehicle.space, vehicle.lane_pair)
     vehicle.section = section
     vehicle.space = space
     vehicle.lane_pair = lane_pair
@@ -1436,7 +1499,8 @@ def apply_action(state: GameState, action_id: str) -> None:
             MOVE_SOURCE,
         )
     )
-    check_movement_hazards(state, vehicle, action_id)
+    check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+    check_movement_hazards(state, vehicle, action_id, old_section=old[0], old_lane_pair=old[2])
     _finish_activation(state, vehicle)
 
 
@@ -1478,7 +1542,7 @@ def ai_choose_action(state: GameState, vehicle: Vehicle) -> str:
     if agency is None:
         return "steady"
 
-    if state.scenario_id == "ambush" and _ahead_of(vehicle, agency):
+    if state.scenario_id == "ambush" and _ahead_of(state, vehicle, agency):
         return "brake" if vehicle.mph > agency.mph else "steady"
 
     if state.scenario_id == "pursuit" and vehicle.side == "outlaw":

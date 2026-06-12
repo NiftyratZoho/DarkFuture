@@ -22,6 +22,8 @@ AGENCY_NOVICE_LICENSE_COST = 5_000
 AGENCY_RUNNING_COST = 10_000
 EXPERIENCED_DRIVER_UPKEEP_RATE = 0.10
 DATA_ROOT = Path(__file__).resolve().parent.parent / "data" / "rules"
+STARTING_FUNDS = 100_000
+STARTING_DRIVER_SKILL = 2
 
 # Extracted from docs/rules/clean/campaign.md; still marked needsProofread there.
 OUTLAW_BOUNTY_BY_DRIVE_SKILL = {
@@ -709,11 +711,36 @@ def create_unit(
     name: str,
     kind: UnitKind,
     player_id: str,
-    funds: int = 100_000,
+    funds: int = STARTING_FUNDS,
 ) -> UnitState:
     unit = UnitState(id=unit_id, name=name, kind=kind, player_id=player_id, funds=funds)
     campaign.units[unit.id] = unit
     campaign.logs.append(f"Created {kind} unit {name}.")
+    return unit
+
+
+def create_starting_unit(
+    campaign: CampaignState,
+    unit_id: str,
+    name: str,
+    kind: UnitKind,
+    player_id: str,
+) -> UnitState:
+    unit = create_unit(campaign, unit_id, name, kind, player_id, STARTING_FUNDS)
+    free_drivers = 2 if kind == "outlawGang" else 1 if kind in {"independentOp", "renegadeOp"} else 0
+    for index in range(free_drivers):
+        role: DriverRole = "outlaw" if unit.is_outlaw() else "sanctioned"
+        driver = Driver(
+            id=f"{unit_id}-driver-{index + 1}",
+            name=f"{name} Driver {index + 1}",
+            unit_id=unit.id,
+            role=role,
+            drive_skill=STARTING_DRIVER_SKILL,
+        )
+        campaign.drivers[driver.id] = driver
+        unit.driver_ids.append(driver.id)
+    if free_drivers:
+        campaign.logs.append(f"{unit.name} starts with {free_drivers} free drive-skill {STARTING_DRIVER_SKILL} driver(s).")
     return unit
 
 

@@ -17,6 +17,7 @@ from dark_future.engine import (
     speed_factor,
     vehicle_by_id,
     provisional_track_layout,
+    shoot_targets,
 )
 
 
@@ -182,12 +183,49 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(state.track_section_types[5], "curve30to60_right")
         self.assertEqual(curve_safety_limit(state, vehicle), 30)
 
+    def test_curve_safety_applies_when_exiting_curve_to_straight(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        vehicle.section = 3
+        vehicle.space = 3
+        vehicle.lane_pair = 1
+        vehicle.mph = 70
+        vehicle.handling = 0
+        vehicle.driver_skill = 0
+        state.dice.queue = [6]
+
+        apply_action(state, "steady")
+
+        self.assertEqual((vehicle.section, vehicle.space), (4, 1))
+        self.assertEqual(vehicle.control_state, "out_of_control")
+        self.assertTrue(any("exiting curve safety limit" in entry.message for entry in state.logs))
+
+    def test_shooting_range_uses_real_track_section_lengths(self):
+        state = new_game()
+        shooter = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        shooter.section = 0
+        shooter.space = 3
+        shooter.lane_pair = 4
+        shooter.direction = 1
+        target.section = 3
+        target.space = 2
+        target.lane_pair = 4
+        target.direction = -1
+
+        self.assertIn(target, shoot_targets(state, shooter))
+
     def test_action_list_present_for_active_vehicle(self):
         state = new_game()
         labels = [action.label for action in legal_actions(state)]
         self.assertIn("Steady Forward", labels)
         self.assertIn("Accelerate", labels)
         self.assertIn("Shoot", labels)
+
+    def test_lightweight_campaign_state_uses_dead_mans_curve_starting_funds(self):
+        state = new_game()
+
+        self.assertEqual(state.campaign.funds, 100_000)
 
     def test_idle_tactical_actions_do_not_include_campaign_setup(self):
         state = new_game()
@@ -393,6 +431,32 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(marker.section, agency.section - 1)
         self.assertEqual(marker.space, 3)
 
+    def test_passive_marker_dropped_under_tailgater_triggers_when_tailgater_moves_off(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        outlaw.section = agency.section - 1
+        outlaw.space = 3
+        outlaw.lane_pair = agency.lane_pair
+        outlaw.direction = agency.direction
+        outlaw.mph = 70
+        outlaw.handling = 0
+        outlaw.driver_skill = 0
+
+        apply_action(state, "drop_oil")
+
+        marker = state.passive_markers[0]
+        self.assertEqual(marker.trigger_on_exit_vehicle_id, outlaw.id)
+
+        state.active_vehicle_id = outlaw.id
+        outlaw.acted_this_phase = False
+        state.dice.queue = [6]
+        apply_action(state, "steady")
+
+        self.assertEqual(state.passive_markers, [])
+        self.assertTrue(any(entry.kind == "passive" and "hits oil" in entry.message for entry in state.logs))
+        self.assertEqual(outlaw.control_state, "out_of_control")
+
     def test_hazard_failure_sets_out_of_control(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
@@ -506,7 +570,7 @@ class EngineTests(unittest.TestCase):
         agency = vehicle_by_id(state, "agency-1")
         outlaw = vehicle_by_id(state, "outlaw-1")
         outlaw.section = 3
-        outlaw.space = 1
+        outlaw.space = 2
         outlaw.lane_pair = 6
         outlaw.direction = -1
         outlaw.mph = 50
@@ -516,6 +580,23 @@ class EngineTests(unittest.TestCase):
 
         self.assertEqual(state.track_section_types[outlaw.section], "curve50to80_left")
         self.assertEqual(ai_choose_action(state, outlaw), "steady")
+
+    def test_ai_can_choose_legal_outward_curve_drift(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        outlaw.section = 3
+        outlaw.space = 1
+        outlaw.lane_pair = 4
+        outlaw.direction = 1
+        outlaw.mph = 50
+        agency.section = 4
+        agency.space = 1
+        agency.lane_pair = 5
+        state.passive_markers.append(PassiveMarker("smoke-curve-ai", "smoke", 3, 2, 3, "agency"))
+
+        self.assertEqual(state.track_section_types[outlaw.section], "curve50to80_left")
+        self.assertEqual(ai_choose_action(state, outlaw), "drift_right")
 
     def test_ai_avoids_smoke_in_next_space_with_legal_drift(self):
         state = new_game()

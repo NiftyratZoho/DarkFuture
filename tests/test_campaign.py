@@ -5,6 +5,7 @@ from dark_future.campaign import (
     CampaignState,
     ContractOutcome,
     add_vehicle,
+    create_starting_unit,
     create_unit,
     fit_store_item_to_vehicle,
     purchase_chassis,
@@ -126,6 +127,19 @@ class CampaignBackendTests(unittest.TestCase):
         self.assertEqual(experienced.funds, 10_000)
         self.assertEqual(experienced.mileage_points, 20)
         self.assertEqual(campaign.units[agency.id].expenses_due, 4_000)
+
+    def test_create_starting_unit_uses_dead_mans_curve_starting_funds_and_free_drivers(self):
+        campaign = CampaignState()
+
+        op = create_starting_unit(campaign, "op", "Eagle Security", "independentOp", "player-1")
+        gang = create_starting_unit(campaign, "gang", "Dust Saints", "outlawGang", "player-2")
+
+        self.assertEqual(op.funds, 100_000)
+        self.assertEqual(gang.funds, 100_000)
+        self.assertEqual(len(op.driver_ids), 1)
+        self.assertEqual(len(gang.driver_ids), 2)
+        self.assertTrue(all(campaign.drivers[driver_id].drive_skill == 2 for driver_id in op.driver_ids + gang.driver_ids))
+        self.assertTrue(all(campaign.drivers[driver_id].role == "outlaw" for driver_id in gang.driver_ids))
 
     def test_campaign_serializes_to_plain_dict_and_loads_back(self):
         campaign, agency, gang, op_driver, _, car = self.make_campaign()

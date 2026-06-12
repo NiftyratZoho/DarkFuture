@@ -3,6 +3,7 @@ import math
 
 from dark_future.track_layout import (
     curve_lane_boundary_radii,
+    curve_lane_center_radii,
     layout_track_sections,
     point_on_curve,
     point_on_straight,
@@ -108,7 +109,7 @@ class TrackLayoutTests(unittest.TestCase):
         self.assertGreater(straight_point[0], 30)
         self.assertNotEqual(round(curve_point[0], 3), round(straight_point[0], 3))
 
-    def test_curve_vehicle_center_uses_occupied_lane_boundaries(self):
+    def test_curve_vehicle_center_uses_occupied_lane_centers(self):
         lane_width = 10
         car_length = 30
         placements = layout_track_sections(
@@ -124,15 +125,11 @@ class TrackLayoutTests(unittest.TestCase):
             lane_width=lane_width,
             car_length=car_length,
         )
-        boundaries = curve_lane_boundary_radii(
-            curve.piece_type,
-            lane_width=lane_width,
-            car_length=car_length,
-        )
+        centers = curve_lane_center_radii(curve.piece_type, car_length=car_length)
 
         self.assertAlmostEqual(
             distance(curve.center, point),
-            (boundaries[3] + boundaries[5]) / 2,
+            (centers[3] + centers[4]) / 2,
         )
 
     def test_straight_after_clockwise_curve_counts_lanes_from_connected_edge(self):

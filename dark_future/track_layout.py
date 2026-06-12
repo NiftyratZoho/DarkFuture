@@ -143,12 +143,8 @@ def point_on_curve(
     angle_step = (placement.exit_heading_degrees - placement.heading_degrees) / count
     radial = placement.heading_degrees - placement.turn_direction * 90
     radial += angle_step * (space - 0.5)
-    boundaries = curve_lane_boundary_radii(
-        placement.piece_type,
-        lane_width=lane_width,
-        car_length=car_length,
-    )
-    radius = (boundaries[lane_pair - 1] + boundaries[lane_pair + 1]) / 2
+    centers = curve_lane_center_radii(placement.piece_type, car_length=car_length)
+    radius = (centers[lane_pair - 1] + centers[lane_pair]) / 2
     return _advance(placement.center, radial, radius)
 
 

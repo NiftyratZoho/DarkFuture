@@ -45,6 +45,29 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertEqual(app.state.scenario_id, "pursuit")
         self.assertEqual(app.state.save_path, str(ui_pygame.DEFAULT_MISSION_SAVE_PATH))
 
+    def test_campaign_contract_button_starts_current_campaign_scenario(self):
+        app = ui_pygame.App()
+        app.state.campaign.current_scenario = "pursuit"
+
+        app._dispatch_button("start_campaign_contract")
+
+        self.assertEqual(app.state.mode, "tactical")
+        self.assertEqual(app.state.scenario_id, "pursuit")
+        self.assertIn("Started campaign Pursuit contract", app.ui_status)
+
+    def test_campaign_view_exposes_settlement_and_new_contract_actions_when_game_over(self):
+        app = ui_pygame.App()
+        app._set_screen("campaign")
+        app.state.game_over = True
+        app.state.winner = "agency"
+        app.state.campaign.settlement_pending = True
+
+        app._draw()
+
+        labels = [button.label for button in app.buttons]
+        self.assertIn("Settle Campaign", labels)
+        self.assertIn("New Contract", labels)
+
     def test_continue_loads_last_saved_mission(self):
         app = ui_pygame.App()
         app.state.campaign.funds = 12345
@@ -56,6 +79,19 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertEqual(app.state.mode, "tactical")
         self.assertEqual(app.state.campaign.funds, 12345)
         self.assertEqual(app.state.save_path, str(ui_pygame.DEFAULT_MISSION_SAVE_PATH))
+
+    def test_mission_load_summary_shows_contract_turn_and_funds(self):
+        app = ui_pygame.App()
+        app.state.campaign.funds = 54321
+        app.state.turn = 3
+        app.state.phase = 4
+        save_game(app.state, ui_pygame.DEFAULT_MISSION_SAVE_PATH)
+
+        summary = app._mission_save_summary(ui_pygame.DEFAULT_MISSION_SAVE_PATH)
+
+        self.assertIn("Intercept", summary)
+        self.assertIn("T3 P4", summary)
+        self.assertIn("$54321", summary)
 
     def test_garage_fit_preview_uses_design_backend_weight_effects(self):
         app = ui_pygame.App()

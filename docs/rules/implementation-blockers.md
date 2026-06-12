@@ -164,12 +164,12 @@
 
 ### HZ-004 Passive marker exception
 
-- Status: `data-ready`
+- Status: `resolved`
 - Source to check: Dark Future passive hazard text.
-- Blocker type: code implementation missing.
 - Missing information: none. It is not a specific passive weapon type; the exception is a passive marker dropped directly under a tailgating pursuer.
-- Blocks implementation: complete passive hazard lifecycle.
-- Current code behaviour: passive markers test on entry only; tailgater-drop-under-pursuer move-off exception still needs code.
+- Blocks implementation: no longer blocks passive marker lifecycle at current engine fidelity.
+- Current code behaviour: passive markers test on entry. If a passive marker is dropped directly under a tailgating pursuer, the marker records that vehicle and resolves when that specific vehicle moves off the marker space.
+- Implementation notes: updated `PassiveMarker` state, drop-marker tailgater detection, move-off marker checks, save/load compatibility, and engine regression tests.
 - User notes:
 
 ## Shooting and Weapons
