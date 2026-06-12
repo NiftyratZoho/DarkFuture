@@ -1,0 +1,111 @@
+{
+  "id": "curve-atlas-work-items",
+  "status": "draft",
+  "source": {
+    "cleanedRuleFile": "docs/rules/clean/curve-atlas-trace-plan.md",
+    "relatedDataFile": "data/rules/track-pieces-draft.json"
+  },
+  "workItems": [
+    {
+      "id": "trace.broadCurveLeft",
+      "pieceId": "broadCurveLeft",
+      "priority": "blocking",
+      "sourcePages": [10, 13, 14, 52, 53, 54, 55, 74, 78, 79],
+      "requiredOutputs": [
+        "trackSpaces",
+        "forwardLinks",
+        "driftOutwardLinks",
+        "contactAnchors",
+        "contactZones",
+        "frontOrdinals",
+        "hazardPlacementSlots"
+      ],
+      "status": "pendingTrace"
+    },
+    {
+      "id": "mirror.broadCurveRight",
+      "pieceId": "broadCurveRight",
+      "priority": "blocking",
+      "dependsOn": ["trace.broadCurveLeft"],
+      "requiredOutputs": [
+        "mirroredTrackSpaces",
+        "mirroredForwardLinks",
+        "mirroredContactZones",
+        "rightHandVerificationNotes"
+      ],
+      "status": "pendingLeftTrace"
+    },
+    {
+      "id": "trace.tightCornerLeft",
+      "pieceId": "tightCornerLeft",
+      "priority": "blocking",
+      "sourcePages": [74, 78, 79],
+      "requiredOutputs": [
+        "trackSpaces",
+        "forwardLinks",
+        "driftOutwardLinks",
+        "contactAnchors",
+        "contactZones",
+        "frontOrdinals",
+        "hazardPlacementSlots"
+      ],
+      "status": "pendingTrace"
+    },
+    {
+      "id": "mirror.tightCornerRight",
+      "pieceId": "tightCornerRight",
+      "priority": "blocking",
+      "dependsOn": ["trace.tightCornerLeft"],
+      "requiredOutputs": [
+        "mirroredTrackSpaces",
+        "mirroredForwardLinks",
+        "mirroredContactZones",
+        "rightHandVerificationNotes"
+      ],
+      "status": "pendingLeftTrace"
+    },
+    {
+      "id": "enumerate.curveBoundaryUTurns",
+      "priority": "high",
+      "sourcePages": [14, 15],
+      "dependsOn": ["trace.broadCurveLeft", "trace.tightCornerLeft"],
+      "requiredOutputs": [
+        "boundarySpaces",
+        "uTurnAcrossEdgeMetadata",
+        "sixLaneContactZoneDefinitions"
+      ],
+      "status": "pendingCurveTrace"
+    },
+    {
+      "id": "enumerate.curveRamContactZones",
+      "priority": "high",
+      "sourcePages": [52, 53, 54, 55],
+      "dependsOn": ["trace.broadCurveLeft", "trace.tightCornerLeft"],
+      "requiredOutputs": [
+        "curveEvenContactZones",
+        "curveUnevenContactZones",
+        "sideswipeFrontOrdinals",
+        "headOnLaneDirectionRules",
+        "shuntLaneOverlapRules"
+      ],
+      "status": "pendingCurveTrace"
+    },
+    {
+      "id": "verify.trackGenerationPieces",
+      "priority": "medium",
+      "sourcePages": [74, 75, 76, 77, 78, 79],
+      "dependsOn": [
+        "trace.broadCurveLeft",
+        "mirror.broadCurveRight",
+        "trace.tightCornerLeft",
+        "mirror.tightCornerRight"
+      ],
+      "requiredOutputs": [
+        "pieceInventoryAssumption",
+        "generationValidationCases",
+        "hazardPlacementSlotOrdering"
+      ],
+      "status": "pendingCurveTrace"
+    }
+  ]
+}

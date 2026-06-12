@@ -1,0 +1,27 @@
+{
+  "status": "firstPass",
+  "notes": "Crop rectangles are from rendered OCR page images. Re-run scripts/build_weapon_icons.py after adjusting any rectangle.",
+  "items": [
+    { "weaponId": "chainGun", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [580, 535, 320, 120] },
+    { "weaponId": "grenadeLauncher40mm", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [620, 1020, 280, 130] },
+    { "weaponId": "heavyLaser", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [565, 1575, 340, 120] },
+    { "weaponId": "missilePod", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [655, 2020, 210, 110] },
+    { "weaponId": "machineGun6mm", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [1305, 405, 280, 85] },
+    { "weaponId": "autocannon15mm", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [1268, 850, 330, 105] },
+    { "weaponId": "grenadeLauncher20mm", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [1325, 1325, 260, 72] },
+    { "weaponId": "combatLaser", "source": "_analysis/ocr_pages/dark_future/page-84.png", "rect": [1288, 2028, 330, 105] },
+    { "weaponId": "spikeLayer", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [835, 360, 230, 220] },
+    { "weaponId": "oilLayer", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [830, 815, 245, 230] },
+    { "weaponId": "patternMineLayer", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [830, 1235, 250, 235] },
+    { "weaponId": "smokeLayer", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [825, 1640, 255, 220] },
+    { "weaponId": "lightweightMachineGun42mm", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [1280, 735, 330, 130] },
+    { "weaponId": "lightweightGrenadeLauncher20mm", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [1325, 1175, 260, 120] },
+    { "weaponId": "lightweightCombatLaser", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [1288, 1585, 330, 130] },
+    { "weaponId": "ragTube40mm", "source": "_analysis/ocr_pages/dark_future/page-85.png", "rect": [1325, 2035, 330, 105] },
+    { "weaponId": "lightweightSpikeLayer", "aliasOf": "spikeLayer" },
+    { "weaponId": "lightweightPatternMineLayer", "aliasOf": "patternMineLayer" },
+    { "weaponId": "lightweightSmokeLayer", "aliasOf": "smokeLayer" },
+    { "weaponId": "lightweightOilLayer", "aliasOf": "oilLayer" },
+    { "weaponId": "minigun62mm", "placeholder": true, "notes": "White Line Fever minigun art still needs a source crop." }
+  ]
+}

@@ -1,0 +1,389 @@
+{
+  "id": "deadMansCurve.campaignSequence",
+  "label": "Dead Man's Curve Campaign Sequence",
+  "status": "cleanSummaryDraft",
+  "source": {
+    "book": "White Dwarf",
+    "issues": [
+      {
+        "issue": 124,
+        "pages": [18, 19, 20, 21, 22, 26, 27, 28, 29, 30, 31],
+        "extractionFile": "docs/rules/dead-mans-curve/01-white-dwarf-124-pages-18-31.md"
+      },
+      {
+        "issue": 125,
+        "pages": [68, 69, 70, 71, 72, 73, 74, 75, 76],
+        "extractionFile": "docs/rules/dead-mans-curve/02-white-dwarf-125-pages-68-76.md"
+      }
+    ],
+    "notes": [
+      "Treat the White Dwarf 125 reference to White Dwarf 123 as a publication-delay typo; the first campaign part used here is White Dwarf 124 pages 18-31.",
+      "This file defines sequence structure only. Damaged numeric tables remain pending proofread in docs/rules/clean/campaign.md."
+    ]
+  },
+  "terms": {
+    "contractSequence": "A campaign time block containing attack declarations, engagements, and post-engagement consequences.",
+    "unit": "A persistent Op, agency, outlaw gang, or renegade Op controlled by a player.",
+    "engagement": "A tactical roadfight scheduled by an attack declaration.",
+    "activeVehicle": "A vehicle with working engine, usable non-passive ammunition and firing means, and a non-disabled driver."
+  },
+  "unitKinds": [
+    "independentOp",
+    "agency",
+    "outlawGang",
+    "renegadeOp"
+  ],
+  "startingSetup": {
+    "startingFunds": 100000,
+    "startingDriverDriveSkill": 2,
+    "independentOp": {
+      "freeStartingDrivers": 1,
+      "vehiclesAndEquipmentBoughtFromStartingFunds": true
+    },
+    "outlawGang": {
+      "freeStartingDrivers": 2,
+      "minimumStartingDrivers": 2,
+      "vehiclesAndEquipmentBoughtFromStartingFunds": true
+    },
+    "agencyFormation": {
+      "cost": 10000,
+      "source": {
+        "issue": 125,
+        "pages": [72]
+      }
+    },
+    "source": {
+      "issue": 124,
+      "pages": [18]
+    }
+  },
+  "legalEngagementPairings": [
+    {
+      "attackerKind": "independentOp",
+      "defenderKind": "outlawGang"
+    },
+    {
+      "attackerKind": "agency",
+      "defenderKind": "outlawGang"
+    },
+    {
+      "attackerKind": "outlawGang",
+      "defenderKind": "outlawGang"
+    },
+    {
+      "attackerKind": "outlawGang",
+      "defenderKind": "renegadeOp"
+    },
+    {
+      "attackerKind": "independentOp",
+      "defenderKind": "renegadeOp"
+    },
+    {
+      "attackerKind": "agency",
+      "defenderKind": "renegadeOp"
+    },
+    {
+      "attackerKind": "renegadeOp",
+      "defenderKind": "renegadeOp"
+    }
+  ],
+  "preEngagementSteps": [
+    {
+      "id": "attackDeclarations",
+      "order": 1,
+      "phase": "preEngagement",
+      "required": true,
+      "summary": "Players roll for declaration order, then eligible units declare attacks subject to one-attack and one-target restrictions.",
+      "rules": [
+        "Each unit may make only one attack declaration per contract sequence.",
+        "Each unit may be the target of only one attack declaration per contract sequence.",
+        "A unit already targeted by an attack declaration cannot declare its own attack.",
+        "The two units must form a legal engagement pairing.",
+        "A unit that declines an attack declaration retires immediately and cannot be replaced until the next contract sequence."
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [19, 20]
+      }
+    },
+    {
+      "id": "approach",
+      "order": 2,
+      "phase": "preEngagement",
+      "required": true,
+      "summary": "For each declared engagement, allocate participating drivers and vehicles, buy any information bonuses, roll approach, and choose intercept, pursuit, or ambush as allowed.",
+      "requiresProofread": [
+        "approachDriveSkillBonusTable",
+        "informationBonusCostsAndCaps",
+        "approachResultBands",
+        "engagementTypeSetup"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [20, 21]
+      }
+    },
+    {
+      "id": "engagementObjectiveTracking",
+      "order": 3,
+      "phase": "preEngagement",
+      "required": true,
+      "summary": "Initialize attacker objective tracking; the attacking unit must spend six phases with at least one attacker within four spaces of at least one defender unless exempt.",
+      "rules": [
+        "Objective is tracked for the unit that is attacker for the engagement, not necessarily the approach winner.",
+        "Different vehicle pairs may satisfy different phases.",
+        "Ambushed units are exempt.",
+        "Deliberate failure causes pay/mileage/loot penalties and can remove the unit after repeated failure."
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [22]
+      }
+    },
+    {
+      "id": "tacticalEngagement",
+      "order": 4,
+      "phase": "engagement",
+      "required": true,
+      "summary": "Play the tactical roadfight using core, White Line Fever, and applicable campaign setup rules.",
+      "externalDependencies": [
+        "turnSequence",
+        "movement",
+        "trackGeometry",
+        "shooting",
+        "damage",
+        "hazards",
+        "ramsAndCrashes",
+        "scenarioSetup"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [21, 22]
+      }
+    }
+  ],
+  "postEngagementPhases": [
+    {
+      "id": "injury",
+      "order": 1,
+      "summary": "Resolve driver death, injury, limb disabled results, recovery clauses, and escape/rescue.",
+      "stateWrites": [
+        "driver.injuryState",
+        "driver.driveSkillTemporaryModifiers",
+        "driver.psychosisPoints",
+        "driver.missedSequences",
+        "unit.salvageEligibility"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [26]
+      }
+    },
+    {
+      "id": "salvage",
+      "order": 2,
+      "summary": "Determine salvage rights and pay immediate scavenger costs to recover eligible equipment or vehicles.",
+      "stateWrites": [
+        "unit.store",
+        "vehicle.salvageState",
+        "unit.funds"
+      ],
+      "requiresProofread": [
+        "equipmentSalvageCostTable",
+        "vehicleSalvageCostTable",
+        "unsalvageableEquipmentCategories"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [27]
+      }
+    },
+    {
+      "id": "mileage",
+      "order": 3,
+      "summary": "Surviving drivers gain mileage from combat or flight engagement tables; drive skill updates immediately at thresholds.",
+      "stateWrites": [
+        "driver.mileagePoints",
+        "driver.driveSkill"
+      ],
+      "requiresProofread": [
+        "combatEngagementMileageTable",
+        "flightEngagementMileageTable",
+        "campaignMileageTable"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [28]
+      }
+    },
+    {
+      "id": "pay",
+      "order": 4,
+      "summary": "Ops claim bounty for qualifying outlaw losses; outlaws and renegade Ops resolve loot.",
+      "stateWrites": [
+        "unit.funds",
+        "driver.funds"
+      ],
+      "requiresProofread": [
+        "outlawBountyTable",
+        "lootLeaderDriveSkillModifierTable"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [29]
+      }
+    },
+    {
+      "id": "psychosis",
+      "order": 5,
+      "summary": "Apply engagement and pending media psychosis, test drivers with sufficient psychosis, and resolve disorders.",
+      "stateWrites": [
+        "driver.psychosisPoints",
+        "driver.disorders",
+        "driver.pendingMediaPsychosis"
+      ],
+      "requiresProofread": [
+        "disorderSeverityTable",
+        "harmlessDisorderTable",
+        "minorDisorderTable",
+        "costlyDisorderTable",
+        "dangerousDisorderTable"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [29, 30, 31]
+      }
+    },
+    {
+      "id": "kudos",
+      "order": 6,
+      "summary": "Recalculate kudos and media visibility, optionally resolve media rolls, then check media manipulation.",
+      "stateWrites": [
+        "driver.kudosPoints",
+        "driver.mediaVisibility",
+        "driver.pendingMediaPsychosis",
+        "unit.funds",
+        "driver.funds",
+        "unit.recruitmentLocks",
+        "driver.temporaryEffects"
+      ],
+      "requiresProofread": [
+        "eccentricityFactors",
+        "mediaTables",
+        "mediaManipulationTable"
+      ],
+      "source": {
+        "issue": 125,
+        "pages": [68, 69, 70, 71]
+      }
+    },
+    {
+      "id": "recruitment",
+      "order": 7,
+      "summary": "Form agencies, replace losses, hire novice or experienced drivers, and apply agency/gang obligations.",
+      "stateWrites": [
+        "unit.kind",
+        "unit.driverIds",
+        "driver.unitId",
+        "driver.contractObligations",
+        "unit.expensesDue"
+      ],
+      "requiresProofread": [
+        "agencyFormationCost",
+        "driverGenerationTable",
+        "singleVehicleGangReplacementRules"
+      ],
+      "source": {
+        "issue": 125,
+        "pages": [72]
+      }
+    },
+    {
+      "id": "reEquipment",
+      "order": 8,
+      "summary": "Repair, reload, sell surplus, redesign vehicles, buy new vehicles/equipment, fit cybernetics/software, and repair hack damage.",
+      "stateWrites": [
+        "unit.funds",
+        "driver.funds",
+        "vehicle.damage",
+        "vehicle.criticalHits",
+        "vehicle.equipment",
+        "unit.store",
+        "driver.cybernetics",
+        "driver.software"
+      ],
+      "requiresProofread": [
+        "cyberDeviceCosts",
+        "softwareCosts",
+        "hackHostilityTurretResult"
+      ],
+      "source": {
+        "issue": 125,
+        "pages": [73, 74, 75]
+      }
+    },
+    {
+      "id": "recordKeeping",
+      "order": 9,
+      "summary": "Persist updated driver, vehicle, unit, funds, store, obligation, and campaign state before the next contract sequence.",
+      "stateWrites": [
+        "campaign.sequenceNumber",
+        "campaign.units",
+        "campaign.drivers",
+        "campaign.vehicles",
+        "campaign.logs"
+      ],
+      "source": {
+        "issue": 124,
+        "pages": [23]
+      }
+    }
+  ],
+  "hackHostileSystemEffects": {
+    "roboticDrive": {
+      "handlingDelta": -3
+    },
+    "computerDrive": {
+      "handlingDelta": -1,
+      "accelerationMphDelta": -5,
+      "brakingMphDelta": -5
+    },
+    "missileFireComputer": {
+      "mayFireAtEnemyTargets": false,
+      "mustFireAtFriendlyTargetsOnly": true
+    },
+    "turretFireComputer": {
+      "mustFireAtFriendlyTargetsOnly": true
+    },
+    "source": {
+      "issue": 125,
+      "pages": [75]
+    }
+  },
+  "campaignEndConditions": [
+    {
+      "id": "singleRemainingUnit",
+      "summary": "If only one unit remains in the campaign, that unit's controlling player wins.",
+      "source": {
+        "issue": 124,
+        "pages": [22]
+      }
+    },
+    {
+      "id": "lawAndOrderVictory",
+      "summary": "If more than one unit remains but all are Op units, the campaign ends as a side victory for law and order unless one or more units become renegade.",
+      "source": {
+        "issue": 124,
+        "pages": [22]
+      }
+    },
+    {
+      "id": "noOpposingUnits",
+      "summary": "If no opposing units are available for a contract sequence, the campaign ends.",
+      "source": {
+        "issue": 124,
+        "pages": [22]
+      }
+    }
+  ]
+}

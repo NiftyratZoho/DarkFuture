@@ -1,0 +1,569 @@
+{
+  "id": "bikes-three-wheelers-draft",
+  "status": "cleanedDraft",
+  "source": [
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [64, 65, 66, 67, 68, 69, 70, 71, 72, 73],
+      "extractionFile": "docs/rules/core/10-bikes.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [38, 39, 40],
+      "extractionFile": "docs/rules/white-line-fever/06-three-wheelers.md"
+    }
+  ],
+  "vehicleKinds": [
+    {
+      "id": "bike",
+      "baseTemplateId": "bike",
+      "rulesFamily": "motorcycle",
+      "usesCarRulesExceptOverrides": true,
+      "riderAndVehicleAreSingleEntity": true,
+      "contactZoneProfile": "bikeTwoLane",
+      "normalContactZoneLanes": 2,
+      "stationaryContactZoneProfile": "normalBike",
+      "source": { "book": "Dark Future Rulebook", "pages": [64] }
+    },
+    {
+      "id": "trike",
+      "rulesFamily": "threeWheeler",
+      "usesCarRulesExceptOverrides": true,
+      "contactZoneProfile": "car",
+      "collisionFamily": "bikeRestricted",
+      "source": { "book": "White Line Fever", "pages": [38, 39] },
+      "coreStats": {
+        "damageTrack": [12, 8, 4],
+        "armour": 2,
+        "maximumSpeedMph": 110,
+        "accelerationMph": 35,
+        "brakingMph": 35,
+        "handling": 3,
+        "cost": 20000,
+        "payload": 350
+      }
+    },
+    {
+      "id": "motorcycleCombination",
+      "rulesFamily": "threeWheeler",
+      "usesTrikeRulesExceptOverrides": true,
+      "contactZoneProfile": "car",
+      "collisionFamily": "bikeRestricted",
+      "source": { "book": "White Line Fever", "pages": [40] }
+    }
+  ],
+  "bikeMovement": {
+    "placement": {
+      "wheelsOverLaneDivider": true,
+      "frontNearForwardSpaceDivider": true,
+      "curveOddLaneReference": "outsideLaneSpaceDivider",
+      "source": { "book": "Dark Future Rulebook", "pages": [64] }
+    },
+    "illegalActions": ["reverse", "bootlegger", "bulldoze"],
+    "restrictedRams": {
+      "cannotDeliberatelyRamCars": true,
+      "bikeSideswipeAllowedOnlyAgainstSameDirectionBike": true,
+      "cannotSideswipeOpposedBike": true,
+      "source": { "book": "Dark Future Rulebook", "pages": [64, 70, 71, 72, 73] }
+    },
+    "movingOffDifferentDirection": {
+      "allowedOnlyWhenMovingOff": true,
+      "maximumAccelerationToMph": 20,
+      "finalAlignment": "oppositeEndSpaceDividers",
+      "source": { "book": "Dark Future Rulebook", "pages": [66] }
+    },
+    "uTurn": {
+      "usesNormalRestrictions": true,
+      "automaticAtOrBelowMph": 10,
+      "safetyLimitMph": 30,
+      "automaticControlLossAtOrAboveMph": 31,
+      "source": { "book": "Dark Future Rulebook", "pages": [65] },
+      "status": "crossSectionDraft"
+    }
+  },
+  "overlappingContactZones": {
+    "allowedOnlyBetweenMovingBikes": true,
+    "notCollisionByItself": true,
+    "hazardRequests": [
+      {
+        "id": "bike.overlap.sameDirection",
+        "directionRelation": "same",
+        "safetyLimitMph": 80,
+        "appliesTo": "bothRiders",
+        "source": { "book": "Dark Future Rulebook", "pages": [64, 65] }
+      },
+      {
+        "id": "bike.overlap.opposed",
+        "directionRelation": "opposed",
+        "safetyLimitMph": 40,
+        "appliesTo": "bothRiders",
+        "source": { "book": "Dark Future Rulebook", "pages": [64, 65] }
+      }
+    ],
+    "notes": "Stationary, upright, and fallen bikes use normal contact zones. Diagrams should be traced before final contact-zone implementation.",
+    "status": "needsDiagramTrace"
+  },
+  "dodge": {
+    "id": "bike.dodge",
+    "kind": "manoeuvre",
+    "vehicleKinds": ["bike"],
+    "safetyLimitMph": 40,
+    "movement": "straightAheadMoveWithReducedOneLaneContactZone",
+    "riderChoosesReducedContactSide": true,
+    "mayBeUsedOnCurves": true,
+    "canAvoid": ["passiveMarkers", "surfaceHazards"],
+    "cannotAvoid": ["vehicles"],
+    "panicBrakeOrControlLossStillCompletesDodge": true,
+    "nextMove": {
+      "mayDodgeAgainEitherDirection": true,
+      "restoreNormalContactZoneIfNoDodge": true
+    },
+    "source": { "book": "Dark Future Rulebook", "pages": [65, 66] },
+    "status": "needsCurveDiagramTrace"
+  },
+  "bikePassiveDeployment": {
+    "markerPlacement": "behindBikeModel",
+    "stationaryBikesMayDeployPassives": false,
+    "requiresTrackGeometrySlots": true,
+    "oilInjectionSmokeTrailLimit": 2,
+    "source": [
+      { "book": "Dark Future Rulebook", "pages": [66] },
+      { "book": "White Line Fever", "pages": [18] }
+    ]
+  },
+  "bikeShooting": {
+    "fireCorridorProfile": "bikeForwardTwoLane",
+    "curveCorridorRequiresRulerTemplate": true,
+    "targetModifiers": [
+      {
+        "id": "bikeTarget.oneLaneInCorridor",
+        "condition": "onlyOneOccupiedLaneInFireCorridor",
+        "hitModifier": -2,
+        "source": { "book": "Dark Future Rulebook", "pages": [67] }
+      },
+      {
+        "id": "bikeTarget.bothLanesInCorridor",
+        "condition": "bothOccupiedLanesInFireCorridor",
+        "hitModifier": -1,
+        "source": { "book": "Dark Future Rulebook", "pages": [67] }
+      }
+    ],
+    "fallenBikeTargeting": {
+      "canBeTargetedByFixedWeapons": false,
+      "canBeTargetedByTurretMountedWeapons": true,
+      "source": { "book": "Dark Future Rulebook", "pages": [67] }
+    },
+    "coreBikeWeaponsRecovered": [
+      { "weaponId": "lightweight-4-2mm-mg", "range": 8, "accuracy": 2, "status": "clean" },
+      { "weaponId": "lightweight-20mm-tube-gl", "range": 12, "accuracy": 0, "status": "clean" },
+      { "weaponId": "lightweight-combat-laser", "range": 12, "accuracy": 2, "status": "clean" },
+      { "weaponId": "40mm-rag-tube", "range": 12, "accuracy": 0, "status": "clean" }
+    ],
+    "source": { "book": "Dark Future Rulebook", "pages": [66, 67] }
+  },
+  "bikeDamage": {
+    "damageIncrements": [6, 3],
+    "incrementEffects": {
+      "maximumSpeedMph": -10,
+      "accelerationMph": -3,
+      "handling": -1
+    },
+    "terminalDamage": {
+      "usesCarProcedure": true,
+      "whenHalted": "fallsAndIsTreatedAsWreck",
+      "riderEscapesAtStartOfNextTurnIfAlive": true
+    },
+    "roadDamage": {
+      "triggerEvents": ["roll", "crash", "headOnRam"],
+      "criticalTable": "rider",
+      "speedFactorModifiers": [
+        { "speedFactor": 1, "modifier": -4 },
+        { "speedFactor": 2, "modifier": -2 },
+        { "speedFactor": 3, "modifier": 0 },
+        { "speedFactor": 4, "modifier": 2 },
+        { "speedFactor": 5, "modifier": 3 },
+        { "speedFactor": 6, "modifier": 4 },
+        { "speedFactor": 7, "modifier": 5 },
+        { "speedFactorMin": 8, "modifier": 6 }
+      ],
+      "source": { "book": "Dark Future Rulebook", "pages": [68] },
+      "status": "needsTableProofread"
+    }
+  },
+  "bikeHandling": {
+    "fullHandlingUses": ["ordinaryManoeuvres", "curves", "smokeHazards", "straightAheadOilWithoutSpeedAdjustment"],
+    "reducedHandlingFormula": "fullHandling - 3",
+    "reducedHandlingUses": [
+      "heHits",
+      "oilOnCurves",
+      "oilOnStraightsAfterSpeedAdjustmentEarlierInPhase",
+      "criticalHits",
+      "mineHits",
+      "debris",
+      "sandOnCurves",
+      "collisions",
+      "outOfControlSideswipeTests"
+    ],
+    "adverseControlUsesFullHandling": true,
+    "source": { "book": "Dark Future Rulebook", "pages": [70] }
+  },
+  "bikeControlLoss": {
+    "formula": "normalControlLossFormula",
+    "results": [
+      { "range": { "max": 1 }, "effect": "regainControl" },
+      { "range": { "min": 2, "max": 3 }, "effect": "skidAndRegainControl" },
+      { "range": { "min": 4, "max": 5 }, "effect": "skidRemainOutOfControl" },
+      { "range": { "min": 6 }, "effect": "roll" }
+    ],
+    "source": { "book": "Dark Future Rulebook", "pages": [70] }
+  },
+  "bikeRolling": {
+    "immediateCrashAtOrAboveMph": 81,
+    "rollAtOrBelowMph": 80,
+    "atOrAboveCrash": {
+      "removeFromPlay": true,
+      "takesCrashDamage": true,
+      "riderTakesRoadDamage": true
+    },
+    "atOrBelowRoll": {
+      "preRoll": "standardSkidTestAndMove",
+      "damage": {
+        "hitCount": "max(0, vehicle.speedFactor - 2)",
+        "damageCharacteristic": "vehicle.speedFactor - 2",
+        "facingRoll": [
+          { "roll": 1, "facing": "leftSide" },
+          { "roll": 2, "facing": "rightSide" },
+          { "roll": 3, "facing": "roof" },
+          { "roll": 4, "facing": "floor" },
+          { "roll": 5, "facing": "front" },
+          { "roll": 6, "facing": "rear" }
+        ]
+      },
+      "finalSpeedMph": 0,
+      "fallenPlacement": "onSideAtAngleToGrid",
+      "ifTerminalOrRiderKo": "wreck",
+      "ifSurvives": "mayBePickedUpAtStartOfNextMove"
+    },
+    "source": { "book": "Dark Future Rulebook", "pages": [70] }
+  },
+  "bikeCriticalTables": {
+    "bodywork": [
+      { "roll": 1, "effect": "transmissionCheck", "check": "d6 + hitDamage >= 6", "successEffect": "accelerationToZero", "failureEffect": "wasted" },
+      { "roll": 2, "effect": "clutchCable", "state": "maximumSpeedCannotExceedCurrentSpeedFactorCharacteristic" },
+      { "roll": 3, "effect": "fuelLineLeak", "endOfTurnD6OneDisablesEngine": true },
+      { "roll": 4, "effect": "brakeCable", "state": "currentBrakingHalvedRoundDown" },
+      { "roll": 5, "effect": "weaponLinkSevered", "subroll": [{ "range": [1, 2], "target": "leftWeapon" }, { "range": [3, 4], "target": "rightWeapon" }, { "range": [5, 6], "target": "passiveWeapon" }], "wastedIfAbsent": true },
+      { "roll": 6, "effect": "acceleratorCable", "state": "accelerationToZero" }
+    ],
+    "engine": [
+      { "roll": 1, "effect": "engineBlockCheck", "check": "d6 + hitDamage >= 6", "successEffect": "engineDisabled", "failureEffect": "wasted" },
+      { "roll": 2, "effect": "carburettor", "state": "accelerationReducedToOneThirdRoundDown" },
+      { "roll": 3, "effect": "brakeCylinderAsCar" },
+      { "roll": 4, "effect": "generatorAsCar" },
+      { "roll": 5, "effect": "ignitionAsCar" },
+      { "roll": 6, "effect": "explosionAsCar" }
+    ],
+    "wheels": [
+      { "roll": 1, "effect": "brakeCable", "state": "currentBrakingHalvedRoundDown" },
+      { "range": [2, 3], "effect": "wheelBearingCheck", "check": "d6 + hitDamage >= 7", "failureEffect": "handlingMinusOne", "successEffect": "wheelFallsOffWithSpeedDependentCrashOrNextMoveRoll" },
+      { "roll": 4, "effect": "axleAsCar" },
+      { "range": [5, 6], "effect": "tyreDestroyedAsCar", "hazardUsesReducedHandling": true }
+    ],
+    "fuel": [
+      { "range": [1, 3], "effect": "holedAsCar" },
+      { "range": [4, 6], "effect": "explodes", "hit": { "damageModifier": 8, "tags": ["HE"] }, "engineDisabled": true }
+    ],
+    "rider": [
+      { "range": [1, 2], "effect": "hurtAsCar" },
+      { "range": [3, 4], "effect": "injuredAsCar" },
+      { "roll": 5, "effect": "limbDisabledAsCar" },
+      { "roll": 6, "effect": "koNoRider", "bikeRollsOnNextMove": true }
+    ],
+    "weapons": "sameAsCarWeaponCriticals",
+    "source": { "book": "Dark Future Rulebook", "pages": [69] },
+    "status": "needsProofreadForColumnDamage"
+  },
+  "bikeTargetMatrix": {
+    "status": "needsProofreadForColumnDamage",
+    "source": { "book": "Dark Future Rulebook", "pages": [68] },
+    "facings": {
+      "front": [
+        { "range": [1, 2], "target": "bodywork" },
+        { "roll": 3, "target": "frontWheels" },
+        { "roll": 4, "target": "weapons", "subroll": "oddLeftEvenRight" },
+        { "roll": 5, "target": "engine" },
+        { "roll": 6, "subroll": [{ "range": [1, 2], "target": "fuel" }, { "range": [3, 6], "target": "rider" }] }
+      ],
+      "side": [
+        { "range": [1, 2], "target": "bodywork" },
+        { "roll": 3, "target": "wheels", "subroll": [{ "range": [1, 3], "target": "frontWheels" }, { "range": [4, 6], "target": "rearWheels" }] },
+        { "roll": 4, "target": "weapons", "subroll": [{ "values": "odd", "target": "frontWeapon" }, { "values": "even", "target": "passives" }] },
+        { "roll": 5, "subroll": [{ "values": "odd", "target": "fuel" }, { "values": "even", "target": "engine" }] },
+        { "roll": 6, "target": "rider" }
+      ],
+      "rear": [
+        { "range": [1, 2], "target": "bodywork" },
+        { "roll": 3, "target": "rearWheel" },
+        { "roll": 4, "target": "passives" },
+        { "roll": 5, "subroll": [{ "values": "odd", "target": "fuel" }, { "values": "even", "target": "engine" }] },
+        { "roll": 6, "target": "rider" }
+      ],
+      "floor": [
+        { "range": [1, 2], "target": "bodywork" },
+        { "roll": 3, "target": "wheels", "subroll": [{ "values": "odd", "target": "frontWheels" }, { "values": "even", "target": "rearWheels" }] },
+        { "range": [4, 5], "target": "weapons", "subroll": [{ "values": "odd", "target": "frontWeaponThenOddLeftEvenRight" }, { "values": "even", "target": "passives" }] },
+        { "roll": 6, "target": "rider" }
+      ],
+      "roof": [
+        { "range": [1, 3], "target": "bodywork" },
+        { "range": [4, 6], "target": "rider" }
+      ]
+    }
+  },
+  "disabledEngineAndNoRider": {
+    "disabledEngineSlowsToHalt": true,
+    "mayAbandonAfterHaltAtStartOfTurn": true,
+    "pushing": {
+      "countsAsNormalAction": true,
+      "accelerationMph": 5,
+      "maximumSpeedMph": 5,
+      "cannotShootSameTurn": true
+    },
+    "noRider": {
+      "automaticallyRollsOnNextMove": true,
+      "crashesIfFinishesMoveOnCurve": true
+    },
+    "fullHandlingZeroEffect": "automaticControlLoss",
+    "source": { "book": "Dark Future Rulebook", "pages": [69, 70] }
+  },
+  "bikeCollisions": {
+    "bikeVsBike": {
+      "headOn": {
+        "damage": "combinedSpeedFactorDamageToBoth",
+        "bothHaltAndFall": true,
+        "survivingRidersTakeRoadDamage": true
+      },
+      "shunt": {
+        "usesUsualRules": true,
+        "bothBikesAutomaticallyLoseControl": true,
+        "skipOrdinaryPostShuntHazardRoll": true,
+        "rammerModelNotMoved": true
+      },
+      "sideswipe": {
+        "allowedOnlySameDirectionOverlappingContactZones": true,
+        "usesNormalSideswipeTest": true,
+        "outOfControlAccidentalOpposedSideswipeUsesReducedHandling": true
+      },
+      "source": { "book": "Dark Future Rulebook", "pages": [70, 71, 72] }
+    },
+    "bikeVsCar": {
+      "headOn": {
+        "damage": "oneCombinedSpeedFactorHitToBoth",
+        "riderTakesRoadDamage": true,
+        "bikeRemovedFromPlay": true,
+        "bikeTakesAdditionalCrashDamage": false,
+        "carIfRammerCompletesMove": true,
+        "carSpeedLossMph": 30,
+        "carControlState": "outOfControl"
+      },
+      "shuntBikeRamsCar": {
+        "damage": "relativeSpeedFactorHitToBoth",
+        "bikeSpeedAfter": "carSpeed",
+        "carSpeedUnaffected": true,
+        "bikerAutomaticallyLosesControl": true,
+        "carSkipsUsualHazardRoll": true
+      },
+      "shuntCarRamsBike": {
+        "damage": "relativeSpeedFactorHitToBoth",
+        "bikeSpeedAfter": "carImpactSpeed",
+        "carSpeedLossMph": 10,
+        "bikerAutomaticallyLosesControl": true,
+        "carSkipsUsualHazardRoll": true
+      },
+      "sideswipe": {
+        "bikeAutomaticallyLosesAgainstCar": true,
+        "partialHeadOnOrShuntWithBikeTreatedAsSideswipe": true,
+        "carDoesNotRequireOverlappingContactZones": true
+      },
+      "fallenOrWreckedBike": {
+        "carHitsFallenBike": "treatAsHeadOnRemoveBikeCarCompletesMoveAndLosesControl",
+        "bikeHitsWreckedBike": "movingBikeCrashesRemovedTakesCrashAndRoadDamageWreckRemains"
+      },
+      "source": { "book": "Dark Future Rulebook", "pages": [72, 73] }
+    }
+  },
+  "threeWheelers": {
+    "trike": {
+      "movement": {
+        "contactZones": "car",
+        "actionsAndManoeuvres": "car",
+        "collisionRestrictions": "bikeStyle",
+        "cannotDeliberatelySideswipeOpposedVehicles": true,
+        "neverUsesReducedHandling": true,
+        "spinAtOrAboveMphBecomesRoll": 81,
+        "rollsAreWrecksCannotBeRighted": true,
+        "crewTakeRoadDamageWhen": ["roll", "crash"]
+      },
+      "shooting": {
+        "targetHitModifier": -1,
+        "modifierAppliesWhetherOneOrBothLanesInCorridor": true,
+        "pintleTailGunner": {
+          "optional": true,
+          "allowedFacings": ["front", "rear"],
+          "fireCorridorProfile": "trikePintleDiagram",
+          "status": "needsDiagramTrace"
+        },
+        "withoutTailGunner": {
+          "weaponMustBeFixedForward": true,
+          "fireCorridorProfile": "hoodMounted"
+        }
+      },
+      "design": {
+        "cost": 20000,
+        "payload": 350,
+        "armourPerFacing": 2,
+        "armourModificationRules": "bikeArmourRules",
+        "hardPoints": [
+          { "id": "frontLeft", "allowedWeaponClasses": ["lightweight"], "capacity": 1 },
+          { "id": "frontRight", "allowedWeaponClasses": ["lightweight"], "capacity": 1 },
+          { "id": "rearLeft", "allowedWeaponClasses": ["lightweightPassive", "passive"], "capacity": 1 },
+          { "id": "rearRight", "allowedWeaponClasses": ["lightweightPassive", "passive"], "capacity": 1 },
+          { "id": "pintle", "optional": true, "allowedWeaponClasses": ["lightweight", "medium"], "capacity": 1, "requiresTailGunner": true }
+        ]
+      },
+      "source": { "book": "White Line Fever", "pages": [38, 39] }
+    },
+    "motorcycleCombination": {
+      "sameAsTrikeExceptOverrides": true,
+      "sideGunner": {
+        "replacesTailGunner": true,
+        "mountPosition": "frontOfSidecar",
+        "fireCorridorProfile": "sideGunnerDiagram",
+        "status": "needsDiagramTrace"
+      },
+      "withoutSideGunner": {
+        "mayUseFixedForwardRiderControlledWeapon": true,
+        "fireCorridorProfile": "sideMounted"
+      },
+      "outriggersAllowed": false,
+      "source": { "book": "White Line Fever", "pages": [40] }
+    }
+  },
+  "trikeTargetMatrix": {
+    "status": "needsProofreadForOcrDamage",
+    "source": { "book": "White Line Fever", "pages": [39] },
+    "notes": "Rows are reconstructed from OCR and need image proofread before coding.",
+    "matrixRef": "wlf.trikeTargetMatrix"
+  },
+  "motorcycleCombinationTargetMatrix": {
+    "status": "needsProofreadForOcrDamage",
+    "source": { "book": "White Line Fever", "pages": [40] },
+    "notes": "Separate sidecar matrix; rows are OCR-damaged and should be checked against the page image.",
+    "matrixRef": "wlf.motorcycleCombinationTargetMatrix"
+  },
+  "implementationHandoffs": [
+    { "system": "Movement", "requires": ["bikeDodgeAction", "illegalBikeActions", "bikeMovingOffDifferentDirection", "trikeCarMovement"] },
+    { "system": "TrackGeometry", "requires": ["bikeContactZones", "dodgeReducedContactZones", "overlappingBikeContactZones", "bikePassivePlacement", "trikePintleCorridors", "sideGunnerCorridor"] },
+    { "system": "Hazards", "requires": ["bikeFullVsReducedHandling", "bikeControlLossTable", "overlapHazards", "trikeSpinToRollAt81Plus"] },
+    { "system": "Damage", "requires": ["bikeRoadDamage", "bikeTargetMatrix", "bikeCriticalTables", "trikeAndSidecarTargetMatrices"] },
+    { "system": "RamsCrashes", "requires": ["bikeVsBikeOverrides", "bikeVsCarOverrides", "fallenBikeCollisionRules", "trikeBikeStyleRestrictions"] },
+    { "system": "Shooting", "requires": ["bikeTargetModifiers", "fallenBikeTargeting", "trikeTargetModifier", "trikePintleRules", "sideGunnerRules"] },
+    { "system": "VehicleDesign", "requires": ["trikeTemplate", "sidecarCombinationTemplate", "trikeHardPoints", "sidecarOutriggerBan"] }
+  ],
+  "ambiguities": [
+    {
+      "id": "bikeDodgeCurveGeometry",
+      "source": { "book": "Dark Future Rulebook", "pages": [65, 66] },
+      "description": "Dodge examples on curves are diagram-dependent and must be traced."
+    },
+    {
+      "id": "bikePassivePlacement",
+      "source": { "book": "Dark Future Rulebook", "pages": [66] },
+      "description": "Exact passive marker cells behind bikes, especially on curves, are not recoverable from OCR."
+    },
+    {
+      "id": "bikeRagAccuracy",
+      "source": { "book": "Dark Future Rulebook", "pages": [67] },
+      "status": "resolvedByPageImage",
+      "description": "40mm RAG launcher tube accuracy is 0."
+    },
+    {
+      "id": "bikeTargetMatrixColumnDamage",
+      "source": { "book": "Dark Future Rulebook", "pages": [68] },
+      "description": "Side and floor target matrix rows include damaged column text. Draft needs page-image proofread."
+    },
+    {
+      "id": "bikeRoadDamageSpeedFactor3",
+      "source": { "book": "Dark Future Rulebook", "pages": [68] },
+      "description": "Speed-factor 3 modifier is visually blank in OCR and is represented as zero."
+    },
+    {
+      "id": "bikeRollThreshold",
+      "source": { "book": "Dark Future Rulebook", "pages": [70] },
+      "description": "OCR around 80/81 mph is noisy; draft uses 81+ immediate crash and 80 or less roll."
+    },
+    {
+      "id": "partialBikeCollisionDiagrams",
+      "source": { "book": "Dark Future Rulebook", "pages": [72, 73] },
+      "description": "Partial head-on/shunt-to-sideswipe examples are diagram-led and require geometry trace."
+    },
+    {
+      "id": "trikeTargetMatrixOcrDamage",
+      "source": { "book": "White Line Fever", "pages": [39] },
+      "description": "Trike matrix is too damaged for final coding without page-image proofread."
+    },
+    {
+      "id": "trikePintleCorridor",
+      "source": { "book": "White Line Fever", "pages": [38] },
+      "description": "Pintle front/rear fire corridors are diagram-defined."
+    },
+    {
+      "id": "sideGunnerCorridor",
+      "source": { "book": "White Line Fever", "pages": [40] },
+      "description": "Side-gunner fire corridor is diagram-defined."
+    }
+  ],
+  "candidateTests": [
+    "bike.cannotReverse",
+    "bike.cannotBootlegger",
+    "bike.cannotBulldoze",
+    "bike.movingOffDifferentDirectionAt20MphLegal",
+    "bike.movingOffDifferentDirectionAt25MphIllegal",
+    "bike.overlapSameDirectionRequests80MphHazard",
+    "bike.overlapOpposedRequests40MphHazard",
+    "bike.dodgeUsesOneLaneContactZone",
+    "bike.dodgeAt41MphRequestsHazard",
+    "bike.dodgeCanAvoidPassiveButNotVehicle",
+    "bike.restoreNormalContactZoneAfterNonDodgeMove",
+    "bike.targetOneLaneInCorridorMinus2",
+    "bike.targetBothLanesInCorridorMinus1",
+    "bike.fallenBikeOnlyTurretTargetable",
+    "bike.stationaryCannotDeployPassives",
+    "bike.oilInjectionSmokeTrailMaxTwo",
+    "bike.damageIncrementAt6And3",
+    "bike.oilStraightNoSpeedAdjustmentUsesFullHandling",
+    "bike.mineHazardUsesReducedHandling",
+    "bike.smokeHazardUsesFullHandling",
+    "bike.controlLossTotal6Rolls",
+    "bike.adverseControlUsesFullHandling",
+    "bike.rollAt81MphCrashesImmediately",
+    "bike.rollAt80MphFallsAndStops",
+    "bike.roadDamageSpeedFactor2ModifierMinus2",
+    "bikeVsBike.headOnRoadDamageBothSurvivingRiders",
+    "bikeVsBike.shuntBothAutomaticallyLoseControl",
+    "bikeVsBike.sameDirectionOverlapSideswipeLegal",
+    "bikeVsCar.headOnRemovesBikeAndCarLoses30AndControl",
+    "bikeVsCar.bikeShuntsCarBikeMatchesCarSpeed",
+    "bikeVsCar.carShuntsBikeBikeMatchesCarImpactSpeedCarMinus10",
+    "bikeVsCar.bikeAutomaticallyLosesSideswipe",
+    "bikeHitsWreckedBike.crashesAndWreckRemains",
+    "trike.usesCarContactZones",
+    "trike.neverUsesReducedHandling",
+    "trike.spinAt81MphBecomesRollAndWreck",
+    "trike.targetModifierMinus1",
+    "trike.withoutTailGunnerFixedForwardOnly",
+    "trike.pintleAllowsFrontOrRear",
+    "sidecar.rejectsOutriggers",
+    "sidecar.sideGunnerUsesDiagramCorridor"
+  ]
+}

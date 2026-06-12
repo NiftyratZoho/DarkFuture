@@ -1,0 +1,174 @@
+{
+  "id": "equipment",
+  "status": "cleanedDraft",
+  "source": [
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [81, 84, 85],
+      "extractionFile": "docs/rules/core/12-vehicle-design.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [16, 37, 41, 43],
+      "extractionFile": "docs/rules/white-line-fever/04-new-equipment.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [37],
+      "extractionFile": "docs/rules/white-line-fever/05-safety-devices.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [41, 44],
+      "extractionFile": "docs/rules/white-line-fever/07-design-section.md"
+    }
+  ],
+  "weaponClasses": ["lightweight", "medium", "heavy", "passive", "lightweightPassive"],
+  "weapons": [
+    { "id": "chainGun", "label": "Chain Gun", "class": "heavy", "cost": 22000, "weight": 300, "startingLoad": { "kind": "gp", "shots": 6 }, "sanctioned": true, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "grenadeLauncher40mm", "label": "40mm Grenade Launcher", "class": "heavy", "cost": 15000, "weight": 250, "startingLoad": { "kind": "he", "shots": 8 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "heavyLaser", "label": "Heavy Laser", "class": "heavy", "cost": 18000, "weight": 200, "startingLoad": { "kind": "powered", "shots": "oncePerTurn" }, "sanctioned": true, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "missilePod", "label": "Missile Pod", "class": "heavy", "cost": 25000, "weight": 300, "startingLoad": { "kind": "missile.he", "shots": 6 }, "sanctioned": true, "coreTurretAllowed": false, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "machineGun6mm", "label": "6mm Machine Gun", "class": "medium", "cost": 5000, "weight": 175, "startingLoad": { "kind": "gp", "shots": 12 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "autocannon15mm", "label": "15mm Autocannon", "class": "medium", "cost": 9000, "weight": 250, "startingLoad": { "kind": "gp", "shots": 8 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "grenadeLauncher20mm", "label": "20mm Grenade Launcher", "class": "medium", "cost": 5000, "weight": 150, "startingLoad": { "kind": "he", "shots": 10 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "combatLaser", "label": "Combat Laser", "class": "medium", "cost": 10000, "weight": 100, "startingLoad": { "kind": "powered", "shots": "oncePerTurn" }, "sanctioned": true, "source": { "book": "Dark Future Rulebook", "pages": [81, 84] } },
+    { "id": "spikeLayer", "label": "Spike Layer", "class": "passive", "cost": 4000, "weight": 100, "startingLoad": { "kind": "spikes", "shots": 12 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "patternMineLayer", "label": "Pattern Mine Layer", "class": "passive", "cost": 5000, "weight": 150, "startingLoad": { "kind": "patternMine", "shots": 6 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "smokeLayer", "label": "Smoke Layer", "class": "passive", "cost": 2000, "weight": 50, "startingLoad": { "kind": "smoke", "shots": 20 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "oilLayer", "label": "Oil Layer", "class": "passive", "cost": 3000, "weight": 75, "startingLoad": { "kind": "oil", "shots": 12 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightMachineGun42mm", "label": "4.2mm Machine Gun", "class": "lightweight", "cost": 6000, "weight": 80, "startingLoad": { "kind": "gp", "shots": 6 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightGrenadeLauncher20mm", "label": "Lightweight 20mm Grenade Launcher", "class": "lightweight", "cost": 6000, "weight": 60, "startingLoad": { "kind": "he", "shots": 4 }, "source": { "book": "Dark Future Rulebook", "pages": [85] } },
+    { "id": "lightweightCombatLaser", "label": "Lightweight Combat Laser", "class": "lightweight", "cost": 10000, "weight": 70, "startingLoad": { "kind": "powered", "shots": "oncePerTurn" }, "source": { "book": "Dark Future Rulebook", "pages": [85] } },
+    { "id": "ragTube40mm", "label": "40mm RAG Launcher Tube", "class": "lightweight", "cost": 5000, "weight": 50, "startingLoad": { "kind": "he", "shots": 1 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightSpikeLayer", "label": "Lightweight Spike Layer", "class": "lightweightPassive", "cost": 1000, "weight": 60, "startingLoad": { "kind": "spikes", "shots": 6 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightPatternMineLayer", "label": "Lightweight Pattern Mine Layer", "class": "lightweightPassive", "cost": 4000, "weight": 100, "startingLoad": { "kind": "patternMine", "shots": 4 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightSmokeLayer", "label": "Lightweight Smoke Layer", "class": "lightweightPassive", "cost": 1500, "weight": 50, "startingLoad": { "kind": "smoke", "shots": 12 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "lightweightOilLayer", "label": "Lightweight Oil Layer", "class": "lightweightPassive", "cost": 2000, "weight": 50, "startingLoad": { "kind": "oil", "shots": 6 }, "source": { "book": "Dark Future Rulebook", "pages": [81, 85] } },
+    { "id": "minigun62mm", "label": "6.2mm Minigun", "class": "lightweight", "cost": 17000, "weight": 300, "startingLoad": { "kind": "gp", "shots": 4 }, "status": "needsProofread", "notes": "WLF p.43 OCR row is damaged but clearly identifies minigun and a reload row.", "source": { "book": "White Line Fever", "pages": [43] } }
+  ],
+  "reloads": [
+    { "weaponId": "machineGun6mm", "kind": "gp", "shots": 12, "cost": 1000, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "autocannon15mm", "kind": "gp", "shots": 8, "cost": 3000, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "grenadeLauncher20mm", "kind": "he", "shots": 10, "cost": 2000, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightMachineGun42mm", "kind": "gp", "shots": 6, "cost": 1000, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightGrenadeLauncher20mm", "kind": "he", "shots": 4, "cost": 800, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "ragTube40mm", "kind": "he", "shots": 1, "cost": 750, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "spikeLayer", "kind": "spikes", "shots": 12, "cost": 100, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "patternMineLayer", "kind": "patternMine", "shots": 6, "cost": 1500, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "smokeLayer", "kind": "smoke", "shots": 20, "cost": 100, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "oilLayer", "kind": "oil", "shots": 12, "cost": 50, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightSpikeLayer", "kind": "spikes", "shots": 6, "cost": 50, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightPatternMineLayer", "kind": "patternMine", "shots": 4, "cost": 1000, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightSmokeLayer", "kind": "smoke", "shots": 12, "cost": 60, "source": { "book": "White Line Fever", "pages": [43] } },
+    { "weaponId": "lightweightOilLayer", "kind": "oil", "shots": 6, "cost": 25, "source": { "book": "White Line Fever", "pages": [43] } }
+  ],
+  "ammunitionTypes": [
+    { "id": "gp", "label": "General Purpose", "replacesGpShot": false },
+    { "id": "he", "label": "High Explosive", "tags": ["HE"] },
+    { "id": "depletedUranium", "label": "Depleted Uranium", "tags": ["AP"], "compatibleWeapons": ["chainGun", "autocannon15mm", "minigun62mm"], "source": { "book": "White Line Fever", "pages": [30, 43] } },
+    { "id": "shapedPlastic", "label": "Shaped Plastic", "tags": ["AP"], "compatibleWeapons": ["grenadeLauncher40mm", "ragTube40mm"], "source": { "book": "White Line Fever", "pages": [30, 43] } },
+    { "id": "phosphor", "label": "Phosphor", "effect": "persistentSmokeTrail", "compatibleWeapons": ["grenadeLauncher40mm", "ragTube40mm"], "source": { "book": "White Line Fever", "pages": [31, 43] } },
+    { "id": "missile.he", "label": "High Explosive Missile", "tags": ["HE"], "cost": 4000, "weight": 30, "source": { "book": "White Line Fever", "pages": [28, 43] } },
+    { "id": "missile.shapedPlastic", "label": "Shaped Plastic Missile", "tags": ["AP"], "cost": 5000, "weight": 30, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [28, 43] } },
+    { "id": "missile.hivap", "label": "HiVAP Missile", "tags": ["AP"], "cost": 10000, "weight": 30, "source": { "book": "White Line Fever", "pages": [28, 43] } },
+    { "id": "missile.cannister", "label": "Cannister Missile", "tags": ["sectionHit"], "cost": 10000, "weight": 30, "status": "proofreadDraft", "effect": "trackSectionAutomaticRoofHit", "damageModifier": 3, "fireRestriction": "cannotFireAfterHazardRollOrManoeuvreThisTurn", "source": { "book": "White Line Fever", "pages": [28, 43] } },
+    { "id": "missile.smoke", "label": "Smoke Missile", "effect": "persistentSmokeCorridor", "cost": 2000, "weight": 30, "status": "proofreadDraft", "smokeTemplate": { "defaultStartRangeSpaces": 6, "lengthSpaces": 6, "widthLanes": 4, "persistent": true, "missileFireComputerStartRangeSpaces": { "min": 2, "max": 6 } }, "source": { "book": "White Line Fever", "pages": [29, 43] } },
+    { "id": "missile.tgsm", "label": "TGSM Missile", "tags": ["HE"], "cost": 12500, "weight": 30, "status": "partial", "accuracyModifier": 4, "submunitionDamageModifier": 4, "remainingBlocker": "WLF p.29 submunition count and hit-location tables still need extraction for tactical resolution.", "source": { "book": "White Line Fever", "pages": [29, 43] } }
+  ],
+  "doubleLoadFacilities": [
+    { "weaponId": "chainGun", "cost": 3000, "additionalWeight": 200, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "grenadeLauncher40mm", "cost": 2000, "additionalWeight": 125, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "machineGun6mm", "cost": 1000, "additionalWeight": 125, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "autocannon15mm", "cost": 2000, "additionalWeight": 125, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "grenadeLauncher20mm", "cost": 1000, "additionalWeight": 100, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightMachineGun42mm", "cost": 1000, "additionalWeight": 45, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightGrenadeLauncher20mm", "cost": 1000, "additionalWeight": 40, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "minigun62mm", "cost": 2000, "additionalWeight": 75, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "spikeLayer", "cost": 1000, "additionalWeight": 50, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "patternMineLayer", "cost": 2000, "additionalWeight": 125, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "smokeLayer", "cost": 1000, "additionalWeight": 25, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "oilLayer", "cost": 1000, "additionalWeight": 50, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightSpikeLayer", "cost": 1000, "additionalWeight": 30, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightPatternMineLayer", "cost": 2000, "additionalWeight": 75, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightSmokeLayer", "cost": 1000, "additionalWeight": 10, "source": { "book": "White Line Fever", "pages": [32, 43] } },
+    { "weaponId": "lightweightOilLayer", "cost": 1000, "additionalWeight": 25, "source": { "book": "White Line Fever", "pages": [32, 43] } }
+  ],
+  "mountUpgrades": [
+    { "id": "turret", "label": "Turret", "allowedVehicleKinds": ["car"], "cost": 25000, "weight": 150, "capacityRules": [{ "weaponClass": "heavy", "capacity": 1 }, { "weaponClass": "medium", "capacity": 2 }], "forbiddenWeaponIds": ["missilePod"], "source": { "book": "Dark Future Rulebook", "pages": [81, 83] } },
+    { "id": "rearLeftWing", "label": "Rear Left Wing Hard Point", "allowedVehicleTemplates": ["renegade", "interceptor"], "cost": 0, "weight": 0, "capacity": 1, "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "facingByVehicleTemplate": { "renegade": ["rear"], "interceptor": ["front", "rear"] }, "rearFacingHitModifier": -2, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [12, 13, 43] } },
+    { "id": "tailgate", "label": "Tailgate Hard Point", "allowedVehicleTemplates": ["renegade", "interceptor"], "allowedFacings": ["rear"], "cost": 0, "weight": 0, "capacity": 1, "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "rearFacingHitModifier": -1, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [12, 13, 43] } },
+    { "id": "rearRightWing", "label": "Rear Right Wing Hard Point", "allowedVehicleTemplates": ["renegade", "interceptor"], "cost": 0, "weight": 0, "capacity": 1, "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "facingByVehicleTemplate": { "renegade": ["rear"], "interceptor": ["front", "rear"] }, "rearFacingHitModifier": -2, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [12, 13, 43] } },
+    { "id": "cupola", "label": "Cupola", "allowedVehicleKinds": ["car"], "cost": 10000, "weight": 200, "crewCostIncluded": true, "status": "proofreadDraft", "notes": "Weight includes tail gunner; crewman cost is called out separately as $5000.", "source": { "book": "White Line Fever", "pages": [34, 43] } },
+    { "id": "pintle", "label": "Pintle", "allowedVehicleKinds": ["car"], "cost": 6000, "weight": 100, "crewCostIncluded": true, "status": "proofreadDraft", "notes": "Weight includes tail gunner; crewman cost is called out separately as $5000.", "source": { "book": "White Line Fever", "pages": [34, 43] } },
+    { "id": "outrigger", "label": "Outrigger Pair", "allowedVehicleKinds": ["bike"], "cost": 5000, "weight": 0, "conflictsWith": ["crashBars"], "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [14, 43] } }
+  ],
+  "engineAddOns": [
+    { "id": "charger", "label": "Charger", "allowedVehicleKinds": ["car", "bike"], "cost": 5000, "weight": 0, "effects": { "accelerationMph": 4, "maximumSpeedMph": 16 }, "maxPerVehicle": 1, "disabledWhen": "engineDisabled", "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "nox", "label": "Nox", "allowedVehicleKinds": ["car", "bike"], "cost": 2000, "weight": 0, "effects": { "accelerationMultiplier": 2, "carMaximumSpeedMph": 40, "bikeMaximumSpeedMph": 10 }, "explosionRolls2d6": { "base": [2, 12], "withCharger": [2, 11, 12], "withOilInjectionSmoke": [2, 3, 12], "withChargerAndOilInjectionSmoke": [2, 3, 11, 12] }, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "oilInjection", "label": "Oil Injection", "allowedVehicleKinds": ["car", "bike"], "cost": 2000, "weight": 0, "effects": { "accelerationMph": -2, "maximumSpeedMph": -4 }, "source": { "book": "White Line Fever", "pages": [18, 42] } }
+  ],
+  "drivingSystems": [
+    { "id": "activeSuspensionRenegade", "system": "activeSuspension", "allowedVehicleTemplates": ["renegade"], "cost": 8000, "weight": 30, "effects": { "handling": 2 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "activeSuspensionInterceptor", "system": "activeSuspension", "allowedVehicleTemplates": ["interceptor"], "cost": 12000, "weight": 40, "effects": { "handling": 2 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "roboticDriveRenegadeComplete", "system": "roboticDrive", "allowedVehicleTemplates": ["renegade"], "cost": 12000, "weight": 50, "includes": ["activeSuspension"], "effects": { "handling": 3 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "roboticDriveRenegadeUpgrade", "system": "roboticDrive", "allowedVehicleTemplates": ["renegade"], "cost": 7000, "weight": 20, "requires": ["activeSuspension"], "effects": { "handling": 3 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "roboticDriveInterceptorComplete", "system": "roboticDrive", "allowedVehicleTemplates": ["interceptor"], "cost": 15000, "weight": 60, "includes": ["activeSuspension"], "effects": { "handling": 3 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "roboticDriveInterceptorUpgrade", "system": "roboticDrive", "allowedVehicleTemplates": ["interceptor"], "cost": 10000, "weight": 20, "requires": ["activeSuspension"], "effects": { "handling": 3 }, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "dragChute", "system": "dragChute", "allowedVehicleKinds": ["car", "bike"], "cost": 3000, "weight": 20, "source": { "book": "White Line Fever", "pages": [20, 42] } },
+    { "id": "twoWheelDrive", "system": "twoWheelDrive", "allowedVehicleKinds": ["bike"], "cost": 3000, "weight": 0, "status": "proofreadDraft", "effects": { "handling": 1, "brakingMph": 10 }, "source": { "book": "White Line Fever", "pages": [42, 44] } },
+    { "id": "computerDrive", "system": "computerDrive", "allowedVehicleKinds": ["bike"], "cost": 2000, "weight": 0, "status": "proofreadDraft", "effects": { "handling": 1, "accelerationMph": 5, "brakingMph": 5 }, "source": { "book": "White Line Fever", "pages": [42, 44] } },
+    { "id": "rocketBoosterSingle", "system": "rocketBooster", "allowedVehicleKinds": ["car"], "allowedVehicleTemplates": ["renegade"], "occupiesPassiveWeaponSpaces": 1, "targetMatrixComponent": "passives", "ammunitionRatingShots": 24, "cost": 30000, "weight": 150, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [22, 42] } },
+    { "id": "rocketBoosterTwin", "system": "rocketBooster", "allowedVehicleKinds": ["car"], "allowedVehicleTemplates": ["interceptor"], "occupiesPassiveWeaponSpaces": 2, "targetMatrixComponent": "passives", "linkedPairDisabledTogether": true, "ammunitionRatingShots": 36, "cost": 45000, "weight": 225, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [22, 42] } }
+  ],
+  "armour": {
+    "facings": ["front", "rear", "leftSide", "rightSide", "floor", "roof"],
+    "materials": [
+      { "id": "carbonSteel", "label": "Carbon Steel", "apHandling": "mayBeIgnoredOrHalvedByAP" },
+      { "id": "carbonPlastic", "label": "Carbon Plastic", "apHandling": "alwaysCountsAtFullValueAgainstAP" }
+    ],
+    "caps": {
+      "car": { "front": 6, "rear": 6, "leftSide": 6, "rightSide": 6, "floor": 6, "roof": 6 },
+      "bike": { "front": 6, "rear": 6, "leftSide": 4, "rightSide": 4, "floor": 6, "roof": 3 }
+    },
+    "costWeightTables": {
+      "status": "needsProofread",
+      "source": { "book": "White Line Fever", "pages": [42] },
+      "knownExample": {
+        "vehicleTemplateId": "interceptor",
+        "material": "carbonSteel",
+        "pointsAddedPerFacing": 2,
+        "facings": ["front", "rear", "leftSide", "rightSide", "floor", "roof"],
+        "cost": 16000,
+        "weight": 320,
+        "source": { "book": "White Line Fever", "pages": [41] }
+      }
+    }
+  },
+  "fireControlComputers": [
+    { "id": "turretFireComputer", "label": "Turret Fire Computer", "cost": 10000, "weight": 0, "compatibleMountKinds": ["turret", "cupola"], "incompatibleMountKinds": ["pintle"], "incompatibleWeaponIds": ["missilePod"], "source": { "book": "White Line Fever", "pages": [34, 43] } },
+    { "id": "missileFireComputer", "label": "Missile Fire Computer", "cost": 10000, "weight": 0, "compatibleWeaponIds": ["missilePod"], "source": { "book": "White Line Fever", "pages": [35, 36, 43] } }
+  ],
+  "safetyDevices": [
+    { "id": "crashBars", "label": "Crash Bars", "allowedVehicleKinds": ["bike"], "cost": 500, "weight": 0, "status": "proofreadDraft", "conflictsWith": ["outrigger"], "source": { "book": "White Line Fever", "pages": [37] } },
+    { "id": "crashSuppressionSystem", "label": "Crash Suppression System", "allowedVehicleKinds": ["car"], "cost": 5000, "weight": 10, "status": "proofreadDraft", "source": { "book": "White Line Fever", "pages": [37] } },
+    { "id": "ejectorSeat", "label": "Ejector Seat", "allowedVehicleKinds": ["car"], "cost": 7500, "weight": 30, "source": { "book": "White Line Fever", "pages": [37] } },
+    { "id": "passengerCage", "label": "Passenger Cage", "allowedVehicleKinds": ["car"], "cost": 5000, "weight": 30, "source": { "book": "White Line Fever", "pages": [37] } }
+  ],
+  "campaignPurchaseRules": {
+    "outlawSanctionedItemSurchargePercent": 50,
+    "source": { "book": "White Line Fever", "pages": [43] }
+  },
+  "legalityRules": [
+    { "id": "corePayloadLimit", "appliesToDesignMode": "corePayload" },
+    { "id": "heavyWeaponsNotOnWings" },
+    { "id": "passiveWeaponsOnlyInPassiveMounts" },
+    { "id": "ordinaryWeaponsNotInPassiveMounts" },
+    { "id": "bikeFairingLightweightOnly" },
+    { "id": "coreTurretsNoMissilePods" },
+    { "id": "linkedWeaponsIdenticalAndSameFacing" },
+    { "id": "tailgateGunExcludesRearFacingRoofGun" },
+    { "id": "crashBarsConflictWithOutriggers" },
+    { "id": "singleChargerOnly" }
+  ]
+}

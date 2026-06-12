@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.test-*/
+
+# Runtime state
+dark_future_save.json
+saves/
+
+# Local extraction and OCR working files. Keep cleaned rule docs/data in repo.
+_analysis/
+
+# Large/source token extraction artefacts. Keep processed game tokens.
+assets/tokens/source/
+assets/tokens/rendered/

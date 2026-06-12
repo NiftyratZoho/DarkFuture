@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "vehicleTemplateId": "interceptor",
+      "image": "assets/vehicle_sheets/processed/interceptor.png",
+      "source": "_analysis/wlf_pages/wlf-50.jpg",
+      "cropRect": [
+        425,
+        690,
+        330,
+        640
+      ]
+    },
+    {
+      "vehicleTemplateId": "renegade",
+      "image": "assets/vehicle_sheets/processed/renegade.png",
+      "source": "_analysis/wlf_pages/wlf-54.jpg",
+      "cropRect": [
+        430,
+        700,
+        330,
+        620
+      ]
+    },
+    {
+      "vehicleTemplateId": "bike",
+      "image": "assets/vehicle_sheets/processed/bike.png",
+      "source": "_analysis/wlf_pages/wlf-52.jpg",
+      "cropRect": [
+        435,
+        760,
+        330,
+        540
+      ]
+    }
+  ]
+}

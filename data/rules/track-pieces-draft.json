@@ -1,0 +1,294 @@
+{
+  "id": "track-pieces-draft",
+  "status": "supersededByTrackDefinitionsForPlayableGrid",
+  "source": {
+    "book": "Dark Future Rulebook",
+    "pages": [10, 13, 14, 15, 52, 53, 54, 55, 74, 75, 76, 77, 78, 79],
+    "cleanedRuleFile": "docs/rules/clean/track-geometry.md",
+    "photoReviewFile": "docs/rules/clean/track-piece-photo-review.md",
+    "inventoryFile": "data/rules/track-piece-inventory.json",
+    "canonicalTrackDefinitionsFile": "data/rules/track-definitions.json"
+  },
+  "supersededNotes": [
+    "The playable grid now uses the user-provided 8-lane track definitions in data/rules/track-definitions.json.",
+    "The older six-lane trackSpaces below are retained as extraction history only until a full curve graph replacement is generated."
+  ],
+  "traceSourceAssessment": {
+    "status": "sourceReviewedNeedsManualTrace",
+    "renderedImageRoot": "_analysis/ocr_pages/dark_future",
+    "usableNow": [
+      {
+        "id": "photoVisibleInventory",
+        "pages": [],
+        "result": "Photo evidence shows seven straight sections and six curved sections, with exact broad-vs-tight count still needing square-on confirmation."
+      },
+      {
+        "id": "curveComponentFamilies",
+        "pages": [74, 75, 76],
+        "result": "Straight, broad 60-degree bend, and tight 90-degree corner families are confirmed, with left and right curve directions."
+      },
+      {
+        "id": "straightGrid",
+        "pages": [10, 78],
+        "result": "User-provided track definitions supersede the OCR-derived draft: straight sections have eight lanes, three spaces, and seven legal two-lane vehicle lane pairs."
+      },
+      {
+        "id": "hazardPlacementConstraints",
+        "pages": [78, 79],
+        "result": "Road hazards occupy three edge lanes in one ordered space; straight sections provide three spaces, while curve sides provide two to five spaces depending on the curve-side geometry."
+      }
+    ],
+    "blocked": [
+      {
+        "id": "curveTrackSpaceGraph",
+        "reason": "The available scans show example curve layouts but still require manual overlay tracing before every forward, driftOutward, contactAnchor, and frontOrdinal link can be encoded faithfully."
+      }
+    ]
+  },
+  "conventions": {
+    "laneCount": 8,
+    "vehicleLaneWidth": 2,
+    "laneNumbering": {
+      "status": "provisional",
+      "description": "Lanes are numbered left-to-right from the point of view of a vehicle entering the section in direction of play."
+    },
+    "lanePairs": [
+      { "id": "lp1", "lanes": [1, 2] },
+      { "id": "lp2", "lanes": [2, 3] },
+      { "id": "lp3", "lanes": [3, 4] },
+      { "id": "lp4", "lanes": [4, 5] },
+      { "id": "lp5", "lanes": [5, 6] },
+      { "id": "lp6", "lanes": [6, 7] },
+      { "id": "lp7", "lanes": [7, 8] }
+    ],
+    "movement": {
+      "description": "Track movement is graph-based. Render coordinates are display hints only."
+    }
+  },
+  "pieceKinds": [
+    {
+      "id": "straight",
+      "turnDirection": "none",
+      "spaceCountAlongDirection": 3,
+      "status": "draftUsable",
+      "source": { "pages": [10, 78] },
+      "trackSpaces": [
+        { "id": "straight.s1.lp1", "spaceIndex": 1, "lanePair": "lp1", "forward": "straight.s2.lp1" },
+        { "id": "straight.s1.lp2", "spaceIndex": 1, "lanePair": "lp2", "forward": "straight.s2.lp2" },
+        { "id": "straight.s1.lp3", "spaceIndex": 1, "lanePair": "lp3", "forward": "straight.s2.lp3" },
+        { "id": "straight.s1.lp4", "spaceIndex": 1, "lanePair": "lp4", "forward": "straight.s2.lp4" },
+        { "id": "straight.s1.lp5", "spaceIndex": 1, "lanePair": "lp5", "forward": "straight.s2.lp5" },
+        { "id": "straight.s2.lp1", "spaceIndex": 2, "lanePair": "lp1", "forward": "straight.s3.lp1" },
+        { "id": "straight.s2.lp2", "spaceIndex": 2, "lanePair": "lp2", "forward": "straight.s3.lp2" },
+        { "id": "straight.s2.lp3", "spaceIndex": 2, "lanePair": "lp3", "forward": "straight.s3.lp3" },
+        { "id": "straight.s2.lp4", "spaceIndex": 2, "lanePair": "lp4", "forward": "straight.s3.lp4" },
+        { "id": "straight.s2.lp5", "spaceIndex": 2, "lanePair": "lp5", "forward": "straight.s3.lp5" },
+        { "id": "straight.s3.lp1", "spaceIndex": 3, "lanePair": "lp1", "forward": "nextSection.s1.lp1" },
+        { "id": "straight.s3.lp2", "spaceIndex": 3, "lanePair": "lp2", "forward": "nextSection.s1.lp2" },
+        { "id": "straight.s3.lp3", "spaceIndex": 3, "lanePair": "lp3", "forward": "nextSection.s1.lp3" },
+        { "id": "straight.s3.lp4", "spaceIndex": 3, "lanePair": "lp4", "forward": "nextSection.s1.lp4" },
+        { "id": "straight.s3.lp5", "spaceIndex": 3, "lanePair": "lp5", "forward": "nextSection.s1.lp5" }
+      ],
+      "hazardPlacementSlots": {
+        "left": [
+          { "id": "straight.left.1", "spaceIndex": 1, "lanes": [1, 2, 3] },
+          { "id": "straight.left.2", "spaceIndex": 2, "lanes": [1, 2, 3] },
+          { "id": "straight.left.3", "spaceIndex": 3, "lanes": [1, 2, 3] }
+        ],
+        "right": [
+          { "id": "straight.right.1", "spaceIndex": 1, "lanes": [4, 5, 6] },
+          { "id": "straight.right.2", "spaceIndex": 2, "lanes": [4, 5, 6] },
+          { "id": "straight.right.3", "spaceIndex": 3, "lanes": [4, 5, 6] }
+        ],
+        "railroad": {
+          "status": "needsProofread",
+          "description": "Rulebook says straight railroad crossings are placed across the central spaces."
+        }
+      }
+    },
+    {
+      "id": "broadCurveLeft",
+      "kind": "broadCurve",
+      "turnDirection": "left",
+      "angleDegrees": 60,
+      "status": "needsTraceFromDiagramOrComponentScan",
+      "source": { "pages": [10, 13, 14, 52, 53, 54, 55, 74, 78, 79] },
+      "requiredFieldsPerTrackSpace": [
+        "id",
+        "lanePair",
+        "curveSpaceKind",
+        "outsideDividerIndex",
+        "forward",
+        "driftOutward",
+        "contactAnchor",
+        "frontOrdinal",
+        "render"
+      ],
+      "traceNotes": [
+        "Use the outside divider to map uneven lane positions.",
+        "Store forward links explicitly; do not infer them from render coordinates.",
+        "Store stagger/front ordering for curve sideswipes."
+      ],
+      "trackSpaces": [],
+      "hazardPlacementSlots": {
+        "status": "needsTrace",
+        "description": "Curves have 2-5 spaces; ordered edge slots must be traced from the piece."
+      }
+    },
+    {
+      "id": "broadCurveRight",
+      "kind": "broadCurve",
+      "turnDirection": "right",
+      "angleDegrees": 60,
+      "status": "mirrorAfterLeftTraceThenVerify",
+      "source": { "pages": [74, 78, 79] },
+      "mirrorOf": "broadCurveLeft",
+      "trackSpaces": []
+    },
+    {
+      "id": "tightCornerLeft",
+      "kind": "tightCorner",
+      "turnDirection": "left",
+      "angleDegrees": 90,
+      "status": "needsTraceFromDiagramOrComponentScan",
+      "source": { "pages": [74, 78, 79] },
+      "requiredFieldsPerTrackSpace": [
+        "id",
+        "lanePair",
+        "curveSpaceKind",
+        "outsideDividerIndex",
+        "forward",
+        "driftOutward",
+        "contactAnchor",
+        "frontOrdinal",
+        "render"
+      ],
+      "trackSpaces": [],
+      "hazardPlacementSlots": {
+        "status": "needsTrace",
+        "description": "Curves have 2-5 spaces; ordered edge slots must be traced from the piece."
+      }
+    },
+    {
+      "id": "tightCornerRight",
+      "kind": "tightCorner",
+      "turnDirection": "right",
+      "angleDegrees": 90,
+      "status": "mirrorAfterLeftTraceThenVerify",
+      "source": { "pages": [74, 78, 79] },
+      "mirrorOf": "tightCornerLeft",
+      "trackSpaces": []
+    }
+  ],
+  "contactZoneRequirements": [
+    {
+      "id": "straightAheadMove",
+      "status": "needsEnumeration",
+      "source": { "pages": [52] },
+      "notes": "Calculate for intended movement before moving the vehicle."
+    },
+    {
+      "id": "driftManoeuvre",
+      "status": "needsEnumeration",
+      "source": { "pages": [52] },
+      "notes": "Used both for legal manoeuvre clearance and ram/crash detection."
+    },
+    {
+      "id": "uTurnManoeuvre",
+      "status": "needsEnumeration",
+      "source": { "pages": [14, 15, 52] },
+      "notes": "U-turn contact zone is six lanes wide."
+    },
+    {
+      "id": "curveEvenLaneContact",
+      "status": "needsEnumeration",
+      "source": { "pages": [53] },
+      "notes": "Use curve grid, not rendered car body."
+    },
+    {
+      "id": "curveUnevenLaneContact",
+      "status": "needsEnumeration",
+      "source": { "pages": [53] },
+      "notes": "Use outside lane dividers."
+    },
+    {
+      "id": "angledOrSpinningVehicle",
+      "status": "needsEnumeration",
+      "source": { "pages": [52, 53] },
+      "notes": "Moving angled vehicles use the full four-lane-wide contact region in the space entered."
+    }
+  ],
+  "trackGenerationRules": {
+    "initial": {
+      "startingSections": ["straight", "straight", "straight"],
+      "targetSectionCount": 10,
+      "sectionRoll": [
+        { "range": [1, 4], "result": "straight" },
+        { "range": [5, 6], "result": "curve" }
+      ],
+      "curveTypeRoll": [
+        { "range": [1, 4], "result": "broadCurve" },
+        { "range": [5, 6], "result": "tightCorner" }
+      ],
+      "curveDirectionRoll": [
+        { "parity": "odd", "result": "left" },
+        { "parity": "even", "result": "right" }
+      ],
+      "automaticAfterCurve": "straight",
+      "source": { "pages": [74] }
+    },
+    "continuous": {
+      "maxSectionsInPlay": 7,
+      "lineOfSight": {
+        "onStraight": "Generate until three sections after the lead car's current section are visible, or until a curve blocks view.",
+        "onCurve": "Curve blocks view; mandatory straight is placed when the lead car moves onto the curve."
+      },
+      "removeRearSectionsWhenExceedingMax": true,
+      "removedVehiclesLeavePlayWithoutDamage": true,
+      "source": { "pages": [75, 76, 77] }
+    },
+    "constraints": [
+      {
+        "id": "componentFallback",
+        "source": { "pages": [75] },
+        "description": "If required curve type is unavailable, use the other curve type. If required straight is unavailable, generation ends."
+      },
+      {
+        "id": "oneEightyRule",
+        "source": { "pages": [75] },
+        "description": "After two curves in the same direction, force the next curve to the opposite direction."
+      },
+      {
+        "id": "directionOfPlay",
+        "source": { "pages": [77] },
+        "description": "Direction follows the majority of cars; ties keep previous direction."
+      }
+    ]
+  },
+  "ambiguities": [
+    {
+      "id": "curveGraphNotTextDefined",
+      "severity": "blocking",
+      "source": { "pages": [10, 13, 14, 52, 53, 54, 55] },
+      "description": "The prose explains outside-divider handling, but exact curve positions, forward links, and contact zones must be traced from diagrams or component scans."
+    },
+    {
+      "id": "curvePieceInventory",
+      "severity": "medium",
+      "source": { "pages": [74, 75] },
+      "description": "The rules refer to availability of piece types, but this pass did not verify exact physical inventory counts."
+    },
+    {
+      "id": "curveHazardSlotCounts",
+      "severity": "medium",
+      "source": { "pages": [78, 79] },
+      "description": "Curves are said to have 2-5 spaces. Ordered left/right hazard placement slots must be traced per curve piece."
+    },
+    {
+      "id": "laneNumberingConvention",
+      "severity": "low",
+      "source": { "pages": [10, 13] },
+      "description": "Numeric lane ids are a project convention and need approval before final data."
+    }
+  ]
+}

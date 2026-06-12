@@ -1,0 +1,133 @@
+{
+  "id": "speed-phases",
+  "status": "cleaned-draft",
+  "sources": [
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [9, 11, 12],
+      "extractionFiles": [
+        "docs/rules/core/02-turn-sequence.md",
+        "docs/rules/core/03-movement.md"
+      ]
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [4],
+      "extractionFiles": [
+        "docs/rules/white-line-fever/01-advanced-manoeuvres.md"
+      ],
+      "proofreadFromImage": "_analysis/wlf_pages/wlf-04.jpg"
+    }
+  ],
+  "phaseCount": 6,
+  "speedFactorCalculation": {
+    "mphPerSpeedFactor": 20,
+    "rounding": "ceil",
+    "stationaryMph": 0
+  },
+  "core": {
+    "ordinaryMoveCount": 1,
+    "rows": [
+      {
+        "speedFactor": 1,
+        "mphRange": { "min": 1, "max": 20 },
+        "phaseMoves": [1, 0, 0, 0, 0, 0]
+      },
+      {
+        "speedFactor": 2,
+        "mphRange": { "min": 21, "max": 40 },
+        "phaseMoves": [1, 1, 0, 0, 0, 0]
+      },
+      {
+        "speedFactor": 3,
+        "mphRange": { "min": 41, "max": 60 },
+        "phaseMoves": [1, 1, 1, 0, 0, 0]
+      },
+      {
+        "speedFactor": 4,
+        "mphRange": { "min": 61, "max": 80 },
+        "phaseMoves": [1, 1, 1, 1, 0, 0]
+      },
+      {
+        "speedFactor": 5,
+        "mphRange": { "min": 81, "max": 100 },
+        "phaseMoves": [1, 1, 1, 1, 1, 0]
+      },
+      {
+        "speedFactor": 6,
+        "mphRange": { "min": 101, "max": 120 },
+        "phaseMoves": [1, 1, 1, 1, 1, 1]
+      }
+    ]
+  },
+  "whiteLineFever": {
+    "rule": "speedFactor7PlusDoubleMoves",
+    "ordinaryMoveCount": 1,
+    "doubleMoveCount": 2,
+    "rows": [
+      {
+        "speedFactor": 7,
+        "mphRange": { "min": 121, "max": 140 },
+        "phaseMoves": [2, 1, 1, 1, 1, 1]
+      },
+      {
+        "speedFactor": 8,
+        "mphRange": { "min": 141, "max": 160 },
+        "phaseMoves": [2, 2, 1, 1, 1, 1]
+      },
+      {
+        "speedFactor": 9,
+        "mphRange": { "min": 161, "max": 180 },
+        "phaseMoves": [2, 2, 2, 1, 1, 1]
+      },
+      {
+        "speedFactor": 10,
+        "mphRange": { "min": 181, "max": 200 },
+        "phaseMoves": [2, 2, 2, 2, 1, 1]
+      },
+      {
+        "speedFactor": 11,
+        "mphRange": { "min": 201, "max": 220 },
+        "phaseMoves": [2, 2, 2, 2, 2, 1]
+      },
+      {
+        "speedFactor": 12,
+        "mphRange": { "min": 221, "max": 240 },
+        "phaseMoves": [2, 2, 2, 2, 2, 2]
+      }
+    ],
+    "doubleMoveActionTiming": {
+      "actionsPerPhase": 1,
+      "allowedMoveIndexes": [1, 2],
+      "mayUseActionInBothMoves": false
+    },
+    "doubleMoveOrdering": {
+      "firstMovePass": "descendingMph",
+      "secondMovePass": "descendingMph"
+    }
+  },
+  "activationOrder": {
+    "primarySort": "descendingMph",
+    "sameSpeedAheadTieBreak": "frontVehicleFirst",
+    "sameSpeedUnclearTieBreak": {
+      "dice": { "kind": "d6", "count": 1 },
+      "winner": "lowestRoll"
+    },
+    "stationaryTieBreak": {
+      "dice": { "kind": "d6", "count": 1 }
+    },
+    "phaseOrderLockedAfterStart": true,
+    "interruptions": ["collision"]
+  },
+  "stationary": {
+    "mph": 0,
+    "phaseMoves": [0, 0, 0, 0, 0, 0],
+    "mayActInPhaseOne": true,
+    "allowedActionKinds": ["shootDirectFire", "laySmoke"]
+  },
+  "nonMovingVehicleActionRestriction": {
+    "appliesWhen": "vehicleSpeedFactorLessThanCurrentPhase",
+    "allowedActionKinds": ["shootDirectFire", "useSmoke"],
+    "skippedSequenceSteps": ["move", "hazardRollFromMovement", "placePassiveMarkers"]
+  }
+}

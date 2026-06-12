@@ -1,0 +1,203 @@
+{
+  "id": "core-target-matrices",
+  "status": "cleanedDraft",
+  "source": {
+    "book": "Dark Future Rulebook",
+    "pages": [32, 33],
+    "extractionFiles": [
+      "docs/rules/core/07-critical-hits.md"
+    ],
+    "pageImages": [
+      "_analysis/df_pages/df-33.jpg"
+    ]
+  },
+  "facings": ["front", "rear", "side", "floor", "roof"],
+  "facingRules": [
+    {
+      "id": "ordinaryFrontRear",
+      "condition": "target and firer relationship clearly exposes front or rear",
+      "result": "frontOrRearFromGeometry"
+    },
+    {
+      "id": "sharedLaneStraight",
+      "condition": "both cars are on straights and share at least one lane",
+      "result": "frontOrRearFromGeometry"
+    },
+    {
+      "id": "oblique",
+      "condition": "target is angled, on/from a corner, or in a different pair of lanes",
+      "dice": {
+        "kind": "d6",
+        "even": "frontOrRearFromGeometry",
+        "odd": "side"
+      }
+    },
+    {
+      "id": "spunNinetyDegrees",
+      "condition": "target has spun through 90 degrees",
+      "result": "side"
+    },
+    {
+      "id": "passiveCritical",
+      "condition": "critical is caused by passive weapon",
+      "result": "floor"
+    },
+    {
+      "id": "rollingCritical",
+      "condition": "critical is caused by rolling",
+      "result": "roof"
+    },
+    {
+      "id": "crashCritical",
+      "condition": "critical is caused by crashing",
+      "dice": {
+        "kind": "d6",
+        "rows": [
+          { "range": { "min": 1, "max": 2 }, "result": "roof" },
+          { "range": { "min": 3, "max": 3 }, "result": "leftSide" },
+          { "range": { "min": 4, "max": 4 }, "result": "rightSide" },
+          { "range": { "min": 5, "max": 6 }, "result": "front" }
+        ]
+      }
+    }
+  ],
+  "specialSelectionRules": [
+    {
+      "id": "leftRightWeaponStations",
+      "appliesTo": ["wings", "sideWeapons", "passives"],
+      "dice": {
+        "kind": "d6",
+        "odd": "left",
+        "even": "right"
+      }
+    },
+    {
+      "id": "renegadeSinglePassiveStation",
+      "vehicleTemplateId": "renegade",
+      "appliesTo": "passives",
+      "result": "centralPassiveStation"
+    },
+    {
+      "id": "sideFacingSideWeaponNearestFirer",
+      "facing": "side",
+      "target": "sideWeapons",
+      "result": "nearestSideToFirer"
+    },
+    {
+      "id": "wastedIfMissingOrDestroyed",
+      "condition": "selected component is absent, disabled, or destroyed",
+      "result": "criticalWasted"
+    }
+  ],
+  "matrices": {
+    "front": [
+      { "range": { "min": 1, "max": 2 }, "target": "bodywork" },
+      { "range": { "min": 3, "max": 3 }, "target": "frontWheels" },
+      {
+        "range": { "min": 4, "max": 4 },
+        "target": "weapons",
+        "subroll": [
+          { "range": { "min": 1, "max": 2 }, "target": "wings", "requiresLeftRight": true },
+          { "range": { "min": 3, "max": 3 }, "target": "sideWeapons", "requiresLeftRight": true },
+          { "range": { "min": 4, "max": 4 }, "target": "hood" },
+          { "range": { "min": 5, "max": 6 }, "target": "roofTurret" }
+        ]
+      },
+      { "range": { "min": 5, "max": 5 }, "target": "engine" },
+      { "range": { "min": 6, "max": 6 }, "target": "driver" }
+    ],
+    "rear": [
+      { "range": { "min": 1, "max": 2 }, "target": "bodywork" },
+      { "range": { "min": 3, "max": 3 }, "target": "rearWheels" },
+      {
+        "range": { "min": 4, "max": 4 },
+        "target": "weapons",
+        "subroll": [
+          { "range": { "min": 1, "max": 3 }, "target": "passives", "requiresLeftRight": true },
+          { "range": { "min": 4, "max": 4 }, "target": "sideWeapons", "requiresLeftRight": true },
+          { "range": { "min": 5, "max": 6 }, "target": "roofTurret" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 6 },
+        "target": "rearInternals",
+        "subroll": [
+          { "range": { "min": 1, "max": 2 }, "target": "engine" },
+          { "range": { "min": 3, "max": 4 }, "target": "fuel" },
+          { "range": { "min": 5, "max": 6 }, "target": "driver" }
+        ]
+      }
+    ],
+    "side": [
+      { "range": { "min": 1, "max": 2 }, "target": "bodywork" },
+      {
+        "range": { "min": 3, "max": 3 },
+        "target": "wheels",
+        "subroll": [
+          { "range": { "min": 1, "max": 3 }, "target": "frontWheels" },
+          { "range": { "min": 4, "max": 6 }, "target": "rearWheels" }
+        ]
+      },
+      {
+        "range": { "min": 4, "max": 4 },
+        "target": "weapons",
+        "subroll": [
+          { "range": { "min": 1, "max": 1 }, "target": "wings", "requiresLeftRight": true },
+          { "range": { "min": 2, "max": 3 }, "target": "passives", "requiresLeftRight": true },
+          { "range": { "min": 4, "max": 5 }, "target": "sideWeapons", "sideSelection": "nearestSideToFirer" },
+          { "range": { "min": 6, "max": 6 }, "target": "roofTurret" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 5 },
+        "target": "sideInternals",
+        "subroll": [
+          { "range": { "min": 1, "max": 4 }, "target": "engine" },
+          { "range": { "min": 5, "max": 6 }, "target": "fuel" }
+        ]
+      },
+      { "range": { "min": 6, "max": 6 }, "target": "driver" }
+    ],
+    "floor": [
+      { "range": { "min": 1, "max": 2 }, "target": "bodywork" },
+      {
+        "range": { "min": 3, "max": 4 },
+        "target": "wheels",
+        "subroll": [
+          { "range": { "min": 1, "max": 4 }, "target": "frontWheels" },
+          { "range": { "min": 5, "max": 6 }, "target": "rearWheels" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 6 },
+        "target": "floorInternals",
+        "subroll": [
+          {
+            "range": { "min": 1, "max": 1 },
+            "target": "weapons",
+            "subroll": [
+              { "range": { "min": 1, "max": 2 }, "target": "sideWeapons", "requiresLeftRight": true },
+              { "range": { "min": 3, "max": 6 }, "target": "passives", "requiresLeftRight": true }
+            ]
+          },
+          { "range": { "min": 2, "max": 3 }, "target": "engine" },
+          { "range": { "min": 4, "max": 4 }, "target": "fuel" },
+          { "range": { "min": 5, "max": 6 }, "target": "driver" }
+        ]
+      }
+    ],
+    "roof": [
+      { "range": { "min": 1, "max": 2 }, "target": "bodywork" },
+      { "range": { "min": 3, "max": 4 }, "target": "roofTurret" },
+      {
+        "range": { "min": 5, "max": 6 },
+        "target": "roofInternals",
+        "subroll": [
+          { "range": { "min": 1, "max": 1 }, "target": "engine" },
+          { "range": { "min": 2, "max": 3 }, "target": "fuel" },
+          { "range": { "min": 4, "max": 6 }, "target": "driver" }
+        ]
+      }
+    ]
+  }
+}

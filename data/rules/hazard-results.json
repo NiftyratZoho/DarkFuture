@@ -1,0 +1,387 @@
+{
+  "id": "hazards-control-loss-draft",
+  "status": "draft",
+  "source": {
+    "book": "Dark Future Rulebook",
+    "pages": [38, 39, 40, 41, 42, 43, 44, 45, 46],
+    "extractionFile": "docs/rules/core/08-hazards-control-loss-tests.md",
+    "supplement": {
+      "book": "White Line Fever",
+      "pages": [10, 11],
+      "extractionFile": "docs/rules/white-line-fever/02-advanced-hazards.md"
+    }
+  },
+  "hazardRoll": {
+    "dice": { "kind": "d6", "count": 1 },
+    "formula": [
+      { "id": "die", "operation": "addRoll" },
+      {
+        "id": "excessSpeed",
+        "operation": "add",
+        "value": "ceil(max(0, mph - safetyLimitMph) / 10)"
+      },
+      {
+        "id": "optimumControl",
+        "operation": "subtract",
+        "value": "max(vehicle.handling, driver.driveSkill)"
+      }
+    ],
+    "results": [
+      {
+        "id": "hazard.ok",
+        "range": { "max": 0 },
+        "effect": "ok"
+      },
+      {
+        "id": "hazard.panicBrake",
+        "range": { "min": 1, "max": 4 },
+        "effect": "panicBrake",
+        "speedLossMph": "5 * total",
+        "usesBrakingAllowance": true
+      },
+      {
+        "id": "hazard.controlLoss",
+        "range": { "min": 5 },
+        "effect": "controlLoss"
+      }
+    ]
+  },
+  "controlLossTest": {
+    "dice": { "kind": "d6", "count": 1 },
+    "formula": [
+      { "id": "die", "operation": "addRoll" },
+      { "id": "speedFactor", "operation": "add", "value": "vehicle.speedFactor" },
+      {
+        "id": "adverseControl",
+        "operation": "subtract",
+        "value": "min(vehicle.handling, driver.driveSkill)"
+      },
+      {
+        "id": "zeroHandlingOrNoDriver",
+        "operation": "add",
+        "value": 2,
+        "condition": "vehicle.handling == 0 || driver == null"
+      }
+    ],
+    "results": [
+      {
+        "id": "controlLoss.regainControl",
+        "range": { "max": 1 },
+        "effect": "regainControlAfterStraightMove",
+        "usesAction": true,
+        "takesHazardsDuringCompulsoryMove": true
+      },
+      {
+        "id": "controlLoss.skidRegainControl",
+        "range": { "min": 2, "max": 3 },
+        "effect": "skidThenRegainControl",
+        "usesSkidTest": true
+      },
+      {
+        "id": "controlLoss.skidRemainOutOfControl",
+        "range": { "min": 4, "max": 5 },
+        "effect": "skidRemainOutOfControl",
+        "usesSkidTest": true
+      },
+      {
+        "id": "controlLoss.spin",
+        "range": { "min": 6, "max": 7 },
+        "effect": "spin",
+        "usesSkidTest": true,
+        "usesSpinTest": true,
+        "suppressesFutureControlLossTests": true
+      },
+      {
+        "id": "controlLoss.roll",
+        "range": { "min": 8 },
+        "effect": "roll",
+        "usesSkidTest": true,
+        "usesSpinTest": true
+      }
+    ]
+  },
+  "safetyLimits": [
+    {
+      "id": "curve.printedLimit",
+      "category": "curve",
+      "safetyLimitMph": "trackSpace.curveSafetyLimitMph",
+      "status": "clean",
+      "notes": "If lanes have different limits, use the higher limit on the outside lane."
+    },
+    {
+      "id": "manoeuvre.drift",
+      "category": "manoeuvre",
+      "safetyLimitMph": 80,
+      "status": "clean"
+    },
+    {
+      "id": "manoeuvre.uTurn",
+      "category": "manoeuvre",
+      "safetyLimitMph": 10,
+      "automaticControlLossAboveMph": 30,
+      "status": "clean",
+      "notes": "Page 38 safety-limit table gives 10 mph; page 40 gives automatic control loss at 31+ mph."
+    },
+    {
+      "id": "ram.sideswipe.neckAndNeck.loser",
+      "category": "ram",
+      "safetyLimitMph": 40,
+      "status": "clean"
+    },
+    {
+      "id": "ram.sideswipe.opposed.winner",
+      "category": "ram",
+      "safetyLimitMph": 40,
+      "status": "clean"
+    },
+    {
+      "id": "ram.sideswipe.opposed.loser",
+      "category": "ram",
+      "safetyLimitMph": 20,
+      "status": "clean"
+    },
+    {
+      "id": "ram.shunt.bothVehicles",
+      "category": "ram",
+      "safetyLimitMph": 40,
+      "status": "clean",
+      "specialRules": ["targetIgnoresPanicBrake"]
+    },
+    {
+      "id": "bike.overlappingContactZones.neckAndNeck",
+      "category": "bike",
+      "safetyLimitMph": 80,
+      "status": "clean"
+    },
+    {
+      "id": "bike.overlappingContactZones.opposed",
+      "category": "bike",
+      "safetyLimitMph": 40,
+      "status": "clean"
+    },
+    {
+      "id": "bike.dodge",
+      "category": "bike",
+      "safetyLimitMph": 40,
+      "status": "clean"
+    },
+    {
+      "id": "passive.oil.straightAheadMove",
+      "category": "passive",
+      "safetyLimitMph": 60,
+      "status": "clean"
+    },
+    {
+      "id": "passive.oil.otherMove",
+      "category": "passive",
+      "safetyLimitMph": 30,
+      "status": "clean",
+      "notes": "Includes drift, U-turn, or moving on a curve."
+    },
+    {
+      "id": "passive.patternMine",
+      "category": "passive",
+      "safetyLimitMph": 50,
+      "status": "clean"
+    },
+    {
+      "id": "passive.smoke",
+      "category": "passive",
+      "safetyLimitMph": 60,
+      "status": "clean"
+    },
+    {
+      "id": "roadHazard.sand",
+      "category": "roadHazard",
+      "safetyLimitMph": 30,
+      "status": "clean"
+    },
+    {
+      "id": "roadHazard.debris",
+      "category": "roadHazard",
+      "safetyLimitMph": 10,
+      "status": "clean",
+      "notes": "Page 38 safety-limit table is readable as 10 mph."
+    },
+    {
+      "id": "roadHazard.railroadCrossing",
+      "category": "roadHazard",
+      "safetyLimitMph": 60,
+      "status": "clean"
+    },
+    {
+      "id": "damage.heHit.plus4OrLess",
+      "category": "damage",
+      "safetyLimitMph": 50,
+      "status": "clean"
+    },
+    {
+      "id": "damage.heHit.plus5OrMore",
+      "category": "damage",
+      "safetyLimitMph": 30,
+      "status": "clean"
+    },
+    {
+      "id": "critical.shatteredScreen",
+      "category": "criticalHit",
+      "safetyLimitMph": 30,
+      "status": "clean"
+    },
+    {
+      "id": "critical.tyreDestroyed",
+      "category": "criticalHit",
+      "safetyLimitMph": 20,
+      "status": "clean"
+    },
+    {
+      "id": "critical.explodingWeapon",
+      "category": "criticalHit",
+      "safetyLimitMph": 30,
+      "heDamage": 8,
+      "status": "clean"
+    },
+    {
+      "id": "critical.explodingEngine",
+      "category": "criticalHit",
+      "safetyLimitMph": 50,
+      "heDamage": 2,
+      "status": "clean"
+    },
+    {
+      "id": "critical.explodingFuelTank",
+      "category": "criticalHit",
+      "safetyLimitMph": 30,
+      "heDamage": 8,
+      "status": "clean"
+    },
+    {
+      "id": "critical.driverHurt",
+      "category": "criticalHit",
+      "safetyLimitMph": 40,
+      "status": "clean",
+      "notes": "Triggered once when the critical occurs."
+    },
+    {
+      "id": "critical.driverInjured",
+      "category": "criticalHit",
+      "safetyLimitMph": 20,
+      "status": "clean",
+      "notes": "Triggered once when the critical occurs."
+    }
+  ],
+  "panicBraking": {
+    "speedLossMph": "5 * hazardTotal",
+    "appliesImmediately": true,
+    "preventsActionsForRestOfPhase": true,
+    "allowance": {
+      "ordinaryPhase": "vehicle.currentBraking - brakingAlreadyUsedThisPhase",
+      "lateTurnHit": "vehicle.currentBraking across rest of turn"
+    },
+    "insufficientAllowanceEffect": "controlLoss"
+  },
+  "multipleHazards": {
+    "order": "descendingSafetyLimit",
+    "oilAlwaysLast": true,
+    "skipIfCurrentSpeedAtOrBelowLimit": true,
+    "stopAfterControlLoss": true
+  },
+  "advancedSpin": {
+    "source": {
+      "book": "White Line Fever",
+      "pages": [10]
+    },
+    "steps": [
+      "skidTestBeforeStraightAheadMove",
+      "straightAheadMoveWithOptionalDriftSkid",
+      "spinTest"
+    ],
+    "skidTest": {
+      "dice": { "kind": "d6", "count": 2 },
+      "driftOccursWhenFirstDieOdd": true,
+      "directionWhenDriftOccurs": {
+        "oddSecondDie": "left",
+        "evenSecondDie": "right"
+      },
+      "leftRightReference": "directionOfTravel"
+    },
+    "collisionInterruptsMove": true,
+    "driftSkidCollisionRamType": "sideswipe",
+    "oppositeDirectionDriftSkidCollisionRamType": "opposedSideswipe"
+  },
+  "spinningOnCurves": {
+    "source": {
+      "book": "White Line Fever",
+      "pages": [11]
+    },
+    "enabled": true,
+    "positionReference": "vehicleCentrePoint",
+    "unevenLaneReference": "outsideLaneSpaceDividers",
+    "driftSkidInwardEffect": "straightSkid",
+    "otherDriftSkidEffect": "driftSkidOutward",
+    "status": "draft"
+  },
+  "rolling": {
+    "core": {
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [46]
+      },
+      "preRollSteps": ["skid", "spin"],
+      "wreckedImmediately": true,
+      "damage": {
+        "hitCount": "currentSpeedFactor",
+        "damagePerHit": "currentSpeedFactor",
+        "criticalFacing": "roof"
+      },
+      "ignoreSpinTemplateSpeedReduction": true,
+      "finalSpeedMph": 0,
+      "remainsAsWreck": true
+    },
+    "whiteLineFever": {
+      "source": {
+        "book": "White Line Fever",
+        "pages": [11]
+      },
+      "preRollSteps": ["advancedSpinMove"],
+      "continuesAcrossPhasesUntilSpeedZero": true,
+      "additionalSpeedLossEachRollingPhaseMph": 10,
+      "damageFacingRoll": [
+        { "range": { "min": 1, "max": 2 }, "facing": "roof" },
+        { "range": { "min": 3, "max": 4 }, "facing": "front" },
+        {
+          "range": { "min": 5, "max": 5 },
+          "facing": "side",
+          "sideRoll": { "odd": "left", "even": "right" }
+        },
+        { "range": { "min": 6, "max": 6 }, "facing": "floor" }
+      ],
+      "damage": {
+        "hitCount": "speedFactorAfterSpinAndRollSpeedLoss",
+        "damagePerHit": "speedFactorAfterSpinAndRollSpeedLoss",
+        "criticalFacing": "damageFacingRoll"
+      }
+    }
+  },
+  "ambiguities": [
+    {
+      "id": "ambiguity.uTurnSafetyLimit",
+      "sourcePage": 38,
+      "description": "Page 38 OCR suggests a U-turn safety limit, but page 40 gives clear automatic control loss above 30 mph. Confirm exact hazard behaviour for U-turns at 11-30 mph."
+    },
+    {
+      "id": "ambiguity.debrisSafetyLimit",
+      "sourcePage": 38,
+      "description": "Road hazard debris safety limit is not readable enough from OCR."
+    },
+    {
+      "id": "ambiguity.coreSkidSpinTemplates",
+      "sourcePages": [43, 44, 45],
+      "description": "Core skid/spin template values and orientation diagrams require image proofread before implementation."
+    },
+    {
+      "id": "ambiguity.passiveMoveOffException",
+      "sourcePage": 40,
+      "description": "OCR mentions a passive weapon exception tested when moving off the counter but does not reliably identify the passive."
+    }
+  ]
+}

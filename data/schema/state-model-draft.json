@@ -1,0 +1,43 @@
+{
+  "id": "state-model-draft",
+  "status": "draft",
+  "description": "High-level canonical state areas for the faithful turn-based Dark Future adaptation.",
+  "stateAreas": [
+    {
+      "id": "turnState",
+      "description": "Current turn, phase, activation order, and pending phase/turn transitions."
+    },
+    {
+      "id": "trackState",
+      "description": "Track pieces, track spaces, lane links, facings, contact zones, deployed hazards, and generated road state."
+    },
+    {
+      "id": "vehicleState",
+      "description": "Vehicle instances, current position, speed, control state, damage, mounted equipment, and tactical status."
+    },
+    {
+      "id": "driverState",
+      "description": "Driver identity, role, skill, injuries, progression, mental/medical/campaign status, and unit membership."
+    },
+    {
+      "id": "weaponState",
+      "description": "Mounted weapons, ammo, passive systems, firing state, and weapon damage."
+    },
+    {
+      "id": "scenarioState",
+      "description": "Scenario setup, victory conditions, deployment zones, and scenario-specific rules."
+    },
+    {
+      "id": "campaignState",
+      "description": "Units, agency/gang state, funds, contracts, post-engagement sequence, kudos, recruitment, repairs, and persistent progression."
+    },
+    {
+      "id": "pendingChoices",
+      "description": "Explicit choices required from a player, AI, or campaign controller before resolution can continue."
+    },
+    {
+      "id": "ruleLog",
+      "description": "Structured, source-referenced rule events and dice results."
+    }
+  ]
+}

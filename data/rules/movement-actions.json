@@ -1,0 +1,582 @@
+{
+  "id": "movement-actions-draft",
+  "status": "cleanedDraftNeedsProofread",
+  "source": {
+    "books": [
+      {
+        "book": "Dark Future Rulebook",
+        "pages": [10, 11, 12, 13, 14, 15, 16, 17],
+        "extractionFile": "docs/rules/core/03-movement.md"
+      },
+      {
+        "book": "White Line Fever",
+        "pages": [4, 5, 6, 7, 8],
+        "extractionFile": "docs/rules/white-line-fever/01-advanced-manoeuvres.md"
+      }
+    ]
+  },
+  "schemaNotes": {
+    "trackSpaceLinks": "All movement destinations are resolved through Track Geometry graph links. Render coordinates are display-only.",
+    "dice": "Movement actions request dice; they do not roll directly.",
+    "hazards": "Hazard roll totals and results are owned by the Hazards Agent.",
+    "rams": "Collision classification and damage are owned by Rams and Crashes and Damage.",
+    "doubleMoveTiming": "In WLF double-move phases, one action may be assigned to firstMove or secondMove."
+  },
+  "speedDependencies": {
+    "speedFactorCalculation": {
+      "owner": "turnSequence",
+      "formula": "ceil(mph / 20)",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [11, 12]
+      }
+    },
+    "movementChangesMph": true,
+    "phaseOrderStableAfterSpeedChange": true,
+    "maximumSpeedCap": {
+      "rule": "Acceleration cannot raise mph above current maximum speed.",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [16]
+      }
+    },
+    "minimumBrakingCharacteristicMph": {
+      "value": 5,
+      "status": "needsProofread",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [16]
+      }
+    },
+    "zeroAccelerationSlowdown": {
+      "mphLossAfterEachMove": 5,
+      "mayBrakeByMore": true,
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [15]
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "steadyForward",
+      "kind": "move",
+      "label": "Steady Forward",
+      "actionCost": 0,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "sequence": [
+        { "step": "checkContactZone", "owner": "trackGeometry" },
+        { "step": "moveForward", "link": "forward" }
+      ],
+      "speedEffect": { "kind": "none" },
+      "hazardTriggers": [],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [12, 13]
+      }
+    },
+    {
+      "id": "accelerate",
+      "kind": "accelerate",
+      "label": "Accelerate",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "parameters": {
+        "mphIncrease": {
+          "min": 0,
+          "maxFromState": "vehicle.currentAccelerationMph"
+        }
+      },
+      "sequence": [
+        { "step": "declareMphIncrease" },
+        { "step": "checkContactZone", "owner": "trackGeometry" },
+        { "step": "moveForward", "link": "forward" },
+        { "step": "applySpeedChange", "timing": "afterMove" }
+      ],
+      "constraints": [
+        "newMph <= vehicle.currentMaximumSpeedMph",
+        "vehicle.mph <= vehicle.currentMaximumSpeedMph"
+      ],
+      "hazardSpeedTiming": "useNewFasterMph",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [11, 15]
+      }
+    },
+    {
+      "id": "moveOff",
+      "kind": "accelerate",
+      "label": "Move Off",
+      "actionCost": 1,
+      "requiresMoveEligibility": false,
+      "allowedVehicleTypes": ["car", "bike"],
+      "prerequisites": [
+        "phase == 1",
+        "vehicle.wasStationaryAtStartOfPhase1 == true"
+      ],
+      "activationNotes": {
+        "movesAfterOrdinaryMovingVehicles": true,
+        "orderBy": "declaredAccelerationMphDescending",
+        "tieHandling": "needsProofread"
+      },
+      "parameters": {
+        "mphIncrease": {
+          "min": 0,
+          "maxFromState": "vehicle.currentAccelerationMph"
+        },
+        "optionalManoeuvre": ["none", "drift", "uTurn"]
+      },
+      "sequence": [
+        { "step": "declareMphIncrease" },
+        { "step": "declareOptionalManoeuvre" },
+        { "step": "resolveOptionalManoeuvre", "owner": "movement" },
+        { "step": "applySpeedChange", "timing": "afterMove" }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [16]
+      }
+    },
+    {
+      "id": "brake",
+      "kind": "brake",
+      "label": "Brake",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "parameters": {
+        "mphDecrease": {
+          "min": 0,
+          "maxFromState": "vehicle.currentBrakingMph"
+        }
+      },
+      "sequence": [
+        { "step": "declareMphDecrease" },
+        { "step": "checkContactZone", "owner": "trackGeometry" },
+        { "step": "moveForward", "link": "forward" },
+        { "step": "applySpeedChange", "timing": "afterMove" }
+      ],
+      "hazardSpeedTiming": "useNewSlowerMph",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [11, 16]
+      }
+    },
+    {
+      "id": "drift",
+      "kind": "drift",
+      "label": "Drift",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "parameters": {
+        "direction": ["left", "right"]
+      },
+      "sequence": [
+        { "step": "declareDirection" },
+        { "step": "checkManoeuvreContactZone", "owner": "trackGeometry" },
+        { "step": "moveForward", "link": "forward" },
+        { "step": "shiftOneLane", "linkFromDirection": true }
+      ],
+      "curveRules": {
+        "core": {
+          "whileFinalPositionOnCurve": "outwardOnly",
+          "curveToStraight": "eitherDirectionAfterEnteringStraight"
+        },
+        "whiteLineFever": {
+          "inwardCurveDriftAllowed": true,
+          "inwardSafetyLimitSource": "outerLaneOfFinalPosition",
+          "outwardSafetyLimitSource": "driftSafetyLimit"
+        }
+      },
+      "hazardTriggers": [
+        {
+          "id": "driftOver80",
+          "condition": "mph > 80",
+          "safetyLimitMph": 80,
+          "source": {
+            "book": "Dark Future Rulebook",
+            "pages": [14]
+          }
+        }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [13, 14]
+      }
+    },
+    {
+      "id": "uTurn",
+      "kind": "uTurn",
+      "label": "U-Turn",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "sequence": [
+        { "step": "checkUTurnContactZone", "owner": "trackGeometry" },
+        { "step": "moveToUTurnTarget", "owner": "trackGeometry" },
+        { "step": "reverseFacing" }
+      ],
+      "contactZone": {
+        "widthLanes": 6,
+        "owner": "trackGeometry"
+      },
+      "curveRules": {
+        "ordinaryCurveSpaces": "illegal",
+        "curveEdgeAcrossStraight": "allowedWhenTrackGeometryMarksSpace",
+        "straightEdgeAcrossCurve": "allowedWhenTrackGeometryMarksSpace"
+      },
+      "speedBands": [
+        {
+          "maxMph": 10,
+          "effect": "automatic"
+        },
+        {
+          "minMph": 11,
+          "maxMph": 30,
+          "effect": "requestHazardRoll"
+        },
+        {
+          "minMph": 31,
+          "effect": "immediateControlLossInsteadOfMove"
+        }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [14, 15]
+      }
+    },
+    {
+      "id": "reverse",
+      "kind": "reverse",
+      "label": "Reverse",
+      "actionCost": 1,
+      "requiresMoveEligibility": false,
+      "allowedVehicleTypes": ["car"],
+      "prerequisites": [
+        "phase == 1",
+        "vehicle.wasStationaryAtStartOfPhase1 == true"
+      ],
+      "assumedMphDuringMove": 10,
+      "sequence": [
+        { "step": "moveBackward", "link": "reverse" },
+        { "step": "optionalReverseManoeuvre", "allowedOnCurves": false },
+        { "step": "setMph", "value": 0, "timing": "endOfMove" }
+      ],
+      "blocksActions": ["shoot", "brake", "accelerate"],
+      "ignoresHazardRolls": true,
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [17]
+      }
+    },
+    {
+      "id": "regainControl",
+      "kind": "regainControl",
+      "label": "Regain Control",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "forcedWhen": [
+        "driver.wasOutOfControlAtStartOfMove == true",
+        "controlLossTest.result == pass"
+      ],
+      "blocksOtherActions": true,
+      "ownerDependencies": ["hazards"],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [11, 17]
+      }
+    },
+    {
+      "id": "swerve",
+      "kind": "swerve",
+      "label": "Swerve",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car", "bike"],
+      "whiteLineFever": true,
+      "parameters": {
+        "direction": ["left", "right"]
+      },
+      "trackPrerequisites": [
+        "movingOntoAlongOrOffStraightSection",
+        "notOnCurve"
+      ],
+      "sequence": [
+        { "step": "shiftOneLane", "stage": "firstShift" },
+        { "step": "resolvePassiveAndHazardEvents", "timing": "immediate" },
+        { "step": "moveForward", "stage": "forwardMove" },
+        { "step": "resolvePassiveAndHazardEvents", "timing": "immediate" },
+        { "step": "shiftOneLane", "stage": "secondShift", "sameDirection": true },
+        { "step": "resolvePassiveAndHazardEvents", "timing": "immediate" },
+        { "step": "requestHazardRoll", "reason": "swerve" }
+      ],
+      "completion": {
+        "secondShiftMandatoryUnlessControlLost": true,
+        "cannotVoluntarilyStopMidAction": true
+      },
+      "dangerHierarchyLeastToMost": [
+        "smoke",
+        "sand",
+        "debris",
+        "spikes",
+        "mines",
+        "shunt",
+        "sideswipe",
+        "crash",
+        "headOnRam"
+      ],
+      "legalityRule": "A swerve may replace an imminent danger only with a strictly less dangerous result.",
+      "bikeException": {
+        "sideswipeDuringSwerve": "automaticControlLoss"
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [6, 7]
+      }
+    },
+    {
+      "id": "bootleggerTurn",
+      "kind": "bootleggerTurn",
+      "label": "Bootlegger Turn",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car"],
+      "whiteLineFever": true,
+      "parameters": {
+        "direction": ["left", "right"]
+      },
+      "trackPrerequisites": ["straightSectionOnly"],
+      "speedBands": [
+        {
+          "maxMph": 30,
+          "effect": "illegal"
+        },
+        {
+          "minMph": 31,
+          "maxMph": 60,
+          "effect": "requestBootleggerTest"
+        },
+        {
+          "minMph": 61,
+          "effect": "immediateControlLossInsteadOfMove"
+        }
+      ],
+      "contactZone": {
+        "mustBeClearOfVehiclesAndRoadEdge": true,
+        "passiveMarkersDoNotBlock": true,
+        "owner": "trackGeometry"
+      },
+      "bootleggerTest": {
+        "status": "needsProofread",
+        "dice": { "kind": "d6", "count": 1 },
+        "modifiers": [
+          {
+            "id": "adverseControl",
+            "operation": "subtract",
+            "valueFromState": "vehicle.adverseControl"
+          },
+          {
+            "id": "oilOrMineInContactZone",
+            "operation": "add",
+            "value": 1,
+            "perMarker": true
+          },
+          {
+            "id": "debrisInContactZone",
+            "operation": "add",
+            "value": 1,
+            "ifPresent": true
+          },
+          {
+            "id": "sandInContactZone",
+            "operation": "add",
+            "value": 1,
+            "ifPresent": true
+          }
+        ],
+        "rows": [
+          {
+            "range": { "max": 1 },
+            "effect": "success",
+            "stateChanges": ["moveToIntendedPosition", "setMph0"]
+          },
+          {
+            "range": { "min": 2, "max": 3 },
+            "effect": "failureDiagram",
+            "status": "needsDiagramTrace"
+          },
+          {
+            "range": { "min": 4 },
+            "effect": "oversteerOrControlLoss",
+            "status": "needsProofread"
+          }
+        ]
+      },
+      "passiveMarkerResolution": {
+        "timing": "afterMove",
+        "damageForAllThenHazardsLowestSafetyLimitFirst": true,
+        "oilLastAtSafetyLimitMph": 30
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [5]
+      }
+    },
+    {
+      "id": "bulldozerMove",
+      "kind": "bulldozerMove",
+      "label": "Bulldozer Move",
+      "actionCost": 1,
+      "requiresMoveEligibility": true,
+      "allowedVehicleTypes": ["car"],
+      "whiteLineFever": true,
+      "prerequisites": [
+        "target.vehicle.stationary == true",
+        "target.vehicle.alignedToGrid == false",
+        "vehicle.mph <= 20",
+        "impactOffset in ['leftOfCentre', 'rightOfCentre']"
+      ],
+      "fallbacks": [
+        {
+          "condition": "target.vehicle.stationary == false",
+          "treatAs": "ram"
+        },
+        {
+          "condition": "target.vehicle.alignedToGrid == true",
+          "treatAs": "ordinaryRam"
+        },
+        {
+          "condition": "vehicle.mph >= 21",
+          "treatAs": "headOnRam"
+        },
+        {
+          "condition": "impactOffset == 'centre'",
+          "treatAs": "headOnRam"
+        }
+      ],
+      "resultOwner": "ramsAndCrashes",
+      "damageNotes": {
+        "status": "needsProofread",
+        "summary": "OCR indicates both vehicles suffer a single low-damage hit and critical hits are ignored."
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [8]
+      }
+    }
+  ],
+  "dualActions": [
+    {
+      "id": "driftAndShoot",
+      "components": ["drift", "shoot"],
+      "order": ["drift", "shoot"],
+      "shootingModifier": -1
+    },
+    {
+      "id": "accelerateAndDrift",
+      "components": ["accelerate", "drift"],
+      "order": ["accelerate", "drift"],
+      "hazardSpeedTiming": "afterAcceleration"
+    },
+    {
+      "id": "brakeAndDrift",
+      "components": ["brake", "drift"],
+      "order": ["brake", "drift"],
+      "hazardSpeedTiming": "afterBraking"
+    },
+    {
+      "id": "accelerateAndShoot",
+      "components": ["accelerate", "shoot"],
+      "order": ["accelerate", "shoot"],
+      "shootingModifier": -1
+    },
+    {
+      "id": "brakeAndShoot",
+      "components": ["brake", "shoot"],
+      "order": ["brake", "shoot"],
+      "shootingModifier": -1
+    }
+  ],
+  "dualActionGlobalEffects": {
+    "hazardRollModifierDuringPhase": -1,
+    "doubleMoveAssumption": "A dual action is assigned wholly to one move in a double-move phase.",
+    "status": "needsRulesLeadConfirmation",
+    "source": {
+      "book": "White Line Fever",
+      "pages": [8]
+    }
+  },
+  "ambiguities": [
+    {
+      "id": "core-page-15-16-column-mixing",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [15, 16]
+      },
+      "note": "OCR mixes U-turn, acceleration, moving off, maximum speed, and braking columns. Cleaned rules need proofread against page images."
+    },
+    {
+      "id": "move-off-tie-handling",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [16]
+      },
+      "note": "Ordering by highest acceleration is visible; equal declared acceleration tie handling is not recovered."
+    },
+    {
+      "id": "bootlegger-diagrams",
+      "source": {
+        "book": "White Line Fever",
+        "pages": [5]
+      },
+      "note": "Failure final positions and oversteer/control-loss row require diagram tracing."
+    },
+    {
+      "id": "swerve-contact-zone-examples",
+      "source": {
+        "book": "White Line Fever",
+        "pages": [6, 7]
+      },
+      "note": "Danger hierarchy is clear; exact contact-zone examples must be modelled with track geometry."
+    },
+    {
+      "id": "bulldozer-result-damage",
+      "source": {
+        "book": "White Line Fever",
+        "pages": [8]
+      },
+      "note": "Movement legality is clear; exact damage/result text is OCR-damaged and belongs to Rams/Damage proofread."
+    }
+  ],
+  "candidateTests": [
+    "steadyForwardUsesTrackGraph",
+    "accelerateAppliesAfterMove",
+    "accelerateCannotExceedMaximumSpeed",
+    "zeroAccelerationLoses5MphAfterMove",
+    "moveOffStationaryPhase1AfterMovingVehicles",
+    "moveOffMayCombineWithDriftOrUTurn",
+    "brakeAppliesAfterMove",
+    "brakeCannotBeUsedWhenNotMovingThisPhase",
+    "driftForwardThenLaneShift",
+    "driftOver80RequestsHazardRoll",
+    "coreCurveDriftInwardIllegal",
+    "wlfCurveDriftInwardAllowedWithPrintedSafetyLimit",
+    "uTurnSpeedBands",
+    "uTurnCurveEdgeOnly",
+    "reverseOnlyStationaryPhase1Cars",
+    "reverseBlocksShootBrakeAccelerate",
+    "reverseIgnoresHazardRolls",
+    "regainControlForcedAfterPassedControlLossTest",
+    "doubleMoveOnlyOneAction",
+    "swerveThreeStages",
+    "swerveDangerHierarchyStrictlyLessDangerous",
+    "bootleggerSpeedBands",
+    "bootleggerTestRequestsDice",
+    "bulldozerPrerequisites",
+    "dualActionsApplyShootPenaltyAndHazardPenalty"
+  ]
+}

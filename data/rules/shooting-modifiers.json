@@ -1,0 +1,175 @@
+{
+  "status": "draft",
+  "owner": "Shooting Agent",
+  "source": [
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [27],
+      "extractionFile": "docs/rules/core/04-shooting.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [13, 20, 34, 35],
+      "extractionFile": "docs/rules/white-line-fever/03-advanced-shooting.md"
+    }
+  ],
+  "hitRollRules": {
+    "die": "d6",
+    "naturalOneAlwaysMisses": true,
+    "successComparator": "modifiedTotal >= effectiveRange",
+    "effectiveRangeCapSpaces": 6,
+    "requiresWithinWeaponMaximumRange": true
+  },
+  "modifiers": [
+    {
+      "id": "mount.hood",
+      "label": "Firing hood-mounted weapon",
+      "value": 1,
+      "appliesWhen": { "mountPosition": "hood" },
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "mount.turret",
+      "label": "Firing turret-mounted weapon",
+      "value": 1,
+      "appliesWhen": { "mountPosition": "turret" },
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "smoke.normal",
+      "label": "Smoke marker in fire corridor",
+      "valuePerMarker": -1,
+      "maximumPenalty": -3,
+      "countsMarkers": "each smoke marker partially or wholly inside fireCorridor, including under target",
+      "source": { "book": "Dark Future Rulebook", "pages": [27, 30, 31] }
+    },
+    {
+      "id": "speed.firer81Plus",
+      "label": "Firer travelling at 81 mph or faster",
+      "value": -1,
+      "appliesWhen": { "firerMphMin": 81 },
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "speed.target81Plus",
+      "label": "Target travelling at 81 mph or faster",
+      "value": -1,
+      "appliesWhen": { "targetMphMin": 81 },
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "rearFacing.central",
+      "label": "Rear-facing roof or tailgate weapon",
+      "value": -1,
+      "appliesWhen": {
+        "facing": "rear",
+        "mountPositionAnyOf": ["roof", "tailgate"]
+      },
+      "source": { "book": "White Line Fever", "pages": [13] }
+    },
+    {
+      "id": "rearFacing.sideOrWing",
+      "label": "Rear-facing side or wing weapon",
+      "value": -2,
+      "appliesWhen": {
+        "facing": "rear",
+        "mountPositionAnyOf": ["sideLeft", "sideRight", "wingLeft", "wingRight", "rearWingLeft", "rearWingRight"]
+      },
+      "source": { "book": "White Line Fever", "pages": [13] }
+    },
+    {
+      "id": "dragChute",
+      "label": "Drag chute marker in fire corridor",
+      "valuePerMarker": -2,
+      "combinedSmokeMaximumPenalty": -3,
+      "source": { "book": "White Line Fever", "pages": [20] }
+    },
+    {
+      "id": "turretFireComputer.range1To6",
+      "label": "Turret fire computer at range 1-6",
+      "value": 1,
+      "appliesWhen": {
+        "fireControlComputer": "turret-fire-computer",
+        "effectiveRange": { "min": 1, "max": 6 }
+      },
+      "source": { "book": "White Line Fever", "pages": [34] }
+    },
+    {
+      "id": "turretFireComputer.range7Plus",
+      "label": "Turret fire computer over range 6",
+      "value": 2,
+      "appliesWhen": {
+        "fireControlComputer": "turret-fire-computer",
+        "measuredRange": { "min": 7 }
+      },
+      "source": { "book": "White Line Fever", "pages": [34] }
+    },
+    {
+      "id": "missileFireComputer.range5To6",
+      "label": "Missile fire computer at range 5-6",
+      "value": 1,
+      "appliesWhen": {
+        "fireControlComputer": "missile-fire-computer",
+        "measuredRange": { "min": 5, "max": 6 }
+      },
+      "source": { "book": "White Line Fever", "pages": [35] }
+    },
+    {
+      "id": "missileFireComputer.range7To8",
+      "label": "Missile fire computer at range 7-8",
+      "value": 2,
+      "appliesWhen": {
+        "fireControlComputer": "missile-fire-computer",
+        "measuredRange": { "min": 7, "max": 8 }
+      },
+      "source": { "book": "White Line Fever", "pages": [35] }
+    },
+    {
+      "id": "missileFireComputer.range9Plus",
+      "label": "Missile fire computer at range 9+",
+      "value": 3,
+      "appliesWhen": {
+        "fireControlComputer": "missile-fire-computer",
+        "measuredRange": { "min": 9 }
+      },
+      "source": { "book": "White Line Fever", "pages": [35] }
+    }
+  ],
+  "modifierCaps": [
+    {
+      "id": "cap.smoke.normal",
+      "modifierIds": ["smoke.normal"],
+      "minimumTotal": -3,
+      "source": { "book": "Dark Future Rulebook", "pages": [27, 31] }
+    },
+    {
+      "id": "cap.smoke.turretFireComputer",
+      "modifierIds": ["smoke.normal"],
+      "minimumTotal": -1,
+      "appliesWhen": { "fireControlComputer": "turret-fire-computer" },
+      "source": { "book": "White Line Fever", "pages": [34] }
+    },
+    {
+      "id": "cap.smoke.missileFireComputer",
+      "modifierIds": ["smoke.normal"],
+      "minimumTotal": -1,
+      "appliesWhen": { "fireControlComputer": "missile-fire-computer" },
+      "source": { "book": "White Line Fever", "pages": [35] }
+    },
+    {
+      "id": "cap.smokeAndDragChuteCombined",
+      "modifierIds": ["smoke.normal", "dragChute"],
+      "minimumTotal": -3,
+      "source": { "book": "White Line Fever", "pages": [20] }
+    }
+  ],
+  "linkedWeaponCoolTest": {
+    "trigger": "linkedWeaponCorridorsContainFriendlyAndEnemyTargets",
+    "die": "d6",
+    "attribute": "driveSkill",
+    "successComparator": "roll < driveSkill",
+    "status": "proofreadDraft",
+    "notes": "WLF p.15 states the die roll must be less than drive skill; equality fails.",
+    "source": { "book": "White Line Fever", "pages": [15] }
+  }
+}

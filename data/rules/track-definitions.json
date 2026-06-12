@@ -1,0 +1,85 @@
+{
+  "id": "track-definitions",
+  "status": "userProvidedCanonicalDraft",
+  "source": {
+    "kind": "userTraceDefinition",
+    "notes": "Provided by user from track-piece inspection/tracing.",
+    "imageEvidence": [
+      "D:/Users/Niftyrat/Desktop/s-l1600.jpg",
+      "D:/Users/Niftyrat/Desktop/IMG_5354.png"
+    ],
+    "imageEvidenceNotes": "IMG_5354.png shows both curve families and a complete straight with red traced lane dividers and section marks. It confirms straight 3-space lanes, 90-degree curves with 2/3/4-space lane groups, and 60-degree bends with 3/4/5-space lane groups."
+  },
+  "trackPieceTypes": {
+    "straight": {
+      "type": "straight",
+      "lanes": 8,
+      "sectionsPerLane": 3,
+      "speedLimits": null,
+      "description": "Straight track section with 8 lanes and 3 movement sections per lane. No printed speed restriction."
+    },
+    "curve30to60": {
+      "type": "curve",
+      "family": "tightCorner",
+      "angleDegrees": 90,
+      "lanes": 8,
+      "cornerSpeedRange": [30, 60],
+      "speedByLane": {
+        "lane1_inner": 30,
+        "lane2": 30,
+        "lane3": 40,
+        "lane4": 40,
+        "lane5": 50,
+        "lane6": 50,
+        "lane7": 60,
+        "lane8_outer": 60
+      },
+      "sectionsByLane": {
+        "lane1_inner": 2,
+        "lane2": 2,
+        "lane3": 2,
+        "lane4": 3,
+        "lane5": 3,
+        "lane6": 4,
+        "lane7": 4,
+        "lane8_outer": 4
+      },
+      "description": "Tight 90-degree corner. Speed limits increase from the inside lane toward the outside lanes. Outer lanes contain more movement sections because they travel a longer distance."
+    },
+    "curve50to80": {
+      "type": "curve",
+      "family": "broadBend",
+      "angleDegrees": 60,
+      "lanes": 8,
+      "cornerSpeedRange": [50, 80],
+      "speedByLane": {
+        "lane1_inner": 50,
+        "lane2": 50,
+        "lane3": 60,
+        "lane4": 60,
+        "lane5": 70,
+        "lane6": 70,
+        "lane7": 80,
+        "lane8_outer": 80
+      },
+      "sectionsByLane": {
+        "lane1_inner": 3,
+        "lane2": 3,
+        "lane3": 3,
+        "lane4": 4,
+        "lane5": 4,
+        "lane6": 5,
+        "lane7": 5,
+        "lane8_outer": 5
+      },
+      "description": "Fast sweeping 60-degree bend. Higher permitted speeds than the 30-60 corner. Outer lanes provide five movement sections and support higher speeds."
+    }
+  },
+  "implementationConventions": {
+    "laneNumbering": "lane 1 is inner on curves; lane 8 is outer on curves",
+    "vehicleLaneWidth": 2,
+    "legalLanePairs": [1, 2, 3, 4, 5, 6, 7],
+    "curveVehicleSafetyLimit": "Use the lower printed speed limit of the two occupied lanes.",
+    "curveVehicleSectionCount": "Use the larger section count of the two occupied lanes so outer-lane movement can use the longer path."
+  }
+}

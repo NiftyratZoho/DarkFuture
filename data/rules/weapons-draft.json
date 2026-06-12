@@ -1,0 +1,288 @@
+{
+  "status": "draft",
+  "owner": "Shooting Agent",
+  "notes": [
+    "This file captures Shooting-owned weapon traits only. Damage, costs, weights, payload, and design legality belong to Damage and Vehicle Design data.",
+    "Core weapon maximum ranges and full hardware stats still need extraction from the vehicle/hardware section before this can become final."
+  ],
+  "source": {
+    "book": "Dark Future Rulebook",
+    "pages": [27],
+    "extractionFile": "docs/rules/core/04-shooting.md"
+  },
+  "weapons": [
+    {
+      "id": "mg-4-2mm",
+      "label": "4.2mm MG",
+      "category": "directFire",
+      "accuracy": 2,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "mg-6mm",
+      "label": "6mm MG",
+      "category": "directFire",
+      "accuracy": 2,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "autocannon-15mm",
+      "label": "15mm Autocannon",
+      "category": "directFire",
+      "accuracy": 1,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "grenade-launcher-20mm",
+      "label": "20mm GL",
+      "category": "directFire",
+      "accuracy": 0,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "grenade-launcher-40mm",
+      "label": "40mm GL",
+      "category": "directFire",
+      "accuracy": 0,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "rag-40mm",
+      "label": "40mm RAG",
+      "category": "directFire",
+      "accuracy": 0,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "laser-lightweight",
+      "label": "Lightweight Laser",
+      "category": "directFire",
+      "accuracy": 2,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "laser-combat",
+      "label": "Combat Laser",
+      "category": "directFire",
+      "accuracy": 2,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "laser-heavy",
+      "label": "Heavy Laser",
+      "category": "directFire",
+      "accuracy": 2,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "chain-gun",
+      "label": "Chain Gun",
+      "category": "directFire",
+      "accuracy": 3,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "missile-pod",
+      "label": "Missile Pod",
+      "category": "missile",
+      "accuracy": 2,
+      "status": "proofreadDraft",
+      "notes": "Page image confirms +2 accuracy.",
+      "minimumRangeSpaces": 2,
+      "source": [
+        { "book": "Dark Future Rulebook", "pages": [27] },
+        { "book": "White Line Fever", "pages": [27] }
+      ]
+    },
+    {
+      "id": "passive-spike-layer",
+      "label": "Spike Layer",
+      "category": "passive",
+      "passiveMarkerKind": "spikes",
+      "deployment": "twoLanesBehindVehicle",
+      "source": { "book": "Dark Future Rulebook", "pages": [23, 24] }
+    },
+    {
+      "id": "passive-oil-layer",
+      "label": "Oil Layer",
+      "category": "passive",
+      "passiveMarkerKind": "oil",
+      "deployment": "twoLanesBehindVehicle",
+      "lockOnAllowed": true,
+      "source": { "book": "Dark Future Rulebook", "pages": [23, 24] }
+    },
+    {
+      "id": "passive-pattern-mine-layer",
+      "label": "Pattern Mine Layer",
+      "category": "passive",
+      "passiveMarkerKind": "patternMines",
+      "deployment": "twoLanesBehindVehicle",
+      "source": { "book": "Dark Future Rulebook", "pages": [23, 24] }
+    },
+    {
+      "id": "passive-smoke-layer",
+      "label": "Smoke Layer",
+      "category": "passive",
+      "passiveMarkerKind": "smoke",
+      "deployment": "twoLanesBehindVehicle",
+      "lockOnAllowed": true,
+      "stationaryDeploymentAllowed": true,
+      "source": { "book": "Dark Future Rulebook", "pages": [23, 24] }
+    },
+    {
+      "id": "oil-injection",
+      "label": "Oil Injection",
+      "category": "smokeSystem",
+      "passiveMarkerKind": "smoke",
+      "deployment": "twoLanesBehindVehicle",
+      "lockOnAllowed": true,
+      "trailLimitByVehicleKind": {
+        "car": 3,
+        "bike": 2
+      },
+      "persistent": false,
+      "source": { "book": "White Line Fever", "pages": [18] }
+    }
+  ],
+  "missileTypes": [
+    {
+      "id": "missile-cannister",
+      "label": "Cannister Missile",
+      "accuracy": null,
+      "usesOrdinaryHitRoll": false,
+      "targeting": "trackSectionWithinRangeAndLineOfSight",
+      "cannotFireAfterManoeuvreOrHazard": true,
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "id": "missile-high-explosive",
+      "label": "High Explosive Missile",
+      "accuracy": 2,
+      "usesOrdinaryHitRoll": true,
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "id": "missile-hivap",
+      "label": "HiVAP Missile",
+      "accuracy": 2,
+      "usesOrdinaryHitRoll": true,
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "id": "missile-shaped-plastic",
+      "label": "Shaped Plastic Missile",
+      "accuracy": 2,
+      "usesOrdinaryHitRoll": true,
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "id": "missile-smoke",
+      "label": "Smoke Missile",
+      "accuracy": null,
+      "usesOrdinaryHitRoll": false,
+      "effect": "placePersistentSmokeCorridor",
+      "corridor": {
+        "widthLanes": 4,
+        "lengthSpaces": 6,
+        "defaultStartRangeSpaces": 6,
+        "computerControlledMinimumStartRangeSpaces": 2
+      },
+      "source": { "book": "White Line Fever", "pages": [29] }
+    },
+    {
+      "id": "missile-tgsm",
+      "label": "TGSM Missile",
+      "accuracy": 4,
+      "usesOrdinaryHitRoll": true,
+      "source": { "book": "White Line Fever", "pages": [29] }
+    }
+  ],
+  "fireCorridorProfiles": [
+    {
+      "id": "fixed-central-forward",
+      "label": "Central fixed forward corridor",
+      "direction": "forward",
+      "laneOffset": 0,
+      "status": "needsDiagramTrace",
+      "source": { "book": "Dark Future Rulebook", "pages": [25] }
+    },
+    {
+      "id": "fixed-left-forward",
+      "label": "Left side or wing forward corridor",
+      "direction": "forward",
+      "laneOffset": -1,
+      "source": { "book": "White Line Fever", "pages": [12] }
+    },
+    {
+      "id": "fixed-right-forward",
+      "label": "Right side or wing forward corridor",
+      "direction": "forward",
+      "laneOffset": 1,
+      "source": { "book": "White Line Fever", "pages": [12] }
+    },
+    {
+      "id": "fixed-central-rear",
+      "label": "Central rear-facing corridor",
+      "direction": "rear",
+      "laneOffset": 0,
+      "source": { "book": "White Line Fever", "pages": [13] }
+    },
+    {
+      "id": "fixed-left-rear",
+      "label": "Left side or rear-wing rear-facing corridor",
+      "direction": "rear",
+      "laneOffset": -1,
+      "source": { "book": "White Line Fever", "pages": [13] }
+    },
+    {
+      "id": "fixed-right-rear",
+      "label": "Right side or rear-wing rear-facing corridor",
+      "direction": "rear",
+      "laneOffset": 1,
+      "source": { "book": "White Line Fever", "pages": [13] }
+    },
+    {
+      "id": "turret-360",
+      "label": "Turret 360 degree arc",
+      "direction": "all",
+      "arcDegrees": 360,
+      "source": { "book": "Dark Future Rulebook", "pages": [27] }
+    },
+    {
+      "id": "missile-fire-computer",
+      "label": "Missile fire computer corridor",
+      "direction": "forward",
+      "widthLanes": 4,
+      "minimumRangeSpaces": 2,
+      "source": { "book": "White Line Fever", "pages": [35] }
+    },
+    {
+      "id": "bike-outrigger-forward",
+      "label": "Bike outrigger forward corridor",
+      "direction": "forward",
+      "widthLanes": 2,
+      "source": { "book": "White Line Fever", "pages": [14] }
+    }
+  ],
+  "fireControlComputers": [
+    {
+      "id": "turret-fire-computer",
+      "label": "Turret Fire Computer",
+      "controls": ["turret", "cupola"],
+      "excludes": ["pintle", "turretMissilePod"],
+      "modes": ["standby", "engagement", "designation"],
+      "firesAt": "endOfPhase",
+      "cannotFireInModeChangePhase": true,
+      "source": { "book": "White Line Fever", "pages": [34] }
+    },
+    {
+      "id": "missile-fire-computer",
+      "label": "Missile Fire Computer",
+      "controls": ["missilePod", "turretMissilePod"],
+      "modes": ["standby", "lockOn", "salvo", "engagement", "designation"],
+      "firesAt": "endOfPhaseOrShootActionByMode",
+      "cannotFireInModeChangePhase": true,
+      "source": { "book": "White Line Fever", "pages": [35, 36] }
+    }
+  ]
+}

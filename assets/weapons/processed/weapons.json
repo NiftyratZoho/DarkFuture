@@ -1,0 +1,86 @@
+{
+  "status": "generated",
+  "sourceManifest": "assets/weapons/source_crops.json",
+  "items": [
+    {
+      "weaponId": "chainGun",
+      "image": "assets/weapons/processed/chainGun.png"
+    },
+    {
+      "weaponId": "grenadeLauncher40mm",
+      "image": "assets/weapons/processed/grenadeLauncher40mm.png"
+    },
+    {
+      "weaponId": "heavyLaser",
+      "image": "assets/weapons/processed/heavyLaser.png"
+    },
+    {
+      "weaponId": "missilePod",
+      "image": "assets/weapons/processed/missilePod.png"
+    },
+    {
+      "weaponId": "machineGun6mm",
+      "image": "assets/weapons/processed/machineGun6mm.png"
+    },
+    {
+      "weaponId": "autocannon15mm",
+      "image": "assets/weapons/processed/autocannon15mm.png"
+    },
+    {
+      "weaponId": "grenadeLauncher20mm",
+      "image": "assets/weapons/processed/grenadeLauncher20mm.png"
+    },
+    {
+      "weaponId": "combatLaser",
+      "image": "assets/weapons/processed/combatLaser.png"
+    },
+    {
+      "weaponId": "spikeLayer",
+      "image": "assets/weapons/processed/spikeLayer.png"
+    },
+    {
+      "weaponId": "oilLayer",
+      "image": "assets/weapons/processed/oilLayer.png"
+    },
+    {
+      "weaponId": "patternMineLayer",
+      "image": "assets/weapons/processed/patternMineLayer.png"
+    },
+    {
+      "weaponId": "smokeLayer",
+      "image": "assets/weapons/processed/smokeLayer.png"
+    },
+    {
+      "weaponId": "lightweightMachineGun42mm",
+      "image": "assets/weapons/processed/lightweightMachineGun42mm.png"
+    },
+    {
+      "weaponId": "lightweightGrenadeLauncher20mm",
+      "image": "assets/weapons/processed/lightweightGrenadeLauncher20mm.png"
+    },
+    {
+      "weaponId": "lightweightCombatLaser",
+      "image": "assets/weapons/processed/lightweightCombatLaser.png"
+    },
+    {
+      "weaponId": "ragTube40mm",
+      "image": "assets/weapons/processed/ragTube40mm.png"
+    },
+    {
+      "weaponId": "lightweightSpikeLayer",
+      "image": "assets/weapons/processed/lightweightSpikeLayer.png"
+    },
+    {
+      "weaponId": "lightweightPatternMineLayer",
+      "image": "assets/weapons/processed/lightweightPatternMineLayer.png"
+    },
+    {
+      "weaponId": "lightweightSmokeLayer",
+      "image": "assets/weapons/processed/lightweightSmokeLayer.png"
+    },
+    {
+      "weaponId": "lightweightOilLayer",
+      "image": "assets/weapons/processed/lightweightOilLayer.png"
+    }
+  ]
+}

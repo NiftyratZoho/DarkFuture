@@ -1,0 +1,695 @@
+{
+  "id": "scenario-rules-draft",
+  "status": "draftNeedsProofread",
+  "schemaVersion": 1,
+  "source": {
+    "extractionFiles": [
+      "docs/rules/core/14-scenarios.md",
+      "docs/rules/white-line-fever/08-scenarios.md",
+      "docs/rules/clean/campaign.md"
+    ]
+  },
+  "sharedRules": {
+    "positionRollOddLeadEvenChase": {
+      "id": "positionRoll.oddLeadEvenChase",
+      "dice": { "kind": "d6", "count": 1 },
+      "oddResult": "lead",
+      "evenResult": "chase",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [87],
+        "extractionFile": "docs/rules/core/14-scenarios.md"
+      }
+    },
+    "coreRandomStartingSpeed": {
+      "id": "startingSpeed.coreRandom",
+      "dice": { "kind": "d6", "count": 2 },
+      "formula": "sumDiceTimes10Mph",
+      "rerollIfRawTotalIn": [2, 3, 4],
+      "vetoes": [
+        {
+          "who": "eitherPlayer",
+          "rawTotalMin": 10,
+          "effect": "reroll"
+        },
+        {
+          "who": "leadPlayer",
+          "rawTotalMin": 8,
+          "effect": "reroll"
+        }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [88],
+        "extractionFile": "docs/rules/core/14-scenarios.md"
+      }
+    },
+    "wlfHazardGeneration": {
+      "id": "hazardGeneration.bulldozerAlley",
+      "dice": { "kind": "d6", "count": 2 },
+      "higherDieTable": [
+        { "range": { "min": 1, "max": 3 }, "hazard": "sand" },
+        { "range": { "min": 4, "max": 6 }, "hazard": "debris" }
+      ],
+      "lowerDieTable": [
+        { "range": { "min": 1, "max": 2 }, "side": "left", "markerCountSource": "lowerDie" },
+        { "range": { "min": 3, "max": 4 }, "side": "right", "markerCountSource": "lowerDie" },
+        { "range": { "min": 5, "max": 6 }, "side": "both", "markerCountSource": "lowerDie" }
+      ],
+      "marker": {
+        "occupiesLanes": 3,
+        "placementOrder": "nearestStartThenForward",
+        "straightSectionSpaces": 3,
+        "curveSectionSpaces": { "min": 2, "max": 5 },
+        "overflow": "nextTrackSection",
+        "reuseAfterAllDriversPass": true
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [45],
+        "extractionFile": "docs/rules/white-line-fever/08-scenarios.md"
+      }
+    }
+  },
+  "scenarioSets": [
+    {
+      "id": "core-rulebook",
+      "label": "Core Rulebook Scenarios",
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [87, 88, 89, 90],
+        "extractionFile": "docs/rules/core/14-scenarios.md"
+      },
+      "scenarios": [
+        {
+          "id": "core.game1.straightChaseDuel",
+          "label": "Game One: Straight Chase Duel",
+          "status": "needsDiagramTrace",
+          "sideRoles": [
+            { "id": "lead", "objective": "crossFinishBoundary" },
+            { "id": "chase", "objective": "stopLeadBeforeFinish" }
+          ],
+          "forceDefinitions": [
+            {
+              "sideRole": "lead",
+              "vehicles": [
+                {
+                  "templateId": "renegade",
+                  "driver": { "driveSkill": 3 },
+                  "equipment": [
+                    { "mount": "hood", "weaponId": "machineGun" },
+                    { "mount": "passive", "weaponId": "oilLayer" }
+                  ],
+                  "status": "needsVehicleDesign"
+                }
+              ]
+            },
+            {
+              "sideRole": "chase",
+              "vehicles": [
+                {
+                  "templateId": "renegade",
+                  "driver": { "driveSkill": 3 },
+                  "equipment": [
+                    { "mount": "hood", "weaponId": "machineGun" },
+                    { "mount": "passive", "weaponId": "oilLayer" }
+                  ],
+                  "status": "needsVehicleDesign"
+                }
+              ]
+            }
+          ],
+          "trackSetup": {
+            "kind": "fixedDiagram",
+            "trackLayoutId": "core.game1.track",
+            "status": "needsTrace",
+            "requirements": ["allStraightSections", "rearShadedDeployment", "frontShadedDeployment", "finishBoundary"]
+          },
+          "deployment": [
+            { "sideRole": "chase", "zone": "rearShadedStartSection" },
+            { "sideRole": "lead", "zone": "frontShadedStartSection" }
+          ],
+          "startingSpeed": { "kind": "fixed", "mph": 60, "speedFactor": 3 },
+          "victoryCondition": {
+            "kind": "leadExitOrChaseStop",
+            "leadWin": { "event": "vehicleCrossesFinishBoundary" },
+            "chaseWin": { "event": "leadUnableToReachFinishBoundary" }
+          },
+          "aiSetup": {
+            "lead": { "priority": "escape" },
+            "chase": { "priority": "stopLead" }
+          },
+          "source": { "book": "Dark Future Rulebook", "pages": [87] }
+        },
+        {
+          "id": "core.game2.fixedCurvedChase",
+          "label": "Game Two: Fixed Curved Chase",
+          "status": "needsDiagramTrace",
+          "inherits": ["core.game1.forceDefinitions", "core.game1.startingSpeed", "core.game1.victoryCondition"],
+          "trackSetup": {
+            "kind": "rollOnFixedDiagramLayouts",
+            "dice": { "kind": "d6", "count": 1 },
+            "layoutIds": [
+              "core.game2.layout1",
+              "core.game2.layout2",
+              "core.game2.layout3",
+              "core.game2.layout4",
+              "core.game2.layout5",
+              "core.game2.layout6"
+            ],
+            "status": "needsTrace"
+          },
+          "deployment": [
+            { "sideRole": "chase", "zone": "firstTrackSection" },
+            { "sideRole": "lead", "zone": "trackSectionAhead" }
+          ],
+          "source": { "book": "Dark Future Rulebook", "pages": [87] }
+        },
+        {
+          "id": "core.game3.randomLoadoutChase",
+          "label": "Game Three: Random Loadout Chase",
+          "status": "draftNeedsProofread",
+          "sideRoles": [
+            { "id": "lead", "objective": "crossFinishBoundary" },
+            { "id": "chase", "objective": "stopLeadBeforeFinish" }
+          ],
+          "forceChoice": {
+            "chooseBeforePositionRoll": true,
+            "baseTemplateId": "renegade",
+            "driver": { "driveSkill": 3 },
+            "packageTables": {
+              "offensive": [
+                { "die": 1, "equipment": [{ "mount": "hood", "weaponId": "machineGun" }, { "mount": "passive", "weaponId": "oilLayer" }] },
+                { "die": 2, "equipment": [{ "mount": "leftWing", "weaponId": "20mmGrenadeLauncher" }, { "mount": "rightWing", "weaponId": "20mmGrenadeLauncher" }, { "mount": "passive", "weaponId": "smokeLayer" }] },
+                { "die": 3, "equipment": [{ "mount": "leftWing", "weaponId": "machineGun" }, { "mount": "rightWing", "weaponId": "machineGun" }, { "mount": "passive", "weaponId": "spikeLayer" }] },
+                { "die": 4, "equipment": [{ "mount": "hood", "weaponId": "40mmGrenadeLauncher" }, { "mount": "passive", "weaponId": "smokeLayer" }] },
+                { "die": 5, "equipment": [{ "mount": "hood", "weaponId": "15mmAutocannon" }] },
+                { "die": 6, "equipment": [{ "mount": "hood", "weaponId": "chainGun" }] }
+              ],
+              "defensive": [
+                { "die": 1, "equipment": [{ "mount": "hood", "weaponId": "machineGun" }, { "mount": "passive", "weaponId": "spikeLayer" }] },
+                { "die": 2, "equipment": [{ "mount": "hood", "weaponId": "machineGun" }, { "mount": "passive", "weaponId": "smokeLayer" }] },
+                { "die": 3, "equipment": [{ "mount": "hood", "weaponId": "machineGun" }, { "mount": "passive", "weaponId": "oilLayer" }] },
+                { "die": 4, "equipment": [{ "mount": "hood", "weaponId": "20mmGrenadeLauncher" }, { "mount": "passive", "weaponId": "oilLayer" }] },
+                { "die": 5, "equipment": [{ "mount": "hood", "weaponId": "20mmGrenadeLauncher" }, { "mount": "passive", "weaponId": "patternMineLayer" }] },
+                { "die": 6, "equipment": [{ "mount": "hood", "weaponId": "15mmAutocannon" }, { "mount": "passive", "weaponId": "patternMineLayer" }] }
+              ]
+            },
+            "status": "needsWeaponProofread"
+          },
+          "trackSetup": { "kind": "useCoreGame2LayoutRoll", "status": "needsTrace" },
+          "startingSpeedRuleId": "startingSpeed.coreRandom",
+          "victoryCondition": { "kind": "sameAs", "scenarioId": "core.game1.straightChaseDuel" },
+          "source": { "book": "Dark Future Rulebook", "pages": [88] }
+        },
+        {
+          "id": "core.game4.budgetDuel",
+          "label": "Game Four: Budget Duel",
+          "status": "draftNeedsProofread",
+          "forceDefinitions": [
+            {
+              "sideRole": "playerA",
+              "budget": 50000,
+              "requiredVehicleTemplateIds": ["renegade"],
+              "minimumWeaponsPerVehicle": 1,
+              "driverSkillTable": [
+                { "die": 1, "driveSkill": 2 },
+                { "die": 2, "driveSkill": 3 },
+                { "die": 3, "driveSkill": 3 },
+                { "die": 4, "driveSkill": 3, "status": "needsProofread" },
+                { "die": 5, "driveSkill": 4 },
+                { "die": 6, "driveSkill": 5 }
+              ]
+            },
+            {
+              "sideRole": "playerB",
+              "sameAs": "playerA"
+            }
+          ],
+          "trackSetup": { "kind": "useCoreGame2LayoutRoll", "status": "needsTrace" },
+          "positionRollRuleId": "positionRoll.oddLeadEvenChase",
+          "startingSpeedRuleId": "startingSpeed.coreRandom",
+          "victoryCondition": { "kind": "sameAs", "scenarioId": "core.game1.straightChaseDuel" },
+          "source": { "book": "Dark Future Rulebook", "pages": [88] }
+        },
+        {
+          "id": "core.game5.generatedTrackChase",
+          "label": "Game Five: Generated Track Chase",
+          "status": "draft",
+          "forceDefinitions": [{ "sameAs": "core.game4.budgetDuel.forceDefinitions" }],
+          "trackSetup": {
+            "kind": "initialTrackGeneration",
+            "trackGenerationRule": "core.initialTrackGeneration",
+            "status": "dependsOnTrackGeometry"
+          },
+          "startingSpeedRuleId": "startingSpeed.coreRandom",
+          "victoryCondition": {
+            "kind": "leadExitsNthTrackSection",
+            "leadWinSectionCount": 7,
+            "chaseWin": { "event": "leadStoppedBeforeExit" }
+          },
+          "source": { "book": "Dark Future Rulebook", "pages": [88] }
+        },
+        {
+          "id": "core.game6.opPursuitOutlaws",
+          "label": "Game Six: Op Pursuit Against Outlaws",
+          "status": "draft",
+          "sideRoll": {
+            "dice": { "kind": "d6", "count": 1 },
+            "lowerRollRole": "op",
+            "otherRole": "outlaw"
+          },
+          "forceDefinitions": [
+            {
+              "sideRole": "op",
+              "budget": 100000,
+              "requiredVehicleTemplateIds": ["interceptor"]
+            },
+            {
+              "sideRole": "outlaw",
+              "budget": 100000,
+              "minimumCompositions": [
+                [{ "templateId": "renegade", "count": 2 }],
+                [{ "templateId": "bike", "count": 3 }],
+                [{ "templateId": "renegade", "count": 1 }, { "templateId": "bike", "count": 2 }]
+              ],
+              "minimumWeaponsPerVehicle": 1
+            }
+          ],
+          "sideRoles": [
+            { "id": "outlaw", "scenarioRole": "lead" },
+            { "id": "op", "scenarioRole": "chase" }
+          ],
+          "trackSetup": {
+            "kind": "continuousTrackGeneration",
+            "trackGenerationRule": "core.continuousTrackGeneration",
+            "status": "dependsOnTrackGeometry"
+          },
+          "startingSpeedRuleId": "startingSpeed.coreRandom",
+          "victoryCondition": {
+            "kind": "oneSideNoActiveCapableVehicles",
+            "inactiveStates": ["wrecked", "crashed", "immobilizedWithoutUsableWeapons"]
+          },
+          "source": { "book": "Dark Future Rulebook", "pages": [89] }
+        },
+        {
+          "id": "core.game7.gangOrOpAttack",
+          "label": "Game Seven: Gang or Op Attack",
+          "status": "draftNeedsProofread",
+          "attackerRoll": {
+            "dice": { "kind": "d6", "count": 1 },
+            "highestRollRole": "attacker"
+          },
+          "forceDefinitions": [
+            { "sideRole": "attacker", "choice": ["op", "outlawGang"] },
+            { "sideRole": "target", "requiredKind": "outlawGang" }
+          ],
+          "victoryCondition": {
+            "kind": "conditionalByPairing",
+            "cases": [
+              { "pairing": "opVsGang", "sameAs": "core.game6.opPursuitOutlaws" },
+              {
+                "pairing": "gangVsGang",
+                "attackerWin": "entireTargetGangTakenOut",
+                "targetWin": ["allTargetVehiclesEscape", "attackersTakenOut", "attackersOutdistanced"],
+                "status": "outdistanceNeedsDefinition"
+              }
+            ]
+          },
+          "source": { "book": "Dark Future Rulebook", "pages": [89] }
+        },
+        {
+          "id": "core.game8.interceptOrPursuit",
+          "label": "Game Eight: Intercept or Pursuit",
+          "status": "draftNeedsProofread",
+          "forceDefinitions": [{ "sameAs": "core.game6.opPursuitOutlaws" }],
+          "attackerRoll": { "sameAs": "core.game7.gangOrOpAttack.attackerRoll" },
+          "attackerChoice": ["pursuit", "intercept"],
+          "setupByChoice": {
+            "pursuit": { "sameAs": "core.game6.opPursuitOutlaws" },
+            "intercept": {
+              "trackSetup": {
+                "kind": "continuousTrackGenerationFixedSectionCount",
+                "sectionCount": 7,
+                "status": "needsProofread"
+              },
+              "deployment": [
+                { "sideRole": "target", "section": 3, "mph": 60, "facing": "towardsAttacker" },
+                { "sideRole": "attacker", "sectionChoices": [5, 6, 7], "mphChoice": { "min": 0, "max": "vehicleMaximum" }, "facing": "towardsTarget" }
+              ]
+            }
+          },
+          "victoryCondition": { "kind": "sameAs", "scenarioId": "core.game6.opPursuitOutlaws" },
+          "source": { "book": "Dark Future Rulebook", "pages": [89] }
+        }
+      ]
+    },
+    {
+      "id": "white-line-fever",
+      "label": "White Line Fever Scenarios",
+      "source": {
+        "book": "White Line Fever",
+        "pages": [45, 46, 47, 48],
+        "extractionFile": "docs/rules/white-line-fever/08-scenarios.md"
+      },
+      "scenarios": [
+        {
+          "id": "wlf.game1.bulldozerAlley",
+          "label": "Game One: Bulldozer Alley",
+          "status": "needsDiagramTrace",
+          "forceDefinitions": [
+            {
+              "sideRole": "playerA",
+              "vehicle": {
+                "templateId": "renegade",
+                "engine": "v8",
+                "equipment": [
+                  { "mount": "turret", "weaponId": "missileLauncher" },
+                  { "systemId": "missileFireComputer" }
+                ],
+                "missileLoad": ["HE", "HE", "HE", "canister", "smoke", "HiVAP"],
+                "status": "needsProofread"
+              },
+              "driverSkillTable": [
+                { "die": 1, "driveSkill": 3 },
+                { "die": 2, "driveSkill": 3 },
+                { "die": 3, "driveSkill": 3 },
+                { "die": 4, "driveSkill": 3 },
+                { "die": 5, "driveSkill": 4 },
+                { "die": 6, "driveSkill": 5 }
+              ]
+            },
+            { "sideRole": "playerB", "sameAs": "playerA" }
+          ],
+          "trackSetup": {
+            "kind": "rollOnFixedDiagramLayouts",
+            "dice": { "kind": "d6", "count": 1 },
+            "layoutIds": [
+              "wlf.game1.layout1",
+              "wlf.game1.layout2",
+              "wlf.game1.layout3",
+              "wlf.game1.layout4",
+              "wlf.game1.layout5",
+              "wlf.game1.layout6"
+            ],
+            "generatedSectionsAfterInitialUseHazardRuleId": "hazardGeneration.bulldozerAlley",
+            "status": "needsTrace"
+          },
+          "deployment": [
+            { "sideRole": "lead", "section": 2, "zone": "anywhere" },
+            { "sideRole": "following", "section": 1, "zone": "anywhere" }
+          ],
+          "startingSpeed": { "kind": "playerChoice", "minMph": 0, "maxMph": "vehicleMaximum" },
+          "victoryCondition": {
+            "kind": "firstVehicleCompletesTrackSections",
+            "sectionCount": 10
+          },
+          "aiSetup": {
+            "priority": "raceAndExploitHazards"
+          },
+          "source": { "book": "White Line Fever", "pages": [45] }
+        },
+        {
+          "id": "wlf.game2.gangLeaderDuel",
+          "label": "Game Two: Gang Leader Duel",
+          "status": "draft",
+          "forceDefinitions": [
+            {
+              "sideRole": "playerA",
+              "budget": 100000,
+              "requiredVehicleTemplateIds": ["renegade"]
+            },
+            {
+              "sideRole": "playerB",
+              "budget": 100000,
+              "requiredVehicleTemplateIds": ["renegade"]
+            }
+          ],
+          "setup": { "sameAs": "wlf.game1.bulldozerAlley" },
+          "victoryCondition": { "sameAs": "wlf.game1.bulldozerAlley" },
+          "source": { "book": "White Line Fever", "pages": [46] }
+        },
+        {
+          "id": "wlf.game3.outlawGangBattle",
+          "label": "Game Three: Outlaw Gang Battle",
+          "status": "draft",
+          "forceDefinitions": [
+            {
+              "sideRole": "playerA",
+              "budget": 200000,
+              "requiredComposition": [
+                { "templateId": "renegade", "minimumCount": 2 },
+                { "templateId": "bike", "minimumCount": 3 }
+              ]
+            },
+            { "sideRole": "playerB", "sameAs": "playerA" }
+          ],
+          "trackSetup": {
+            "kind": "useWlfGame1Layout",
+            "status": "needsTrace"
+          },
+          "deployment": [
+            { "sideRole": "playerA", "zone": "oneEnd", "facing": "towardsOpponent" },
+            { "sideRole": "playerB", "zone": "oppositeEnd", "facing": "towardsOpponent" }
+          ],
+          "startingSpeed": { "kind": "playerChoice", "minMph": 0, "maxMph": "vehicleMaximum" },
+          "exitHandling": {
+            "vehicleLeavingEitherEnd": "removedFromBattleCannotReturn"
+          },
+          "victoryCondition": {
+            "kind": "lastSideWithVehicleMovingAndFiring"
+          },
+          "source": { "book": "White Line Fever", "pages": [46] }
+        },
+        {
+          "id": "wlf.game4.executiveEscort",
+          "label": "Game Four: Executive Escort",
+          "status": "needsProofread",
+          "sideAssignment": {
+            "choiceAllowed": true,
+            "rollOption": {
+              "dice": { "kind": "d6", "count": 1 },
+              "lowerRollRole": "opAndExecutive"
+            }
+          },
+          "forceDefinitions": [
+            {
+              "sideRole": "opAndExecutive",
+              "vehicles": [
+                {
+                  "templateId": "interceptor",
+                  "label": "executiveCar",
+                  "engine": "v6",
+                  "armour": { "type": "carbonPlastic", "allFacings": 4 },
+                  "weapons": [],
+                  "protected": true,
+                  "status": "needsVehicleDesign"
+                }
+              ],
+              "budget": 100000,
+              "additionalRequiredVehicleTemplateIds": ["interceptor"]
+            },
+            {
+              "sideRole": "bikerGang",
+              "budget": 100000,
+              "allowedVehicleTypes": ["bike", "trike"]
+            }
+          ],
+          "trackSetup": {
+            "kind": "useWlfGame1LayoutThenContinuousGeneration",
+            "status": "needsTrace"
+          },
+          "engagementFormRoll": {
+            "dice": { "kind": "d6", "count": 1 },
+            "results": [
+              { "range": { "min": 1, "max": 4 }, "engagementType": "pursuit" },
+              { "range": { "min": 5, "max": 6 }, "engagementType": "intercept" }
+            ]
+          },
+          "setupByEngagementType": {
+            "pursuit": {
+              "deployment": [
+                { "sideRole": "opAndExecutive", "section": 3, "mphChoice": { "min": 0, "max": "vehicleMaximum" } },
+                { "sideRole": "bikerGang", "section": 1, "mphChoice": { "min": 0, "max": "vehicleMaximum" } }
+              ]
+            },
+            "intercept": {
+              "deployment": [
+                { "sideRole": "bikerGang", "section": 1, "mphChoice": { "min": 0, "max": "vehicleMaximum" } },
+                { "sideRole": "opAndExecutive", "sectionChoices": [8, 9, 10], "mph": 60, "facing": "oppositeDirection" }
+              ]
+            }
+          },
+          "victoryCondition": {
+            "kind": "protectedExecutiveObjective",
+            "status": "needsProofread",
+            "notes": "OCR does not preserve explicit victory conditions."
+          },
+          "aiSetup": {
+            "opAndExecutive": { "priority": "protectExecutiveAndEscape" },
+            "bikerGang": { "priority": "destroyProtectedVehicle" }
+          },
+          "source": { "book": "White Line Fever", "pages": [46] }
+        },
+        {
+          "id": "wlf.game5.renegadeOp",
+          "label": "Game Five: Renegade Op",
+          "status": "draftNeedsProofread",
+          "equipmentRestrictions": [
+            { "weaponCategory": "missile", "allowed": false }
+          ],
+          "forceDefinitions": [
+            { "sideRole": "renegade", "budget": 100000, "requiredVehicleTemplateIds": ["interceptor"] },
+            { "sideRole": "agencyOp", "budget": 100000, "requiredVehicleTemplateIds": ["interceptor"] }
+          ],
+          "trackSetup": {
+            "kind": "useWlfGame1LayoutThenContinuousGeneration",
+            "status": "needsTrace"
+          },
+          "deployment": [
+            { "sideRole": "renegade", "section": 3, "status": "needsProofread" },
+            { "sideRole": "agencyOp", "section": 2, "status": "needsProofread" }
+          ],
+          "victoryCondition": {
+            "kind": "asymmetric",
+            "renegadeWin": ["opponentDestroyed", "opponentOutdistanced"],
+            "agencyOpWin": ["fugitiveDestroyed", "fugitiveImmobilized"],
+            "status": "outdistanceNeedsDefinition"
+          },
+          "aiSetup": {
+            "renegade": { "priority": "escapeOrDisablePursuer" },
+            "agencyOp": { "priority": "stopFugitive" }
+          },
+          "source": { "book": "White Line Fever", "pages": [47] }
+        },
+        {
+          "id": "wlf.game6.trikeRace",
+          "label": "Game Six: Trike Race",
+          "status": "draftNeedsVehicleDesign",
+          "forceDefinitions": [
+            {
+              "sideRole": "playerA",
+              "vehicleTemplateId": "standardTrike",
+              "status": "needsBikesThreeWheelers"
+            },
+            { "sideRole": "playerB", "sameAs": "playerA" }
+          ],
+          "trackSetup": {
+            "kind": "generatedAsWlfGame1",
+            "status": "needsTrace"
+          },
+          "victoryCondition": {
+            "kind": "firstVehicleCompletesTrackSections",
+            "sectionCount": 20
+          },
+          "aiSetup": {
+            "priority": "race"
+          },
+          "source": { "book": "White Line Fever", "pages": [47] }
+        }
+      ]
+    }
+  ],
+  "contractBridge": {
+    "id": "deadMansCurve.contractToScenarioBridge",
+    "status": "draftNeedsCampaignApproachProofread",
+    "inputFromCampaign": [
+      "contractId",
+      "campaignSequenceId",
+      "attackerUnitId",
+      "defenderUnitId",
+      "engagementType",
+      "eligibleDriverIds",
+      "eligibleVehicleIds",
+      "approachModifiers",
+      "cruisingRestrictions",
+      "engagementObjective"
+    ],
+    "outputToTactical": [
+      "engagementId",
+      "scenarioId",
+      "sideRoles",
+      "trackSetup",
+      "deploymentZones",
+      "initialSpeeds",
+      "participantVehicleIds",
+      "participantDriverIds",
+      "scenarioState",
+      "victoryCondition",
+      "aiSetup"
+    ],
+    "engagementTypeMappings": [
+      {
+        "engagementType": "pursuit",
+        "scenarioPattern": "leadChase",
+        "notes": "Usually maps target/defender to lead and attacker to chase; final mapping depends on approach rules."
+      },
+      {
+        "engagementType": "intercept",
+        "scenarioPattern": "opposedFacingOrCrossing",
+        "notes": "Core Game Eight is the nearest explicit template."
+      },
+      {
+        "engagementType": "ambush",
+        "scenarioPattern": "ambush",
+        "status": "needsProofread",
+        "notes": "Dead Man's Curve setup text is OCR-damaged."
+      }
+    ],
+    "mustNotApplyCampaignPostEngagement": true,
+    "source": {
+      "book": "White Dwarf 124",
+      "pages": [20, 21, 22],
+      "extractionFile": "docs/rules/clean/campaign.md"
+    }
+  },
+  "ambiguities": [
+    {
+      "id": "amb.core.game1.diagram",
+      "source": { "book": "Dark Future Rulebook", "pages": [87] },
+      "issue": "Game One deployment shading and finish line are diagram-only in OCR.",
+      "handling": "Trace page image before implementation."
+    },
+    {
+      "id": "amb.core.game2.layouts",
+      "source": { "book": "Dark Future Rulebook", "pages": [87] },
+      "issue": "Six fixed track diagrams are not usable from OCR.",
+      "handling": "Trace each layout into track-piece sequences."
+    },
+    {
+      "id": "amb.core.game8.sectionCount",
+      "source": { "book": "Dark Future Rulebook", "pages": [89] },
+      "issue": "Fixed generated section count for intercept is OCR-damaged.",
+      "handling": "Provisional sectionCount 7; verify against page image."
+    },
+    {
+      "id": "amb.wlf.game4.victory",
+      "source": { "book": "White Line Fever", "pages": [46] },
+      "issue": "Executive Escort victory conditions are missing or damaged in OCR.",
+      "handling": "Proofread before implementation."
+    },
+    {
+      "id": "amb.contract.ambushSetup",
+      "source": { "book": "White Dwarf 124", "pages": [20, 21, 22] },
+      "issue": "Dead Man's Curve ambush/intercept/pursuit setup details are damaged.",
+      "handling": "Keep campaign bridge draft until proofread."
+    }
+  ],
+  "candidateTests": [
+    "validateScenarioIdsAreUnique",
+    "validateEveryScenarioHasSourceAndVictoryCondition",
+    "coreGameOneCreatesTwoDriveSkill3RenegadesAt60Mph",
+    "coreGameTwoSelectsLayoutFromD6",
+    "coreGameThreeAppliesLoadoutBeforePositionRoll",
+    "coreRandomStartingSpeedHandlesMandatoryRerollsAndVetoes",
+    "coreGameFourEnforcesBudgetAndMinimumWeapon",
+    "coreGameSixEnforcesOutlawMinimumComposition",
+    "coreGameEightInterceptCreatesOpposedFacingDeployment",
+    "wlfGameOneGeneratesHazardsFromHighLowDice",
+    "wlfGameThreeRemovingExitedVehiclesDoesNotAutoWin",
+    "wlfGameFourCreatesProtectedUnarmedExecutiveVehicle",
+    "wlfGameFiveRejectsMissileWeapons",
+    "wlfGameSixEndsAtTwentySections",
+    "contractBridgeCreatesTacticalStateWithoutApplyingPayOrMileage"
+  ]
+}

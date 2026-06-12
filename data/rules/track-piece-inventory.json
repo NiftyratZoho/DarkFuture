@@ -1,0 +1,41 @@
+{
+  "id": "track-piece-inventory",
+  "status": "photoEvidenceNeedsOrthographicConfirmation",
+  "source": {
+    "kind": "photo",
+    "path": "D:/Users/Niftyrat/Desktop/s-l1600.jpg",
+    "reviewFile": "docs/rules/clean/track-piece-photo-review.md"
+  },
+  "visibleInventory": {
+    "straight": {
+      "count": 7,
+      "confidence": "high",
+      "notes": "Four short rectangular sections and three longer rectangular sections are visible."
+    },
+    "curvesTotal": {
+      "count": 6,
+      "confidence": "high",
+      "notes": "Six curved sections are visible."
+    },
+    "broadBends": {
+      "count": null,
+      "confidence": "needsOrthographicConfirmation",
+      "notes": "Broad/bend-like sections are visible, but the photo perspective prevents reliable exact counting by family."
+    },
+    "tightCorners": {
+      "count": null,
+      "confidence": "needsOrthographicConfirmation",
+      "notes": "Tighter corner-like sections are visible, but exact count should be confirmed from square-on images."
+    }
+  },
+  "implementationUse": {
+    "trackGenerationInventoryLimits": "draftUsable",
+    "curveTrackSpaceGraph": "blockedUntilTrace",
+    "curveSafetyLimitPlaceholders": "draftUsable"
+  },
+  "requiredFollowUp": [
+    "square-on single straight section image",
+    "square-on single broad bend image",
+    "square-on single tight corner image"
+  ]
+}

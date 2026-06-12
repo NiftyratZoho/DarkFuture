@@ -1,0 +1,172 @@
+{
+  "id": "vehicles",
+  "status": "cleanedDraft",
+  "source": [
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [81, 83],
+      "extractionFile": "docs/rules/core/12-vehicle-design.md"
+    },
+    {
+      "book": "Dark Future Rulebook",
+      "pages": [83, 85],
+      "extractionFile": "docs/rules/core/13-vehicles-and-hardware.md"
+    },
+    {
+      "book": "White Line Fever",
+      "pages": [41, 42, 44],
+      "extractionFile": "docs/rules/white-line-fever/07-design-section.md"
+    }
+  ],
+  "designModes": [
+    {
+      "id": "corePayload",
+      "description": "Core design uses fixed vehicle characteristics and checks fitted equipment against payload."
+    },
+    {
+      "id": "advancedWeight",
+      "description": "White Line Fever design derives characteristics from engine size and total weight.",
+      "status": "needsProofread",
+      "notes": "WLF page 44 characteristic tables are OCR-damaged."
+    }
+  ],
+  "vehicleTemplates": [
+    {
+      "id": "renegade",
+      "label": "Renegade",
+      "kind": "car",
+      "coreStats": {
+        "damage": 18,
+        "armour": 3,
+        "maximumSpeedMph": 100,
+        "accelerationMph": 20,
+        "brakingMph": 30,
+        "handling": 4,
+        "payload": 650
+      },
+      "damageIncrements": [12, 8, 4],
+      "coreMounts": [
+        { "id": "hood", "kind": "ordinary", "location": "hood", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "centralForward" },
+        { "id": "roof", "kind": "ordinary", "location": "roof", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "centralForward" },
+        { "id": "leftWing", "kind": "ordinary", "location": "leftWing", "allowedWeaponClasses": ["lightweightAsMedium", "medium"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "leftShiftForward" },
+        { "id": "rightWing", "kind": "ordinary", "location": "rightWing", "allowedWeaponClasses": ["lightweightAsMedium", "medium"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "rightShiftForward" },
+        { "id": "passiveCenter", "kind": "passive", "location": "passiveCenter", "allowedWeaponClasses": ["passive"], "allowedFacings": ["rear"], "capacity": 1, "fireCorridorProfile": "passiveRear" }
+      ],
+      "optionalMounts": ["turret", "rearLeftWing", "tailgate", "rearRightWing", "cupola", "pintle"],
+      "source": { "book": "Dark Future Rulebook", "pages": [81, 83] }
+    },
+    {
+      "id": "interceptor",
+      "label": "Interceptor",
+      "kind": "car",
+      "coreStats": {
+        "damage": 24,
+        "armour": 4,
+        "maximumSpeedMph": 120,
+        "accelerationMph": 30,
+        "brakingMph": 40,
+        "handling": 5,
+        "payload": 850
+      },
+      "damageIncrements": [18, 12, 6],
+      "coreMounts": [
+        { "id": "hood", "kind": "ordinary", "location": "hood", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "centralForward" },
+        { "id": "roof", "kind": "ordinary", "location": "roof", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "centralForward" },
+        { "id": "leftWing", "kind": "ordinary", "location": "leftWing", "allowedWeaponClasses": ["lightweightAsMedium", "medium"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "leftShiftForward" },
+        { "id": "rightWing", "kind": "ordinary", "location": "rightWing", "allowedWeaponClasses": ["lightweightAsMedium", "medium"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "rightShiftForward" },
+        { "id": "leftSide", "kind": "ordinary", "location": "leftSide", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "leftShiftForward" },
+        { "id": "rightSide", "kind": "ordinary", "location": "rightSide", "allowedWeaponClasses": ["lightweightAsMedium", "medium", "heavy"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "rightShiftForward" },
+        { "id": "passiveLeft", "kind": "passive", "location": "passiveLeft", "allowedWeaponClasses": ["passive"], "allowedFacings": ["rear"], "capacity": 1, "fireCorridorProfile": "passiveRearLeft" },
+        { "id": "passiveRight", "kind": "passive", "location": "passiveRight", "allowedWeaponClasses": ["passive"], "allowedFacings": ["rear"], "capacity": 1, "fireCorridorProfile": "passiveRearRight" }
+      ],
+      "optionalMounts": ["turret", "rearLeftWing", "tailgate", "rearRightWing", "cupola", "pintle"],
+      "source": { "book": "Dark Future Rulebook", "pages": [81, 83] }
+    },
+    {
+      "id": "bike",
+      "label": "Bike",
+      "kind": "bike",
+      "coreStats": {
+        "damage": 9,
+        "armour": 2,
+        "maximumSpeedMph": 110,
+        "accelerationMph": 40,
+        "brakingMph": 40,
+        "handling": 6,
+        "payload": 300
+      },
+      "damageIncrements": [6, 3],
+      "coreMounts": [
+        { "id": "leftFairing", "kind": "ordinary", "location": "leftFairing", "allowedWeaponClasses": ["lightweight"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "bikeForward" },
+        { "id": "rightFairing", "kind": "ordinary", "location": "rightFairing", "allowedWeaponClasses": ["lightweight"], "allowedFacings": ["front"], "capacity": 1, "fireCorridorProfile": "bikeForward" },
+        { "id": "passiveRear", "kind": "passive", "location": "passiveRear", "allowedWeaponClasses": ["lightweightPassive"], "allowedFacings": ["rear"], "capacity": 1, "fireCorridorProfile": "bikePassiveRear" }
+      ],
+      "optionalMounts": ["outrigger"],
+      "source": { "book": "Dark Future Rulebook", "pages": [81, 83, 85] }
+    }
+  ],
+  "advancedChassis": [
+    { "id": "renegadeV6", "vehicleTemplateId": "renegade", "engineSize": "v6", "cost": 20000, "weight": 1000, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "renegadeV8", "vehicleTemplateId": "renegade", "engineSize": "v8", "cost": 35000, "weight": 1000, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "renegadeV12", "vehicleTemplateId": "renegade", "engineSize": "v12", "cost": 60000, "weight": 1000, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "interceptorV6", "vehicleTemplateId": "interceptor", "engineSize": "v6", "cost": 50000, "weight": 1000, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "interceptorV8", "vehicleTemplateId": "interceptor", "engineSize": "v8", "cost": 70000, "weight": 1000, "source": { "book": "White Line Fever", "pages": [17, 42] } },
+    { "id": "interceptorV12", "vehicleTemplateId": "interceptor", "engineSize": "v12", "cost": 90000, "weight": 1000, "status": "ocrCorrected", "notes": "WLF p.17 OCR reads 30000, but WLF p.41 worked example and p.42 summary support 90000.", "source": { "book": "White Line Fever", "pages": [17, 41, 42] } }
+  ],
+  "advancedCharacteristicTables": {
+    "accelerationAndMaximumSpeed": {
+      "status": "needsProofread",
+      "source": { "book": "White Line Fever", "pages": [44] },
+      "maximumSupportedWeightByEngine": {
+        "v6": 3000,
+        "v8": 3200,
+        "v12": 3600
+      },
+      "readableRows": [
+        { "weightRange": { "min": 801, "max": 1000 }, "v6": { "accelerationMph": 21, "maximumSpeedMph": 112 }, "v8": { "accelerationMph": 28, "maximumSpeedMph": 136 }, "v12": { "accelerationMph": 30, "maximumSpeedMph": 160 } },
+        { "weightRange": { "min": 1201, "max": 1400 }, "v6": { "accelerationMph": 15, "maximumSpeedMph": 100 }, "v8": { "accelerationMph": 24, "maximumSpeedMph": 120 }, "v12": { "accelerationMph": 26, "maximumSpeedMph": 140 } },
+        { "weightRange": { "min": 1601, "max": 1800 }, "v6": { "accelerationMph": 13, "maximumSpeedMph": 92 }, "v8": { "accelerationMph": 20, "maximumSpeedMph": 120 }, "v12": { "accelerationMph": 22, "maximumSpeedMph": 126 } },
+        { "weightRange": { "min": 2001, "max": 2200 }, "v6": { "accelerationMph": 12, "maximumSpeedMph": 86 }, "v8": { "accelerationMph": 16, "maximumSpeedMph": 104 }, "v12": { "accelerationMph": 20, "maximumSpeedMph": 112 } },
+        { "weightRange": { "min": 2401, "max": 2600 }, "v6": { "accelerationMph": 9, "maximumSpeedMph": null }, "v8": { "accelerationMph": 14, "maximumSpeedMph": 96 }, "v12": { "accelerationMph": 16, "maximumSpeedMph": 104 } },
+        { "weightRange": { "min": 2801, "max": 3000 }, "v6": { "accelerationMph": 7, "maximumSpeedMph": 82 }, "v8": { "accelerationMph": 10, "maximumSpeedMph": 90 }, "v12": { "accelerationMph": 14, "maximumSpeedMph": 96 } },
+        { "weightRange": { "min": 3201, "max": 3400 }, "v6": null, "v8": null, "v12": { "accelerationMph": 10, "maximumSpeedMph": 88 } }
+      ]
+    },
+    "brakingAndHandling": {
+      "status": "needsProofread",
+      "source": { "book": "White Line Fever", "pages": [44] },
+      "notes": "OCR collapses Renegade/Interceptor braking and split handling rows. Do not implement advanced braking/handling until page image is traced."
+    },
+    "bikeCharacteristics": {
+      "status": "needsProofread",
+      "source": { "book": "White Line Fever", "pages": [44] },
+      "notes": "Bike weight rows are OCR-damaged. Note confirms handling adjustment also applies to reduced handling."
+    }
+  },
+  "recordSheetFields": [
+    "vehicleId",
+    "templateId",
+    "designMode",
+    "ownerSide",
+    "engineSize",
+    "totalCost",
+    "totalWeight",
+    "damageMax",
+    "damageCurrent",
+    "damageIncrementsApplied",
+    "maximumSpeedMph",
+    "accelerationMph",
+    "brakingMph",
+    "handling",
+    "nonHeHandling",
+    "heHandling",
+    "armourByFacing",
+    "mounts",
+    "linkedGroups",
+    "ammunitionMagazines",
+    "fireControlModes",
+    "safetyDevices",
+    "notes",
+    "campaignRepairState"
+  ]
+}

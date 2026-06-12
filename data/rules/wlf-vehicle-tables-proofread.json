@@ -1,0 +1,228 @@
+{
+  "id": "wlfVehicleTablesProofread",
+  "status": "proofreadDraft",
+  "source": {
+    "book": "White Line Fever",
+    "pages": [42, 43, 44],
+    "renderedImages": [
+      "_analysis/ocr_pages/white_line_fever/page-42.png",
+      "_analysis/ocr_pages/white_line_fever/page-43.png",
+      "_analysis/ocr_pages/white_line_fever/page-44.png"
+    ]
+  },
+  "notes": [
+    "Costs are integer dollars; weights are abstract weight points.",
+    "Sanctioned items are the source rows marked as difficult for Outlaws and should receive the Outlaw surcharge in campaign purchasing.",
+    "A null characteristic means the source table shows no available value for that engine and weight band."
+  ],
+  "vehicles": [
+    { "vehicle": "Renegade", "engine": "V6", "cost": 20000, "weight": 1000 },
+    { "vehicle": "Renegade", "engine": "V8", "cost": 35000, "weight": 1000 },
+    { "vehicle": "Renegade", "engine": "V12", "cost": 60000, "weight": 1000 },
+    { "vehicle": "Interceptor", "engine": "V6", "cost": 50000, "weight": 1000 },
+    { "vehicle": "Interceptor", "engine": "V8", "cost": 70000, "weight": 1000 },
+    { "vehicle": "Interceptor", "engine": "V12", "cost": 90000, "weight": 1000 },
+    { "vehicle": "Bike", "engine": null, "cost": 15000, "weight": 200 }
+  ],
+  "engineAddOns": [
+    { "id": "charger", "label": "Charger", "cost": 5000, "weight": 0, "effects": { "accelerationMph": 4, "maximumSpeedMph": 16 } },
+    { "id": "nox", "label": "Nox", "cost": 2000, "weight": 0, "effects": { "accelerationMultiplier": 2, "carMaximumSpeedMph": 40, "baseExplosionRolls2d6": [2, 12] } },
+    { "id": "oilInjection", "label": "Oil Injection", "cost": 2000, "weight": 0 }
+  ],
+  "armour": {
+    "additionalCarbonSteel": {
+      "car": [
+        { "targetZone": "front", "cost": 2000, "weight": 35 },
+        { "targetZone": "rear", "cost": 2000, "weight": 35 },
+        { "targetZone": "sides", "cost": 2000, "weight": 35 },
+        { "targetZone": "floor", "cost": 1200, "weight": 35 },
+        { "targetZone": "roof", "cost": 800, "weight": 20 }
+      ],
+      "bike": [
+        { "targetZone": "any", "cost": 1000, "weight": 16 }
+      ]
+    },
+    "additionalCarbonPlastic": {
+      "car": [
+        { "targetZone": "front", "cost": 5000, "weight": 20 },
+        { "targetZone": "rear", "cost": 5000, "weight": 20 },
+        { "targetZone": "sides", "cost": 5000, "weight": 20 },
+        { "targetZone": "floor", "cost": 3000, "weight": 20 },
+        { "targetZone": "roof", "cost": 1000, "weight": 10 }
+      ],
+      "bike": [
+        { "targetZone": "any", "cost": 2000, "weight": 8 }
+      ]
+    },
+    "carbonPlasticArmouredVehicles": [
+      { "vehicle": "Renegade", "costModifier": 15000, "weight": 650 },
+      { "vehicle": "Interceptor", "costModifier": 15000, "weight": 650 },
+      { "vehicle": "Bike", "costModifier": 5000, "weight": 150 }
+    ],
+    "carbonPlasticConversions": [
+      { "vehicle": "Renegade", "cost": 20000, "weightModifier": -350 },
+      { "vehicle": "Interceptor", "cost": 20000, "weightModifier": -350 },
+      { "vehicle": "Bike", "cost": 10000, "weightModifier": -50 }
+    ]
+  },
+  "tyres": [
+    { "vehicle": "Renegade", "item": "reinforcedTyres", "cost": 5000, "weight": 0 },
+    { "vehicle": "Interceptor", "item": "reinforcedTyres", "cost": 8000, "weight": 0 },
+    { "vehicle": "Bike", "item": "reinforcedTyres", "cost": 3000, "weight": 0 }
+  ],
+  "drivingSystems": [
+    { "id": "activeSuspension", "vehicle": "Renegade", "cost": 8000, "weight": 30, "effects": { "handling": 2 } },
+    { "id": "activeSuspension", "vehicle": "Interceptor", "cost": 12000, "weight": 40, "effects": { "handling": 2 } },
+    { "id": "roboticDriveUpgrade", "vehicle": "Renegade", "cost": 7000, "weight": 20, "effects": { "finalHandlingBonus": 3 } },
+    { "id": "roboticDriveUpgrade", "vehicle": "Interceptor", "cost": 10000, "weight": 20, "effects": { "finalHandlingBonus": 3 } },
+    { "id": "roboticDriveComplete", "vehicle": "Renegade", "cost": 12000, "weight": 50, "effects": { "handling": 3 } },
+    { "id": "roboticDriveComplete", "vehicle": "Interceptor", "cost": 15000, "weight": 60, "effects": { "handling": 3 } },
+    { "id": "dragChute", "vehicle": "Any", "cost": 3000, "weight": 20, "effects": { "brakingMph": 30 } },
+    { "id": "enhancedComputerisedBraking", "vehicle": "Renegade", "cost": 4000, "weight": 0 },
+    { "id": "enhancedComputerisedBraking", "vehicle": "Interceptor", "cost": 6000, "weight": 0 },
+    { "id": "rocketBoosterSingle", "type": "single", "cost": 30000, "weight": 150 },
+    { "id": "rocketBoosterTwin", "type": "twin", "cost": 45000, "weight": 225 },
+    { "id": "twoWheelDrive", "vehicle": "Bike", "cost": 3000, "weight": 0, "effects": { "handling": 1, "brakingMph": 10 } },
+    { "id": "computerDrive", "vehicle": "Bike", "cost": 2000, "weight": 0, "effects": { "handling": 1, "accelerationMph": 5, "brakingMph": 5 } }
+  ],
+  "safetyDevices": [
+    { "id": "crashSuppression", "cost": 5000, "weight": 10, "vehicleRestriction": "carsOnly" },
+    { "id": "ejectorSeat", "cost": 7500, "weight": 30, "vehicleRestriction": "carsOnly" },
+    { "id": "passengerCage", "cost": 5000, "weight": 30, "vehicleRestriction": "carsOnly" },
+    { "id": "crashBars", "cost": 500, "weight": 0, "vehicleRestriction": "bikesOnly" }
+  ],
+  "weaponMounts": [
+    { "id": "cupola", "cost": 10000, "weight": 200, "vehicleRestriction": "carsOnly", "sanctioned": true, "notes": "Weight includes tail gunner; crewman cost is called out separately as 5000." },
+    { "id": "pintle", "cost": 6000, "weight": 100, "sanctioned": true, "notes": "Weight includes tail gunner; crewman cost is called out separately as 5000." },
+    { "id": "outrigger", "cost": 5000, "weight": 0, "vehicleRestriction": "bikesOnly" }
+  ],
+  "fireControlComputers": [
+    { "id": "missileFireComputer", "cost": 10000, "weight": 0 },
+    { "id": "turretFireComputer", "cost": 10000, "weight": 0, "requiresTurret": true }
+  ],
+  "weaponsAndReloads": {
+    "heavyWeapons": [
+      { "id": "chainGun", "cost": 22000, "weight": 300, "sanctioned": true, "reloads": [{ "id": "gp", "shots": 6, "cost": 7500 }, { "id": "depletedUranium", "shots": 1, "cost": 3000, "sanctioned": true }] },
+      { "id": "grenadeLauncher40mm", "cost": 15000, "weight": 250, "reloads": [{ "id": "highExplosive", "shots": 8, "cost": 4000 }, { "id": "shapedPlastic", "shots": 1, "cost": 1200, "sanctioned": true }, { "id": "phosphor", "shots": 1, "cost": 500, "sanctioned": true }] },
+      { "id": "heavyLaser", "cost": 18000, "weight": 200, "sanctioned": true },
+      { "id": "missilePodUnloaded", "cost": 15000, "weight": 120, "sanctioned": true },
+      { "id": "missileHighExplosive", "cost": 4000, "weight": 30 },
+      { "id": "missileShapedPlastic", "cost": 5000, "weight": 30, "sanctioned": true },
+      { "id": "missileHiVap", "cost": 10000, "weight": 30, "sanctioned": true },
+      { "id": "missileTgsm", "cost": 12500, "weight": 30, "sanctioned": true },
+      { "id": "missileCannister", "cost": 10000, "weight": 30, "sanctioned": true },
+      { "id": "missileSmoke", "cost": 2000, "weight": 30 }
+    ],
+    "mediumWeapons": [
+      { "id": "machineGun6mm", "cost": 5000, "weight": 175, "reloads": [{ "id": "gp", "shots": 12, "cost": 1000 }] },
+      { "id": "autocannon15mm", "cost": 9000, "weight": 250, "reloads": [{ "id": "gp", "shots": 8, "cost": 3000 }, { "id": "depletedUranium", "shots": 1, "cost": 1000, "sanctioned": true }] },
+      { "id": "grenadeLauncher20mm", "cost": 5000, "weight": 150, "reloads": [{ "id": "highExplosive", "shots": 10, "cost": 2000 }, { "id": "phosphor", "shots": 1, "cost": 200, "sanctioned": true }] },
+      { "id": "combatLaser", "cost": 10000, "weight": 100, "sanctioned": true }
+    ],
+    "lightweightWeapons": [
+      { "id": "machineGun4_2mm", "cost": 6000, "weight": 80, "reloads": [{ "id": "gp", "shots": 6, "cost": 1000 }] },
+      { "id": "grenadeLauncher20mmLightweight", "cost": 5000, "weight": 60, "reloads": [{ "id": "highExplosive", "shots": 4, "cost": 800 }, { "id": "phosphor", "shots": 1, "cost": 200, "sanctioned": true }] },
+      { "id": "combatLaserLightweight", "cost": 10000, "weight": 70, "sanctioned": true },
+      { "id": "ragLauncher40mm", "cost": 5000, "weight": 50, "reloads": [{ "id": "highExplosive", "shots": 1, "cost": 750 }, { "id": "phosphor", "shots": 1, "cost": 500, "sanctioned": true }, { "id": "shapedPlastic", "shots": 1, "cost": 1500, "sanctioned": true }] },
+      { "id": "minigun7_62mm", "cost": 12000, "weight": 100, "reloads": [{ "id": "gp", "shots": 4, "cost": 2500 }, { "id": "depletedUranium", "shots": 1, "cost": 2000, "sanctioned": true }] },
+      { "id": "missileTube50mm", "cost": 4000, "weight": 30 }
+    ],
+    "passiveWeapons": [
+      { "id": "spikeLayer", "cost": 1500, "weight": 100, "reloads": [{ "id": "spikes", "shots": 12, "cost": 100 }] },
+      { "id": "mineLayer", "cost": 5000, "weight": 150, "sanctioned": true, "reloads": [{ "id": "mines", "shots": 6, "cost": 1500, "sanctioned": true }] },
+      { "id": "smokeLayer", "cost": 2000, "weight": 50, "reloads": [{ "id": "smoke", "shots": 20, "cost": 100 }] },
+      { "id": "oilLayer", "cost": 3000, "weight": 75, "reloads": [{ "id": "oil", "shots": 12, "cost": 50 }] }
+    ],
+    "lightweightPassives": [
+      { "id": "spikeLayerLightweight", "cost": 1000, "weight": 60, "reloads": [{ "id": "spikes", "shots": 6, "cost": 50 }] },
+      { "id": "mineLayerLightweight", "cost": 4000, "weight": 100, "sanctioned": true, "reloads": [{ "id": "mines", "shots": 4, "cost": 1000, "sanctioned": true }] },
+      { "id": "smokeLayerLightweight", "cost": 1500, "weight": 50, "reloads": [{ "id": "smoke", "shots": 12, "cost": 60 }] },
+      { "id": "oilLayerLightweight", "cost": 2000, "weight": 50, "reloads": [{ "id": "oil", "shots": 6, "cost": 25 }] }
+    ]
+  },
+  "doubleLoads": {
+    "heavyWeapons": [
+      { "id": "chainGun", "cost": 3000, "addWeight": 200 },
+      { "id": "grenadeLauncher40mm", "cost": 2000, "addWeight": 125 }
+    ],
+    "mediumWeapons": [
+      { "id": "machineGun6mm", "cost": 1000, "addWeight": 125 },
+      { "id": "autocannon15mm", "cost": 2000, "addWeight": 125 },
+      { "id": "grenadeLauncher20mm", "cost": 1000, "addWeight": 100 }
+    ],
+    "lightweightWeapons": [
+      { "id": "machineGun4_2mm", "cost": 1000, "addWeight": 45 },
+      { "id": "grenadeLauncher20mmLightweight", "cost": 1000, "addWeight": 40 },
+      { "id": "minigun7_62mm", "cost": 2000, "addWeight": 75, "status": "proofreadDraft" }
+    ],
+    "passiveWeapons": [
+      { "id": "spikeLayer", "cost": 1000, "addWeight": 50 },
+      { "id": "mineLayer", "cost": 2000, "addWeight": 125 },
+      { "id": "smokeLayer", "cost": 1000, "addWeight": 25 },
+      { "id": "oilLayer", "cost": 1000, "addWeight": 50 }
+    ],
+    "lightweightPassives": [
+      { "id": "spikeLayerLightweight", "cost": 1000, "addWeight": 30 },
+      { "id": "mineLayerLightweight", "cost": 2000, "addWeight": 75 },
+      { "id": "smokeLayerLightweight", "cost": 1000, "addWeight": 10 },
+      { "id": "oilLayerLightweight", "cost": 1000, "addWeight": 25 }
+    ]
+  },
+  "characteristics": {
+    "accelerationAndMaximumSpeed": [
+      { "weightRange": { "max": 800 }, "v6": { "accelerationMph": 24, "maximumSpeedMph": 120 }, "v8": { "accelerationMph": 30, "maximumSpeedMph": 142 }, "v12": { "accelerationMph": 32, "maximumSpeedMph": 170 } },
+      { "weightRange": { "min": 801, "max": 1000 }, "v6": { "accelerationMph": 21, "maximumSpeedMph": 112 }, "v8": { "accelerationMph": 28, "maximumSpeedMph": 136 }, "v12": { "accelerationMph": 30, "maximumSpeedMph": 160 } },
+      { "weightRange": { "min": 1001, "max": 1200 }, "v6": { "accelerationMph": 18, "maximumSpeedMph": 106 }, "v8": { "accelerationMph": 26, "maximumSpeedMph": 128 }, "v12": { "accelerationMph": 28, "maximumSpeedMph": 150 } },
+      { "weightRange": { "min": 1201, "max": 1400 }, "v6": { "accelerationMph": 15, "maximumSpeedMph": 100 }, "v8": { "accelerationMph": 24, "maximumSpeedMph": 120 }, "v12": { "accelerationMph": 26, "maximumSpeedMph": 140 } },
+      { "weightRange": { "min": 1401, "max": 1600 }, "v6": { "accelerationMph": 14, "maximumSpeedMph": 96 }, "v8": { "accelerationMph": 22, "maximumSpeedMph": 116 }, "v12": { "accelerationMph": 24, "maximumSpeedMph": 132 } },
+      { "weightRange": { "min": 1601, "max": 1800 }, "v6": { "accelerationMph": 13, "maximumSpeedMph": 92 }, "v8": { "accelerationMph": 20, "maximumSpeedMph": 112 }, "v12": { "accelerationMph": 22, "maximumSpeedMph": 126 } },
+      { "weightRange": { "min": 1801, "max": 2000 }, "v6": { "accelerationMph": 12, "maximumSpeedMph": 88 }, "v8": { "accelerationMph": 18, "maximumSpeedMph": 108 }, "v12": { "accelerationMph": 21, "maximumSpeedMph": 120 } },
+      { "weightRange": { "min": 2001, "max": 2200 }, "v6": { "accelerationMph": 12, "maximumSpeedMph": 86 }, "v8": { "accelerationMph": 16, "maximumSpeedMph": 104 }, "v12": { "accelerationMph": 20, "maximumSpeedMph": 112 } },
+      { "weightRange": { "min": 2201, "max": 2400 }, "v6": { "accelerationMph": 10, "maximumSpeedMph": 86 }, "v8": { "accelerationMph": 15, "maximumSpeedMph": 100 }, "v12": { "accelerationMph": 18, "maximumSpeedMph": 108 } },
+      { "weightRange": { "min": 2401, "max": 2600 }, "v6": { "accelerationMph": 9, "maximumSpeedMph": 86 }, "v8": { "accelerationMph": 14, "maximumSpeedMph": 96 }, "v12": { "accelerationMph": 16, "maximumSpeedMph": 104 } },
+      { "weightRange": { "min": 2601, "max": 2800 }, "v6": { "accelerationMph": 8, "maximumSpeedMph": 82 }, "v8": { "accelerationMph": 12, "maximumSpeedMph": 92 }, "v12": { "accelerationMph": 15, "maximumSpeedMph": 100 } },
+      { "weightRange": { "min": 2801, "max": 3000 }, "v6": { "accelerationMph": 7, "maximumSpeedMph": 82 }, "v8": { "accelerationMph": 10, "maximumSpeedMph": 90 }, "v12": { "accelerationMph": 14, "maximumSpeedMph": 96 } },
+      { "weightRange": { "min": 3001, "max": 3200 }, "v6": null, "v8": { "accelerationMph": 9, "maximumSpeedMph": 88 }, "v12": { "accelerationMph": 12, "maximumSpeedMph": 92 } },
+      { "weightRange": { "min": 3201, "max": 3400 }, "v6": null, "v8": null, "v12": { "accelerationMph": 10, "maximumSpeedMph": 88 } },
+      { "weightRange": { "min": 3401, "max": 3600 }, "v6": null, "v8": null, "v12": { "accelerationMph": 9, "maximumSpeedMph": 88 } }
+    ],
+    "maximumWeightByEngine": { "v6": 3000, "v8": 3200, "v12": 3600 },
+    "brakingAndHandling": [
+      { "weightRange": { "max": 800 }, "renegade": { "brakingMph": 30, "nonHeHandlingModifier": 1, "heHitHandlingModifier": -2 }, "interceptor": { "brakingMph": 38, "nonHeHandlingModifier": 2, "heHitHandlingModifier": -2 } },
+      { "weightRange": { "min": 801, "max": 1000 }, "renegade": { "brakingMph": 26, "nonHeHandlingModifier": 1, "heHitHandlingModifier": -1 }, "interceptor": { "brakingMph": 35, "nonHeHandlingModifier": 1, "heHitHandlingModifier": -1 } },
+      { "weightRange": { "min": 1001, "max": 1200 }, "renegade": { "brakingMph": 24, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 }, "interceptor": { "brakingMph": 32, "nonHeHandlingModifier": 1, "heHitHandlingModifier": -1 } },
+      { "weightRange": { "min": 1201, "max": 1400 }, "renegade": { "brakingMph": 22, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 }, "interceptor": { "brakingMph": 30, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 } },
+      { "weightRange": { "min": 1401, "max": 1600 }, "renegade": { "brakingMph": 20, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 }, "interceptor": { "brakingMph": 28, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 } },
+      { "weightRange": { "min": 1601, "max": 1800 }, "renegade": { "brakingMph": 20, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 }, "interceptor": { "brakingMph": 26, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 } },
+      { "weightRange": { "min": 1801, "max": 2000 }, "renegade": { "brakingMph": 18, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 0 }, "interceptor": { "brakingMph": 22, "nonHeHandlingModifier": 0, "heHitHandlingModifier": 0 } },
+      { "weightRange": { "min": 2001, "max": 2200 }, "renegade": { "brakingMph": 16, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 1 }, "interceptor": { "brakingMph": 20, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 0 } },
+      { "weightRange": { "min": 2201, "max": 2400 }, "renegade": { "brakingMph": 15, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 1 }, "interceptor": { "brakingMph": 20, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 1 } },
+      { "weightRange": { "min": 2401, "max": 2600 }, "renegade": { "brakingMph": 14, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 1 }, "interceptor": { "brakingMph": 18, "nonHeHandlingModifier": -1, "heHitHandlingModifier": 1 } },
+      { "weightRange": { "min": 2601, "max": 2800 }, "renegade": { "brakingMph": 12, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 2 }, "interceptor": { "brakingMph": 16, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 1 } },
+      { "weightRange": { "min": 2801, "max": 3000 }, "renegade": { "brakingMph": 10, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 2 }, "interceptor": { "brakingMph": 15, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 2 } },
+      { "weightRange": { "min": 3001, "max": 3200 }, "renegade": { "brakingMph": 8, "nonHeHandlingModifier": -3, "heHitHandlingModifier": 2 }, "interceptor": { "brakingMph": 14, "nonHeHandlingModifier": -2, "heHitHandlingModifier": 2 } },
+      { "weightRange": { "min": 3201, "max": 3400 }, "renegade": { "brakingMph": 6, "nonHeHandlingModifier": -3, "heHitHandlingModifier": 2 }, "interceptor": { "brakingMph": 13, "nonHeHandlingModifier": -3, "heHitHandlingModifier": 2 } },
+      { "weightRange": { "min": 3401, "max": 3600 }, "renegade": { "brakingMph": 4, "nonHeHandlingModifier": -3, "heHitHandlingModifier": 2 }, "interceptor": { "brakingMph": 12, "nonHeHandlingModifier": -3, "heHitHandlingModifier": 2 } }
+    ],
+    "bikes": [
+      { "weightRange": { "max": 200 }, "brakingMph": 50, "accelerationMph": 60, "maximumSpeedMph": 125, "handlingModifier": 1 },
+      { "weightRange": { "min": 201, "max": 300 }, "brakingMph": 45, "accelerationMph": 45, "maximumSpeedMph": 115, "handlingModifier": 0 },
+      { "weightRange": { "min": 301, "max": 400 }, "brakingMph": 40, "accelerationMph": 40, "maximumSpeedMph": 105, "handlingModifier": 0 },
+      { "weightRange": { "min": 401, "max": 500 }, "brakingMph": 35, "accelerationMph": 35, "maximumSpeedMph": 100, "handlingModifier": 0 },
+      { "weightRange": { "min": 501, "max": 600 }, "brakingMph": 30, "accelerationMph": 30, "maximumSpeedMph": 95, "handlingModifier": -1 },
+      { "weightRange": { "min": 601, "max": 700 }, "brakingMph": 28, "accelerationMph": 25, "maximumSpeedMph": 90, "handlingModifier": -1 },
+      { "weightRange": { "min": 701, "max": 800 }, "brakingMph": 26, "accelerationMph": 20, "maximumSpeedMph": 85, "handlingModifier": -1 },
+      { "weightRange": { "min": 801, "max": 900 }, "brakingMph": 24, "accelerationMph": 18, "maximumSpeedMph": 80, "handlingModifier": -2 },
+      { "weightRange": { "min": 901, "max": 1000 }, "brakingMph": 22, "accelerationMph": 16, "maximumSpeedMph": 75, "handlingModifier": -3 }
+    ]
+  },
+  "uncertainCells": [
+    {
+      "path": "doubleLoads.lightweightWeapons[minigun7_62mm].addWeight",
+      "sourcePage": 43,
+      "status": "resolvedByUserProofread",
+      "value": 75,
+      "reason": "User proofread note confirms +75 added weight."
+    }
+  ]
+}

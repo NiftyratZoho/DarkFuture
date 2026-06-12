@@ -1,0 +1,721 @@
+{
+  "id": "core-damage-critical-tables",
+  "status": "cleanedDraft",
+  "source": {
+    "book": "Dark Future Rulebook",
+    "pages": [28, 29, 30, 31, 34, 35],
+    "extractionFiles": [
+      "docs/rules/core/05-damage.md",
+      "docs/rules/core/06-passive-damage.md",
+      "docs/rules/core/07-critical-hits.md"
+    ],
+    "pageImages": [
+      "_analysis/df_pages/df-28.jpg",
+      "_analysis/df_pages/df-29.jpg",
+      "_analysis/df_pages/df-34.jpg",
+      "_analysis/df_pages/df-35.jpg"
+    ]
+  },
+  "coreDamageProcedure": {
+    "ordinaryDamageFormula": "d6 + damageModifier - armour",
+    "criticalTrigger": {
+      "damageDieNatural": 6,
+      "appliesEvenIfOrdinaryDamageIsZero": true
+    },
+    "multipleDamageOrder": [
+      "ordinaryDamage",
+      "criticalHits",
+      "terminalDamage",
+      "hazardRolls"
+    ],
+    "multipleHits": {
+      "resolveEachHitFullyBeforeNext": true,
+      "afterZeroDamageStillRollForNaturalSixCriticals": true
+    }
+  },
+  "vehicleDamage": [
+    {
+      "vehicleTemplateId": "interceptor",
+      "startingDamage": 24,
+      "coreArmour": 4,
+      "damageIncrements": [18, 12, 6]
+    },
+    {
+      "vehicleTemplateId": "renegade",
+      "startingDamage": 18,
+      "coreArmour": 3,
+      "damageIncrements": [12, 8, 4]
+    },
+    {
+      "vehicleTemplateId": "bike",
+      "startingDamage": 9,
+      "coreArmour": 2,
+      "damageIncrements": [6, 3]
+    }
+  ],
+  "damageIncrementEffect": {
+    "maxMphDelta": -10,
+    "accelerationMphDelta": -3,
+    "handlingDelta": -1,
+    "applyWhenFallsBelowThreshold": true,
+    "startingDamageIsNotThreshold": true
+  },
+  "weaponDamageCharacteristics": [
+    { "weaponId": "lightweightMachineGun", "damageModifier": 1, "tags": [] },
+    { "weaponId": "lightweightGrenadeLauncher", "damageModifier": 2, "tags": ["HE"] },
+    { "weaponId": "lightweightLaser", "damageModifier": 1, "tags": [] },
+    { "weaponId": "40mmRag", "damageModifier": 8, "tags": ["HE"] },
+    { "weaponId": "6mmMachineGun", "damageModifier": 1, "tags": [] },
+    { "weaponId": "15mmAutocannon", "damageModifier": 3, "tags": [] },
+    { "weaponId": "20mmGrenadeLauncher", "damageModifier": 2, "tags": ["HE"] },
+    { "weaponId": "combatLaser", "damageModifier": 3, "tags": [] },
+    { "weaponId": "chainGun", "damageModifier": 5, "tags": [] },
+    { "weaponId": "40mmGrenadeLauncher", "damageModifier": 8, "tags": ["HE"] },
+    { "weaponId": "heavyLaser", "damageModifier": 6, "tags": [] },
+    { "weaponId": "missilePodHighExplosive", "damageModifier": 8, "tags": ["HE"] }
+  ],
+  "armourRules": {
+    "coreUniformArmour": true,
+    "whiteLineFeverFacingArmour": true,
+    "materials": ["carbonSteel", "carbonPlastic"],
+    "carFacingMaxArmour": 6,
+    "bikeFacingMaxArmour": {
+      "front": 6,
+      "rear": 6,
+      "side": 4,
+      "floor": 6,
+      "roof": 3
+    },
+    "apResolution": {
+      "tag": "AP",
+      "carbonSteelIgnoredWhenDamageRatingGteCarbonSteelArmour": true,
+      "carbonSteelCountsHalfRoundedDownWhenTotalArmourGreaterThanDamageRating": true,
+      "carbonPlasticAlwaysAppliesFull": true,
+      "source": {
+        "book": "White Line Fever",
+        "pages": [24, 25, 30]
+      }
+    }
+  },
+  "passiveDamageEffects": [
+    {
+      "passiveMarkerId": "oil",
+      "ordinaryDamage": false,
+      "effects": [
+        { "kind": "handlingDelta", "value": -1, "maxApplications": 2 },
+        { "kind": "hazardEvent", "timing": "afterOtherHazardsForSameMove" }
+      ],
+      "safetyLimits": {
+        "straightNoBrakeNoAccelerate": 60,
+        "otherMoveOrCurve": 30,
+        "afterPanicBrakeFromOtherHazard": 30
+      },
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [30]
+      }
+    },
+    {
+      "passiveMarkerId": "patternMine",
+      "ordinaryDamage": true,
+      "damageModifier": 3,
+      "tags": [],
+      "effects": [
+        { "kind": "removeMarker" },
+        { "kind": "hazardEvent", "ifMphGreaterThan": 50 }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [30]
+      }
+    },
+    {
+      "passiveMarkerId": "smoke",
+      "ordinaryDamage": false,
+      "effects": [
+        { "kind": "hazardEvent", "ifMphGreaterThan": 60 }
+      ],
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [30, 31]
+      }
+    },
+    {
+      "passiveMarkerId": "spikes",
+      "ordinaryDamage": false,
+      "immuneAtMphOrLess": 20,
+      "deploymentOwnerRoll": {
+        "kind": "d6",
+        "rows": [
+          { "range": { "min": 1, "max": 5 }, "result": "noEffect" },
+          {
+            "range": { "min": 6, "max": 6 },
+            "result": "criticalHit",
+            "target": "wheels",
+            "damageModifier": 0
+          }
+        ]
+      },
+      "source": {
+        "book": "Dark Future Rulebook",
+        "pages": [31]
+      }
+    }
+  ],
+  "doublePassiveHitRules": [
+    {
+      "passiveMarkerId": "oil",
+      "condition": "two identical markers hit by straight-ahead move",
+      "result": "resolveTwoOilHits"
+    },
+    {
+      "passiveMarkerId": "patternMine",
+      "condition": "two identical markers hit by straight-ahead move",
+      "result": "resolveTwoDamageHitsOneHazard",
+      "hazardSafetyLimit": 30
+    },
+    {
+      "passiveMarkerId": "smoke",
+      "condition": "two identical markers hit by straight-ahead move",
+      "result": "oneNormalSmokeHazard",
+      "shootingPenaltyWhenFiringOutFromUnderBothMarkers": -1
+    },
+    {
+      "passiveMarkerId": "spikes",
+      "condition": "two identical markers hit by straight-ahead move",
+      "result": "singleSpikeHit"
+    },
+    {
+      "passiveMarkerId": "mixed",
+      "condition": "two different passive markers hit in one move",
+      "result": "resolveEachSeparately"
+    }
+  ],
+  "criticalResultTables": {
+    "driver": [
+      {
+        "range": { "min": 1, "max": 2 },
+        "resultId": "driverHurt",
+        "effects": [
+          { "kind": "hazardEvent", "ifMphGreaterThan": 40 }
+        ]
+      },
+      {
+        "range": { "min": 3, "max": 4 },
+        "resultId": "driverInjured",
+        "effects": [
+          { "kind": "driveSkillDelta", "value": -1 },
+          { "kind": "hazardEvent", "ifMphGreaterThan": 20 }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 5 },
+        "resultId": "limbDisabled",
+        "effects": [
+          { "kind": "rollLimbType", "even": "arm", "odd": "leg" },
+          { "kind": "rollSide", "odd": "left", "even": "right" },
+          { "kind": "driveSkillDeltaByLimb", "arm": -2, "leg": -1 },
+          { "kind": "automaticControlLoss" },
+          { "kind": "controlLossTestAtStartOfNextMove" },
+          { "kind": "noDriverIfBothArmsOrBothLegsDisabled" }
+        ]
+      },
+      {
+        "range": { "min": 6, "max": 6 },
+        "resultId": "driverKo",
+        "effects": [
+          { "kind": "noDriver" }
+        ]
+      }
+    ],
+    "noDriver": {
+      "effects": [
+        { "kind": "automaticControlLoss" },
+        { "kind": "controlLossModifier", "value": 2 },
+        { "kind": "setDriveSkill", "value": 0 },
+        { "kind": "speedDeltaAfterEachMove", "value": -5 },
+        { "kind": "automaticCrashAfterMoveEndingOnCurve" }
+      ]
+    },
+    "engine": [
+      {
+        "range": { "min": 1, "max": 1 },
+        "resultId": "engineBlock",
+        "confirmationRoll": {
+          "kind": "d6PlusHitDamage",
+          "successIfGte": 7,
+          "successEffect": "engineDisabled",
+          "failureEffect": "criticalWasted"
+        }
+      },
+      {
+        "range": { "min": 2, "max": 2 },
+        "resultId": "carburettor",
+        "effects": [
+          { "kind": "halveCurrentAcceleration", "round": "down" }
+        ]
+      },
+      {
+        "range": { "min": 3, "max": 3 },
+        "resultId": "brakeCylinder",
+        "effects": [
+          { "kind": "setBrakingMph", "value": 5 }
+        ]
+      },
+      {
+        "range": { "min": 4, "max": 4 },
+        "resultId": "generator",
+        "effects": [
+          { "kind": "disableLasers" },
+          { "kind": "disableTurrets" },
+          { "kind": "disableGuidanceSystems" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 5 },
+        "resultId": "ignition",
+        "effects": [
+          { "kind": "engineDisabled" }
+        ]
+      },
+      {
+        "range": { "min": 6, "max": 6 },
+        "resultId": "engineExplosion",
+        "effects": [
+          { "kind": "engineDisabled" },
+          { "kind": "createHit", "damageModifier": 2, "tags": ["HE"], "facing": "side" },
+          { "kind": "hazardEvent", "safetyLimitMph": 50 }
+        ]
+      }
+    ],
+    "disabledEngine": {
+      "effects": [
+        { "kind": "setAccelerationMph", "value": 0 },
+        { "kind": "speedDeltaAfterEachMove", "value": -5 },
+        { "kind": "allowOneLastLaserShotIfUnfiredThisTurn" },
+        { "kind": "disableTurrets" },
+        { "kind": "disableMissileGuidance" }
+      ]
+    },
+    "wheels": [
+      {
+        "range": { "min": 1, "max": 1 },
+        "resultId": "brakePipe",
+        "effects": [
+          { "kind": "halveCurrentBraking", "round": "down" }
+        ]
+      },
+      {
+        "range": { "min": 2, "max": 3 },
+        "resultId": "steeringOrAxleHit",
+        "frontWheels": {
+          "confirmationRoll": {
+            "kind": "d6PlusHitDamage",
+            "successIfGte": 6,
+            "successEffect": { "kind": "setHandling", "value": 0 },
+            "failureEffect": "criticalWasted"
+          }
+        },
+        "rearWheels": {
+          "confirmationRoll": {
+            "kind": "d6PlusHitDamage",
+            "successIfGte": 7,
+            "successEffect": "brokenAxle",
+            "failureEffect": "criticalWasted"
+          }
+        }
+      },
+      {
+        "range": { "min": 4, "max": 4 },
+        "resultId": "splitTyre",
+        "effects": [
+          {
+            "kind": "afterEachMoveRoll",
+            "condition": "rollLessThanCurrentSpeedFactor",
+            "successEffect": "tyreDestroyed",
+            "failureEffect": "continueChecking"
+          }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 6 },
+        "resultId": "tyreDestroyed",
+        "effects": [
+          { "kind": "handlingDelta", "value": -2 },
+          { "kind": "maxMphBecomesLowerOf", "values": ["currentMaxMinus10", 60] },
+          { "kind": "hazardEvent", "safetyLimitMph": 20 },
+          { "kind": "hazardIfCurrentMphAboveNewMax", "safetyLimit": "newMaxMph" }
+        ]
+      }
+    ],
+    "brokenAxle": {
+      "effects": [
+        { "kind": "handlingDelta", "value": -2 },
+        { "kind": "setAccelerationMph", "value": 0 },
+        { "kind": "hazardEvent", "safetyLimitMph": 40, "timing": "afterAllSubsequentMoves" },
+        { "kind": "becomesWreckWhenHalted" }
+      ]
+    },
+    "bodywork": [
+      {
+        "range": { "min": 1, "max": 1 },
+        "resultId": "transmission",
+        "confirmationRoll": {
+          "kind": "d6PlusHitDamage",
+          "successIfGte": 7,
+          "successEffect": { "kind": "setAccelerationMph", "value": 0 },
+          "failureEffect": "criticalWasted"
+        }
+      },
+      {
+        "range": { "min": 2, "max": 2 },
+        "resultId": "vduDestroyed",
+        "effects": [
+          { "kind": "disableTurrets" },
+          { "kind": "disableMissilePods" }
+        ]
+      },
+      {
+        "range": { "min": 3, "max": 3 },
+        "resultId": "fuelLine",
+        "effects": [
+          { "kind": "leakingFuel" },
+          {
+            "kind": "endOfTurnRoll",
+            "triggerOn": 1,
+            "effect": "engineDisabled"
+          }
+        ]
+      },
+      {
+        "range": { "min": 4, "max": 4 },
+        "resultId": "brakeLine",
+        "effects": [
+          { "kind": "halveCurrentBraking", "round": "down" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 5 },
+        "resultId": "weaponLinkSevered",
+        "effects": [
+          { "kind": "rerollWeaponHitOnSameFacingMatrixOnce" },
+          { "kind": "selectedWeaponOutOfAction" },
+          { "kind": "criticalWastedIfSelectedMountEmpty" }
+        ]
+      },
+      {
+        "range": { "min": 6, "max": 6 },
+        "resultId": "screenShattered",
+        "effects": [
+          { "kind": "hazardEvent", "safetyLimitMph": 30 }
+        ]
+      }
+    ],
+    "weapons": [
+      {
+        "range": { "min": 1, "max": 2 },
+        "resultId": "weaponDamaged",
+        "effects": [
+          { "kind": "weaponAccuracyDelta", "value": -2 },
+          {
+            "kind": "preFireJamRoll",
+            "odd": "doesNotFireThisAttempt",
+            "even": "firesThisAttempt",
+            "persistent": true
+          }
+        ]
+      },
+      {
+        "range": { "min": 3, "max": 3 },
+        "resultId": "weaponJammed",
+        "effects": [
+          {
+            "kind": "preFireUnjamRoll",
+            "successOn": 6,
+            "failureRange": { "min": 1, "max": 5 }
+          }
+        ]
+      },
+      {
+        "range": { "min": 4, "max": 4 },
+        "resultId": "commandLinkSevered",
+        "effects": [
+          { "kind": "weaponCannotBeOperated" }
+        ]
+      },
+      {
+        "range": { "min": 5, "max": 6 },
+        "resultId": "weaponDestroyed",
+        "effects": [
+          { "kind": "weaponDestroyed" },
+          {
+            "kind": "ifWeaponDamageHasTag",
+            "tag": "HE",
+            "roll": {
+              "kind": "d6",
+              "even": "noExtraDamage",
+              "odd": { "kind": "createHit", "damageModifier": 8, "tags": ["HE"] }
+            }
+          }
+        ]
+      }
+    ],
+    "fuel": [
+      {
+        "range": { "min": 1, "max": 3 },
+        "resultId": "fuelHoled",
+        "effects": [
+          { "kind": "leakingFuel" },
+          {
+            "kind": "endOfTurnRoll",
+            "triggerOn": 1,
+            "effect": "engineDisabled"
+          }
+        ]
+      },
+      {
+        "range": { "min": 4, "max": 6 },
+        "resultId": "fuelExplodes",
+        "effects": [
+          { "kind": "createHit", "damageModifier": 8, "tags": ["HE"], "facing": "rear" },
+          { "kind": "engineDisabled" }
+        ]
+      }
+    ],
+    "tailGunner": [
+      {
+        "range": { "min": 1, "max": 2 },
+        "resultId": "tailGunnerInjured",
+        "effects": [
+          { "kind": "tailGunnerWeaponAccuracyDelta", "value": -1 }
+        ],
+        "source": { "book": "White Line Fever", "pages": [26] }
+      },
+      {
+        "range": { "min": 3, "max": 3 },
+        "resultId": "tailGunnerSeriouslyInjured",
+        "effects": [
+          { "kind": "tailGunnerWeaponAccuracyDelta", "value": -1 },
+          { "kind": "tailGunnerWeaponMaxShotsPerTurn", "value": 1 }
+        ],
+        "source": { "book": "White Line Fever", "pages": [26] }
+      },
+      {
+        "range": { "min": 4, "max": 6 },
+        "resultId": "tailGunnerKo",
+        "effects": [
+          { "kind": "tailGunnerWeaponCannotFire" }
+        ],
+        "source": { "book": "White Line Fever", "pages": [26] }
+      }
+    ]
+  },
+  "terminalDamage": {
+    "trigger": "hitRemovesLastDamagePoint",
+    "effects": [
+      { "kind": "engineDisabled" },
+      { "kind": "allWeaponsStopWorking" },
+      { "kind": "setHandling", "value": 0 },
+      {
+        "kind": "terminalExplosionRoll",
+        "roll": {
+          "kind": "d6",
+          "explodeOn": 1,
+          "noExplosionRange": { "min": 2, "max": 6 }
+        },
+        "explosionEffect": "driverCritical",
+        "onlyUntilVehicleHasExplodedOnce": true
+      }
+    ],
+    "source": {
+      "book": "Dark Future Rulebook",
+      "pages": [35]
+    }
+  },
+  "whiteLineFeverEquipmentDamageEffects": {
+    "nox": {
+      "explosionEffect": {
+        "kind": "engineExplosionCriticalEffect",
+        "engineDisabledRegardless": true
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [17]
+      }
+    },
+    "reinforcedTyres": {
+      "trigger": "wheelCritical",
+      "roll": {
+        "kind": "d6",
+        "even": "criticalCancelled",
+        "odd": "criticalResolvesNormally"
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [23]
+      }
+    },
+    "rocketBoosterCriticalExplosion": {
+      "effects": [
+        { "kind": "createHit", "damageModifier": 8, "tags": ["HE"] },
+        { "kind": "hazardEvent", "safetyLimitMph": 30 },
+        { "kind": "disableLinkedTwinPartnerIfOneBoosterDisabled" }
+      ],
+      "source": {
+        "book": "White Line Fever",
+        "pages": [22]
+      }
+    },
+    "tailGunnerCriticalRouting": {
+      "roofTurretCritical": {
+        "odd": "tailGunner",
+        "even": "tailGunWeapon"
+      },
+      "driverCritical": {
+        "odd": "driver",
+        "even": "tailGunner"
+      },
+      "source": {
+        "book": "White Line Fever",
+        "pages": [26]
+      }
+    }
+  },
+  "whiteLineFeverAmmunitionDamage": [
+    {
+      "ammoId": "depletedUraniumAutocannon",
+      "weaponId": "15mmAutocannon",
+      "damageModifier": 3,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [30] }
+    },
+    {
+      "ammoId": "depletedUraniumMinigun",
+      "weaponId": "minigun",
+      "damageModifier": 5,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [30] }
+    },
+    {
+      "ammoId": "depletedUraniumChainGun",
+      "weaponId": "chainGun",
+      "damageModifier": 6,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [30] }
+    },
+    {
+      "ammoId": "shapedPlastic40mmGrenadeLauncher",
+      "weaponId": "40mmGrenadeLauncher",
+      "damageModifier": 6,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [31] }
+    },
+    {
+      "ammoId": "shapedPlastic40mmRag",
+      "weaponId": "40mmRag",
+      "damageModifier": 6,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [31] }
+    },
+    {
+      "ammoId": "phosphor20mmGrenadeLauncher",
+      "weaponId": "20mmGrenadeLauncher",
+      "damageModifier": 0,
+      "tags": ["phosphor", "noOrdinaryDamage", "persistentSmoke"],
+      "source": { "book": "White Line Fever", "pages": [31] }
+    },
+    {
+      "ammoId": "phosphor40mmGrenadeLauncher",
+      "weaponId": "40mmGrenadeLauncher",
+      "damageModifier": 0,
+      "tags": ["phosphor", "noOrdinaryDamage", "persistentSmoke"],
+      "source": { "book": "White Line Fever", "pages": [31] }
+    },
+    {
+      "ammoId": "phosphor40mmRag",
+      "weaponId": "40mmRag",
+      "damageModifier": 0,
+      "tags": ["phosphor", "noOrdinaryDamage", "persistentSmoke"],
+      "source": { "book": "White Line Fever", "pages": [31] }
+    }
+  ],
+  "whiteLineFeverMissileDamage": [
+    {
+      "missileId": "cannister",
+      "hitGeneration": {
+        "targetSectionRollPerVehicle": {
+          "kind": "d6",
+          "oddHits": 1,
+          "evenHits": 2
+        }
+      },
+      "damageModifier": 3,
+      "tags": [],
+      "facing": "roof",
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "missileId": "highExplosive",
+      "damageModifier": 8,
+      "tags": ["HE"],
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "missileId": "hivap",
+      "damageModifier": {
+        "kind": "rangeBased",
+        "rangeSpacesUpTo25": "rangeSpaces",
+        "maximum": 15,
+        "beyond25": "subtractOnePerAdditionalSpace",
+        "cannotHitAtRangeGte": 40
+      },
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "missileId": "shapedPlastic",
+      "damageModifier": 6,
+      "tags": ["AP"],
+      "source": { "book": "White Line Fever", "pages": [28] }
+    },
+    {
+      "missileId": "smoke",
+      "damageModifier": 0,
+      "tags": ["noOrdinaryDamage", "persistentSmoke"],
+      "source": { "book": "White Line Fever", "pages": [29] }
+    },
+    {
+      "missileId": "tgsm",
+      "submunitionCountRoll": [
+        { "range": { "min": 1, "max": 2 }, "hits": 4 },
+        { "range": { "min": 3, "max": 4 }, "hits": 5 },
+        { "range": { "min": 5, "max": 6 }, "hits": 6 }
+      ],
+      "perSubmunition": {
+        "damageModifier": 4,
+        "tags": ["HE"],
+        "facingRoll": [
+          { "range": { "min": 1, "max": 2 }, "facing": "roof" },
+          { "range": { "min": 3, "max": 3 }, "facing": "leftSide" },
+          { "range": { "min": 4, "max": 4 }, "facing": "rightSide" },
+          { "range": { "min": 5, "max": 5 }, "facing": "front" },
+          { "range": { "min": 6, "max": 6 }, "facing": "rear" }
+        ]
+      },
+      "source": { "book": "White Line Fever", "pages": [29] }
+    }
+  ],
+  "proofreadBlockers": [
+    {
+      "id": "tyreDestroyedMaxSpeedWording",
+      "source": { "book": "Dark Future Rulebook", "pages": [34] },
+      "status": "resolvedByPageImage",
+      "note": "Page image confirms maximum speed becomes the slower of current maximum minus 10 mph or 60 mph."
+    },
+    {
+      "id": "terminalCriticalsAfterExplosion",
+      "source": { "book": "Dark Future Rulebook", "pages": [35] },
+      "note": "Confirm whether natural-six critical checks continue after a vehicle has already exploded."
+    }
+  ]
+}
