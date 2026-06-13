@@ -13,7 +13,7 @@ from .combat_tables import (
     resolve_damage as table_resolve_damage,
     resolve_hazard_test,
 )
-from .data_loader import speed_phase_rows, track_inventory, vehicle_template
+from .data_loader import load_rule_json, speed_phase_rows, track_inventory, vehicle_template
 from .track import (
     LANE_COUNT,
     MAX_LANE_PAIR,
@@ -97,6 +97,8 @@ class Vehicle:
     rocket_booster_cruise_mph: int | None = None
     rocket_booster_disabled: bool = False
     action_cancelled_this_phase: bool = False
+    hostile_systems: list[str] = field(default_factory=list)
+    friendly_fire_only: bool = False
 
     @property
     def lane_rows(self) -> tuple[int, int]:
@@ -189,6 +191,11 @@ CAMPAIGN_SOURCE = SourceRef(
     "White Dwarf 124/125 Dead Man's Curve",
     (18, 19, 20, 68, 69, 70),
     "Rough campaign settlement loop for agency/gang persistence.",
+)
+HACK_SOURCE = SourceRef(
+    "White Dwarf 125 Dead Man's Curve",
+    (75,),
+    "Hostile computer-system effects from the extracted campaign hacking sequence.",
 )
 CURVE_SOURCE = SourceRef(
     "Dark Future Rulebook",
@@ -489,6 +496,38 @@ def apply_rocket_booster_phase_update(state: GameState, vehicle: Vehicle) -> Non
             state.logs.append(LogEntry(f"{vehicle.label} decelerates toward normal maximum: {old} -> {vehicle.mph} mph.", "rocket", ROCKET_BOOSTER_SOURCE))
 
 
+def hostile_system_effect(system_id: str) -> dict:
+    effects = load_rule_json("campaign-sequence.json").get("hackHostileSystemEffects", {})
+    row = effects.get(system_id)
+    if not isinstance(row, dict):
+        raise ValueError(f"unknown hostile system {system_id}")
+    return dict(row)
+
+
+def apply_hostile_system_effect(state: GameState, vehicle: Vehicle, system_id: str) -> None:
+    effect = hostile_system_effect(system_id)
+    if system_id in vehicle.hostile_systems:
+        state.logs.append(LogEntry(f"{vehicle.label}'s {system_id} is already hostile.", "hack", HACK_SOURCE))
+        return
+    vehicle.hostile_systems.append(system_id)
+    if "handlingDelta" in effect:
+        vehicle.handling += int(effect["handlingDelta"])
+    if "accelerationMphDelta" in effect:
+        vehicle.acceleration_mph = max(0, vehicle.acceleration_mph + int(effect["accelerationMphDelta"]))
+    if "brakingMphDelta" in effect:
+        vehicle.braking_mph = max(0, vehicle.braking_mph + int(effect["brakingMphDelta"]))
+    if effect.get("mustFireAtFriendlyTargetsOnly"):
+        vehicle.friendly_fire_only = True
+    vehicle.critical_notes.append(f"hostile {system_id}")
+    state.logs.append(
+        LogEntry(
+            f"{vehicle.label}'s {system_id} turns hostile: handling {vehicle.handling}, accel {vehicle.acceleration_mph}, brake {vehicle.braking_mph}.",
+            "hack",
+            HACK_SOURCE,
+        )
+    )
+
+
 def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Action]:
     actor = vehicle or active_vehicle(state)
     if state.game_over:
@@ -517,7 +556,7 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
         ]
         if state.phase != 1 or actor.template_id == "bike":
             actions = [action for action in actions if action.id != "reverse"]
-        if actor.weapon_disabled or actor.driver_skill <= 0:
+        if actor.weapon_disabled or actor.driver_skill <= 0 or (actor.friendly_fire_only and not shoot_targets(state, actor)):
             actions = [action for action in actions if action.id != "shoot"]
         return actions
     actions = [
@@ -544,7 +583,7 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
                 actions.insert(3, Action(action_id, label, "move", "Move forward, then shift one lane pair."))
     if _can_offer_u_turn(state, actor):
         actions.insert(5, Action("u_turn", "U-Turn", "move", "Turn through 180 degrees using the U-turn speed bands."))
-    if actor.weapon_disabled or actor.driver_skill <= 0:
+    if actor.weapon_disabled or actor.driver_skill <= 0 or (actor.friendly_fire_only and not shoot_targets(state, actor)):
         actions = [action for action in actions if action.id != "shoot"]
     return actions
 
@@ -1060,10 +1099,15 @@ def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -
 def shoot_targets(state: GameState, shooter: Vehicle) -> list[Vehicle]:
     if shooter.weapon_disabled or shooter.driver_skill <= 0:
         return []
+    target_side_matches = (
+        (lambda target: target.side == shooter.side and target.id != shooter.id)
+        if shooter.friendly_fire_only
+        else (lambda target: target.side != shooter.side)
+    )
     return [
         target
         for target in state.vehicles
-        if target.side != shooter.side
+        if target_side_matches(target)
         and not target.destroyed
         and abs(target.lane_pair - shooter.lane_pair) <= 1
         and _ahead_of(state, shooter, target)

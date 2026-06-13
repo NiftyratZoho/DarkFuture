@@ -6,6 +6,7 @@ from dark_future.engine import (
     ai_choose_action,
     apply_action,
     apply_critical_effect,
+    apply_hostile_system_effect,
     apply_rocket_booster_critical,
     choose_next_actor,
     curve_safety_limit,
@@ -13,6 +14,7 @@ from dark_future.engine import (
     initial_track_layout,
     load_game,
     legal_actions,
+    make_vehicle,
     new_game,
     phase_moves,
     save_game,
@@ -503,6 +505,47 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(renegade.damage, 12)
         self.assertTrue(any("rocket booster explosion" in entry.message and entry.kind == "damage" for entry in state.logs))
         self.assertTrue(any(entry.kind == "hazard" and "rocket booster explosion" in entry.message for entry in state.logs))
+
+    def test_hostile_drive_system_applies_extracted_stat_penalties(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        base = (vehicle.handling, vehicle.acceleration_mph, vehicle.braking_mph)
+
+        apply_hostile_system_effect(state, vehicle, "computerDrive")
+
+        self.assertEqual(vehicle.handling, base[0] - 1)
+        self.assertEqual(vehicle.acceleration_mph, base[1] - 5)
+        self.assertEqual(vehicle.braking_mph, base[2] - 5)
+        self.assertIn("computerDrive", vehicle.hostile_systems)
+        self.assertTrue(any(entry.kind == "hack" for entry in state.logs))
+
+    def test_hostile_fire_computer_forces_friendly_only_targets(self):
+        state = new_game()
+        shooter = vehicle_by_id(state, "agency-1")
+        enemy = vehicle_by_id(state, "outlaw-1")
+        enemy.section = shooter.section
+        enemy.space = shooter.space + 2
+        enemy.lane_pair = shooter.lane_pair
+        friendly = make_vehicle(
+            "agency-2",
+            "Wingman",
+            "agency",
+            "interceptor",
+            shooter.section,
+            shooter.space + 1,
+            shooter.lane_pair,
+            1,
+            40,
+        )
+
+        self.assertIn(enemy, shoot_targets(state, shooter))
+        state.vehicles.append(friendly)
+
+        apply_hostile_system_effect(state, shooter, "missileFireComputer")
+
+        self.assertNotIn(enemy, shoot_targets(state, shooter))
+        self.assertEqual(shoot_targets(state, shooter), [friendly])
+        self.assertIn("shoot", {action.id for action in legal_actions(state, shooter)})
 
     def test_tyre_destroyed_critical_uses_lower_of_current_max_minus_ten_and_sixty(self):
         state = new_game()

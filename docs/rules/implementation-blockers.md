@@ -292,12 +292,12 @@
 
 ### CP-006 Hacking and system hostility
 
-- Status: `data-ready`
+- Status: `resolved`
 - Source to check: White Dwarf 125 p. 75.
-- Blocker type: code implementation missing.
+- Blocker type: none.
 - Missing information: none for the hostile-system summary now captured.
-- Blocks implementation: tactical code integration for hostile computer behaviour.
-- Current code behaviour: campaign sequence data records robotic drive, computer drive, missile fire computer, and turret fire computer hostility effects; tactical hostile-system effects are not implemented.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: tactical hostile-system effects are data-driven from `data/rules/campaign-sequence.json`; hostile robotic/computer drive changes handling, acceleration, and braking, and hostile missile/turret fire computers force friendly-only targeting.
 - User notes:
 
 ### SC-001 Scenario diagram setup
