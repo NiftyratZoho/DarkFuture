@@ -196,6 +196,15 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "steady")
         self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (1, 2, 4))
 
+    def test_hold_still_makes_compulsory_forward_move_for_moving_vehicle(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+
+        apply_action(state, "wait")
+
+        self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (1, 2, 4))
+        self.assertTrue(any("compulsory forward move" in entry.message for entry in state.logs))
+
     def test_drift_changes_lane_after_forward_move(self):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")

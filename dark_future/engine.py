@@ -1453,7 +1453,12 @@ def apply_action(state: GameState, action_id: str) -> None:
         advance_phase(state)
         return
     if action_id == "wait":
-        state.logs.append(LogEntry(f"{vehicle.label} holds position.", "action"))
+        if vehicle.mph > 0 and phase_moves(vehicle.mph, state.phase) > 0:
+            state.logs.append(LogEntry(f"{vehicle.label} declares no action and makes the compulsory forward move.", "action", MOVE_SOURCE))
+            if _resolve_forced_straight_move(state, vehicle, "no action"):
+                return
+        else:
+            state.logs.append(LogEntry(f"{vehicle.label} holds position.", "action"))
         _finish_activation(state, vehicle)
         return
     if action_id == "regain_control":
