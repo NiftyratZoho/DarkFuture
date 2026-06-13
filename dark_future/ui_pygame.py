@@ -145,6 +145,7 @@ class App:
         self.selected_catalog_id: str | None = None
         self.selected_design_index = 0
         self.board_zoom = 1.0
+        self.log_scroll = 0
         self.design_specs = self._default_design_specs()
         self.design_status = "Design library loaded from defaults."
         self.ui_status = "Choose Mission, then click an action button or press 1-9."
@@ -238,7 +239,9 @@ class App:
                     self._apply_game_action(self.action_buttons[index].action_id)
         elif event.type == pygame.MOUSEWHEEL:
             pos = pygame.Vector2(self._display_to_canvas(pygame.mouse.get_pos()))
-            if self._board_view_rect().collidepoint(pos) and self._current_screen() in {"tactical", "debug"}:
+            if self._log_rect().collidepoint(pos) and self._current_screen() not in {"home", "mission_menu", "mission_new", "mission_load"}:
+                self._scroll_log(event.y)
+            elif self._board_view_rect().collidepoint(pos) and self._current_screen() in {"tactical", "debug"}:
                 self._zoom_board(event.y)
         elif event.type == pygame.VIDEORESIZE:
             self.display = pygame.display.set_mode(event.size, pygame.RESIZABLE)
@@ -1109,13 +1112,42 @@ class App:
             self.screen.blit(self.small.render(line, True, COLORS["debug"]), (x + 16, 500 + i * 22))
 
     def _draw_log(self) -> None:
-        log = build_log_model(self.state)
-        pygame.draw.rect(self.screen, COLORS["panel"], (16, LOG_Y, 1240, 190), border_radius=4)
+        log = build_log_model(self.state, limit=len(self.state.logs))
+        rect = self._log_rect()
+        pygame.draw.rect(self.screen, COLORS["panel"], rect, border_radius=4)
         self.screen.blit(self.font.render(log.title, True, COLORS["text"]), (32, LOG_Y + 18))
-        for i, entry in enumerate(log.entries):
+        entries = self._visible_log_entries(log.entries)
+        previous_clip = self.screen.get_clip()
+        self.screen.set_clip(rect)
+        for i, entry in enumerate(entries):
             color = COLORS["debug"] if entry.kind in {"phase", "activation"} else COLORS["text"]
             text = f"[{entry.kind}] {entry.message}"
             self.screen.blit(self.small.render(text[:148], True, color), (32, LOG_Y + 50 + i * 18))
+        self.screen.set_clip(previous_clip)
+        if self._max_log_scroll(log.entries) > 0:
+            position = f"{self.log_scroll + 1}-{self.log_scroll + len(entries)} / {len(log.entries)}"
+            self.screen.blit(self.tiny.render(position, True, COLORS["muted"]), (1130, LOG_Y + 20))
+
+    def _log_rect(self) -> pygame.Rect:
+        return pygame.Rect(16, LOG_Y, 1240, 190)
+
+    def _log_visible_line_count(self) -> int:
+        return 7
+
+    def _max_log_scroll(self, entries) -> int:
+        return max(0, len(entries) - self._log_visible_line_count())
+
+    def _scroll_log(self, wheel_delta: int) -> None:
+        max_scroll = self._max_log_scroll(self.state.logs)
+        self.log_scroll = max(0, min(max_scroll, self.log_scroll + wheel_delta))
+
+    def _visible_log_entries(self, entries):
+        visible = self._log_visible_line_count()
+        max_scroll = self._max_log_scroll(entries)
+        self.log_scroll = max(0, min(max_scroll, self.log_scroll))
+        end = len(entries) - self.log_scroll
+        start = max(0, end - visible)
+        return entries[start:end]
 
     def _present(self) -> None:
         display_w, display_h = self.display.get_size()

@@ -9,7 +9,7 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 import pygame
 
 from dark_future import ui_pygame
-from dark_future.engine import save_game
+from dark_future.engine import LogEntry, save_game
 from dark_future.track_layout import curve_lane_boundary_radii
 
 
@@ -184,6 +184,18 @@ class PygameMissionFlowTests(unittest.TestCase):
 
         self.assertEqual(tuple(app.state.track_section_types), before)
         self.assertNotIn("Track", [button.label for button in app.buttons])
+
+    def test_log_panel_scrolls_independently_of_board_zoom(self):
+        app = ui_pygame.App()
+        app._set_screen("tactical")
+        app.state.logs = [LogEntry(f"line {index}", "test") for index in range(12)]
+        before_zoom = app.board_zoom
+
+        app._scroll_log(3)
+
+        self.assertEqual(app.board_zoom, before_zoom)
+        self.assertEqual(app.log_scroll, 3)
+        self.assertEqual([entry.message for entry in app._visible_log_entries(tuple(app.state.logs))][0], "line 2")
 
 
 if __name__ == "__main__":

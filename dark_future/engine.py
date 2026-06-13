@@ -96,6 +96,7 @@ class Vehicle:
     rocket_booster_mode: str | None = None
     rocket_booster_cruise_mph: int | None = None
     rocket_booster_disabled: bool = False
+    action_cancelled_this_phase: bool = False
 
     @property
     def lane_rows(self) -> tuple[int, int]:
@@ -395,6 +396,7 @@ def active_vehicle(state: GameState) -> Vehicle | None:
 def start_phase(state: GameState) -> None:
     for vehicle in state.vehicles:
         vehicle.acted_this_phase = False
+        vehicle.action_cancelled_this_phase = False
     state.logs.append(LogEntry(f"Turn {state.turn}, phase {state.phase} starts.", "phase", PHASE_SOURCE))
     choose_next_actor(state)
 
@@ -702,6 +704,7 @@ def take_hazard_test(state: GameState, vehicle: Vehicle, safety_limit_mph: int, 
     )
     if result.speed_loss_mph:
         vehicle.mph = max(0, vehicle.mph - result.speed_loss_mph)
+        vehicle.action_cancelled_this_phase = True
         state.logs.append(
             LogEntry(
                 f"{vehicle.label} panic brakes to {vehicle.mph} mph.",
@@ -711,6 +714,7 @@ def take_hazard_test(state: GameState, vehicle: Vehicle, safety_limit_mph: int, 
         )
     if result.control_lost:
         vehicle.control_state = "out_of_control"
+        vehicle.action_cancelled_this_phase = True
         state.logs.append(
             LogEntry(
                 f"{vehicle.label} loses control.",
@@ -1132,11 +1136,12 @@ def apply_damage(
     return damage
 
 
-def apply_shoot(state: GameState, shooter: Vehicle) -> None:
+def apply_shoot(state: GameState, shooter: Vehicle, *, finish_activation: bool = True) -> None:
     targets = shoot_targets(state, shooter)
     if not targets:
         state.logs.append(LogEntry(f"{shooter.label} has no target in its forward corridor.", "shoot", SHOOT_SOURCE))
-        _finish_activation(state, shooter)
+        if finish_activation:
+            _finish_activation(state, shooter)
         return
     target = min(targets, key=lambda item: _distance_spaces(state, shooter, item))
     hit_roll = state.dice.d6()
@@ -1160,7 +1165,8 @@ def apply_shoot(state: GameState, shooter: Vehicle) -> None:
         )
     else:
         state.logs.append(LogEntry(f"{shooter.label} misses.", "shoot", SHOOT_SOURCE))
-    _finish_activation(state, shooter)
+    if finish_activation:
+        _finish_activation(state, shooter)
 
 
 def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
@@ -1376,9 +1382,6 @@ def apply_action(state: GameState, action_id: str) -> None:
             state.logs.append(LogEntry(f"{vehicle.label} remains out of control ({result.effect}) and slows to {vehicle.mph} mph.", "control-loss", HAZARD_SOURCE))
         _finish_activation(state, vehicle)
         return
-    if action_id == "shoot":
-        apply_shoot(state, vehicle)
-        return
     if action_id == "drop_oil":
         drop_marker(state, vehicle, "oil")
         return
@@ -1501,6 +1504,11 @@ def apply_action(state: GameState, action_id: str) -> None:
     )
     check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
     check_movement_hazards(state, vehicle, action_id, old_section=old[0], old_lane_pair=old[2])
+    if action_id == "shoot":
+        if vehicle.control_state == "controlled" and not vehicle.action_cancelled_this_phase:
+            apply_shoot(state, vehicle, finish_activation=False)
+        else:
+            state.logs.append(LogEntry(f"{vehicle.label}'s shooting action is cancelled by hazards.", "shoot", SHOOT_SOURCE))
     _finish_activation(state, vehicle)
 
 

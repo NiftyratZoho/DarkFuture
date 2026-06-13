@@ -357,22 +357,45 @@ class EngineTests(unittest.TestCase):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
         outlaw = vehicle_by_id(state, "outlaw-1")
-        outlaw.section = agency.section + 1
-        outlaw.space = agency.space
+        outlaw.section = agency.section
+        outlaw.space = agency.space + 2
         outlaw.lane_pair = agency.lane_pair
         state.dice.queue = [5, 6]
 
         apply_action(state, "shoot")
 
+        self.assertEqual((agency.section, agency.space), (1, 2))
         self.assertLess(outlaw.damage, 18)
         self.assertTrue(any(entry.kind == "damage" for entry in state.logs))
+
+    def test_shooting_is_cancelled_if_movement_hazard_causes_control_loss(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.section = 3
+        agency.space = 1
+        agency.lane_pair = 1
+        agency.mph = 90
+        agency.handling = 0
+        agency.driver_skill = 0
+        outlaw.section = 3
+        outlaw.space = 3
+        outlaw.lane_pair = 1
+        state.dice.queue = [6, 6, 6]
+
+        apply_action(state, "shoot")
+
+        self.assertEqual((agency.section, agency.space), (3, 2))
+        self.assertEqual(agency.control_state, "out_of_control")
+        self.assertEqual(outlaw.damage, 18)
+        self.assertTrue(any("shooting action is cancelled" in entry.message for entry in state.logs))
 
     def test_shooting_can_destroy_target_and_end_game(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
         outlaw = vehicle_by_id(state, "outlaw-1")
-        outlaw.section = agency.section + 1
-        outlaw.space = agency.space
+        outlaw.section = agency.section
+        outlaw.space = agency.space + 2
         outlaw.lane_pair = agency.lane_pair
         outlaw.damage = 2
         state.dice.queue = [5, 6]
