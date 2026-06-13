@@ -299,9 +299,22 @@ def make_vehicle(
     return vehicle
 
 
-def new_game(scenario_id: str = "intercept", campaign: CampaignState | None = None) -> GameState:
+def initial_track_layout(dice: Dice) -> list[str]:
+    inventory = TrackInventory.from_rule_inventory(track_inventory())
+    track = build_initial_track(dice, inventory=inventory)
+    if not track.sections:
+        return provisional_track_layout()
+    return track.piece_types
+
+
+def new_game(
+    scenario_id: str = "intercept",
+    campaign: CampaignState | None = None,
+    *,
+    track_section_types: list[str] | None = None,
+) -> GameState:
     scenario_id = scenario_id if scenario_id in SCENARIOS else "intercept"
-    track_types = provisional_track_layout()
+    track_types = list(track_section_types) if track_section_types is not None else provisional_track_layout()
     agency_section, agency_space, agency_lane, agency_mph = 1, 1, 4, 60
     outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = 6, 3, 4, -1, 40
     if scenario_id == "ambush":

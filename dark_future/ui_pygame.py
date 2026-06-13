@@ -20,6 +20,7 @@ from .engine import (
     copy_state,
     load_game,
     new_game,
+    initial_track_layout,
 )
 from .ui_model import (
     VehicleTokenModel,
@@ -149,6 +150,9 @@ class App:
         self.design_specs = self._default_design_specs()
         self.design_status = "Design library loaded from defaults."
         self.ui_status = "Choose Mission, then click an action button or press 1-9."
+        self.pending_mission_scenario: str | None = None
+        self.pending_campaign_contract = False
+        self.pending_track_section_types: list[str] = []
         self.token_images: dict[tuple[str, str], pygame.Surface] = {}
         self.weapon_images: dict[str, pygame.Surface] = {}
         self.vehicle_sheet_images: dict[str, pygame.Surface] = {}
@@ -239,7 +243,7 @@ class App:
                     self._apply_game_action(self.action_buttons[index].action_id)
         elif event.type == pygame.MOUSEWHEEL:
             pos = pygame.Vector2(self._display_to_canvas(pygame.mouse.get_pos()))
-            if self._log_rect().collidepoint(pos) and self._current_screen() not in {"home", "mission_menu", "mission_new", "mission_load"}:
+            if self._log_rect().collidepoint(pos) and self._current_screen() not in {"home", "mission_menu", "mission_new", "mission_track_setup", "mission_load"}:
                 self._scroll_log(event.y)
             elif self._board_view_rect().collidepoint(pos) and self._current_screen() in {"tactical", "debug"}:
                 self._zoom_board(event.y)
@@ -279,29 +283,28 @@ class App:
                 self.ui_status = "Finish or load away from the active mission before starting a new one."
                 return
             scenario = action_id.split(":", 1)[1]
-            campaign = self.state.campaign
-            self.state = new_game(scenario, campaign)
-            self.state.save_path = str(DEFAULT_MISSION_SAVE_PATH)
-            self.state.campaign.last_save_path = str(DEFAULT_MISSION_SAVE_PATH)
-            self._set_screen("tactical")
-            self.ui_status = f"Started {scenario} mission."
+            self._prepare_mission_track_setup(scenario, campaign_contract=False)
             return
         if action_id == "start_campaign_contract":
             if self._mission_in_progress():
                 self.ui_status = "A mission is already active. Resume or complete it before starting a campaign contract."
                 return
             scenario = self.state.campaign.current_scenario
-            campaign = self.state.campaign
-            self.state = new_game(scenario, campaign)
-            self.state.save_path = str(DEFAULT_MISSION_SAVE_PATH)
-            self.state.campaign.last_save_path = str(DEFAULT_MISSION_SAVE_PATH)
-            self._set_screen("tactical")
-            self.ui_status = f"Started campaign {SCENARIOS[scenario]['label']} contract."
+            self._prepare_mission_track_setup(scenario, campaign_contract=True)
             return
-        if action_id in {"settle_campaign", "new_contract"}:
+        if action_id == "reroll_mission_track":
+            if self.pending_mission_scenario is not None:
+                self.pending_track_section_types = initial_track_layout(self.state.dice)
+                self.ui_status = "Rerolled initial track."
+            return
+        if action_id == "accept_mission_track":
+            self._start_pending_mission()
+            return
+        if action_id == "settle_campaign":
             self._apply_game_action(action_id)
-            if action_id == "new_contract":
-                self._set_screen("tactical")
+            return
+        if action_id == "new_contract":
+            self._prepare_mission_track_setup(self.state.campaign.current_scenario, campaign_contract=True)
             return
         if action_id == "continue_mission":
             if self._load_mission_save(Path(self.state.campaign.last_save_path or self.state.save_path)):
@@ -366,6 +369,30 @@ class App:
             return
         self._apply_game_action(action_id)
 
+    def _prepare_mission_track_setup(self, scenario: str, *, campaign_contract: bool) -> None:
+        self.pending_mission_scenario = scenario if scenario in SCENARIOS else "intercept"
+        self.pending_campaign_contract = campaign_contract
+        self.pending_track_section_types = initial_track_layout(self.state.dice)
+        self._set_screen("mission_track_setup")
+        self.ui_status = "Review the generated initial track, then accept or reroll."
+
+    def _start_pending_mission(self) -> None:
+        if self.pending_mission_scenario is None:
+            self._set_screen("mission_menu")
+            self.ui_status = "No mission setup is pending."
+            return
+        scenario = self.pending_mission_scenario
+        campaign = self.state.campaign
+        track_types = list(self.pending_track_section_types)
+        self.state = new_game(scenario, campaign, track_section_types=track_types)
+        self.state.save_path = str(DEFAULT_MISSION_SAVE_PATH)
+        self.state.campaign.last_save_path = str(DEFAULT_MISSION_SAVE_PATH)
+        self.pending_mission_scenario = None
+        self.pending_campaign_contract = False
+        self.pending_track_section_types = []
+        self._set_screen("tactical")
+        self.ui_status = f"Started {SCENARIOS[scenario]['label']} mission with generated track."
+
     def _apply_game_action(self, action_id: str) -> None:
         if self._blocks_campaign_setup_action(action_id):
             self.ui_status = "Campaign setup is locked while a mission is active."
@@ -378,7 +405,7 @@ class App:
             self.ui_status = f"Action applied: {action_id.replace('_', ' ')}."
 
     def _cycle_mode(self) -> None:
-        modes = ["home", "campaign", "garage", "mission_menu", "tactical", "records", "debug"]
+        modes = ["home", "campaign", "garage", "mission_menu", "mission_track_setup", "tactical", "records", "debug"]
         screen = self._current_screen()
         index = modes.index(screen) if screen in modes else 0
         self._set_screen(modes[(index + 1) % len(modes)])
@@ -415,6 +442,8 @@ class App:
             self._draw_mission_menu()
         elif screen == "mission_new":
             self._draw_mission_new()
+        elif screen == "mission_track_setup":
+            self._draw_mission_track_setup()
         elif screen == "mission_load":
             self._draw_mission_load()
         elif screen == "tactical":
@@ -430,7 +459,7 @@ class App:
         else:
             self._draw_board()
             self._draw_debug_panel()
-        if screen not in {"home", "mission_menu", "mission_new", "mission_load"}:
+        if screen not in {"home", "mission_menu", "mission_new", "mission_track_setup", "mission_load"}:
             self._draw_log()
         self._present()
 
@@ -459,7 +488,7 @@ class App:
             rect = pygame.Rect(x, 50, 92, 20)
             active = self.state.mode == active_mode or (
                 active_mode == "mission"
-                and self.state.mode in {"mission_menu", "mission_new", "mission_load", "tactical"}
+                and self.state.mode in {"mission_menu", "mission_new", "mission_track_setup", "mission_load", "tactical"}
             )
             color = COLORS["button_hover"] if active else COLORS["button"]
             pygame.draw.rect(self.screen, color, rect, border_radius=3)
@@ -621,6 +650,50 @@ class App:
             )
             y += 126
         self._draw_large_menu_button("Back", "Return to Mission menu.", "open_mission", 650, 472)
+
+    def _draw_mission_track_setup(self) -> None:
+        pygame.draw.rect(self.screen, COLORS["panel"], (16, 92, 1240, 690), border_radius=4)
+        scenario = self.pending_mission_scenario or self.state.campaign.current_scenario
+        scenario_data = SCENARIOS.get(scenario, SCENARIOS["intercept"])
+        self.screen.blit(self.big.render("Initial Track Setup", True, COLORS["text"]), (42, 126))
+        subtitle = f"{scenario_data['label']} | {self.ui_status}"
+        self.screen.blit(self.font.render(subtitle[:96], True, COLORS["speed_text"]), (42, 164))
+        self._panel((42, 212, 610, 372), "Generated Sections")
+        if not self.pending_track_section_types:
+            self.screen.blit(self.font.render("No track has been generated yet.", True, COLORS["muted"]), (66, 260))
+        for index, section_type in enumerate(self.pending_track_section_types[:10]):
+            col = index % 2
+            row = index // 2
+            x = 66 + col * 286
+            y = 258 + row * 52
+            rect = pygame.Rect(x, y, 248, 36)
+            pygame.draw.rect(self.screen, COLORS["panel2"], rect, border_radius=4)
+            label = f"{index + 1}. {self._track_piece_label(section_type)}"
+            self._draw_text_clipped(label, rect.x + 10, rect.y + 9, rect.width - 20, COLORS["text"])
+        self._panel((696, 212, 500, 372), "Rules")
+        rules = [
+            "Start with three complete straight sections.",
+            "Each straight section has three movement spaces per lane.",
+            "Roll 1-4 straight, 5-6 curve until ten sections are in play.",
+            "Curve roll: 1-4 broad 60-degree bend, 5-6 tight 90-degree corner.",
+            "Odd direction rolls turn left; even rolls turn right.",
+            "Every generated curve is followed by an automatic straight.",
+        ]
+        for i, line in enumerate(rules):
+            self._draw_text_clipped(line, 720, 258 + i * 32, 450, COLORS["muted"])
+        self._draw_large_menu_button("Accept Track", "Start the mission with this generated road.", "accept_mission_track", 42, 620)
+        self._draw_large_menu_button("Reroll", "Generate a different initial road.", "reroll_mission_track", 650, 620)
+        self._draw_large_menu_button("Back", "Return to contract selection.", "new_mission", 650, 720)
+
+    def _track_piece_label(self, section_type: str) -> str:
+        labels = {
+            "straight": "Straight section",
+            "curve50to80_left": "60-degree bend left",
+            "curve50to80_right": "60-degree bend right",
+            "curve30to60_left": "90-degree corner left",
+            "curve30to60_right": "90-degree corner right",
+        }
+        return labels.get(section_type, section_type)
 
     def _draw_mission_load(self) -> None:
         pygame.draw.rect(self.screen, COLORS["panel"], (16, 92, 1240, 690), border_radius=4)

@@ -10,6 +10,7 @@ from dark_future.engine import (
     choose_next_actor,
     curve_safety_limit,
     generate_track_layout,
+    initial_track_layout,
     load_game,
     legal_actions,
     new_game,
@@ -39,6 +40,24 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(state.track_sections, len(state.track_section_types))
         self.assertEqual(state.track_section_types[:5], ["straight", "straight", "straight", "curve30to60_left", "straight"])
         self.assertTrue(any(entry.kind == "track" and "Generated track" in entry.message for entry in state.logs))
+
+    def test_initial_track_layout_uses_rulebook_ten_section_generation(self):
+        state = new_game()
+        state.dice.queue = [5, 6, 2, 5, 6, 4, 5, 6, 2, 1]
+
+        layout = initial_track_layout(state.dice)
+
+        self.assertEqual(len(layout), 10)
+        self.assertEqual(layout[:3], ["straight", "straight", "straight"])
+        self.assertIn("curve30to60_right", layout)
+
+    def test_new_game_accepts_generated_track_layout(self):
+        layout = ["straight"] * 10
+
+        state = new_game("intercept", track_section_types=layout)
+
+        self.assertEqual(state.track_sections, 10)
+        self.assertEqual(state.track_section_types, layout)
 
     def test_speed_factor_uses_ceil_twenty_mph_bands(self):
         self.assertEqual(speed_factor(0), 0)

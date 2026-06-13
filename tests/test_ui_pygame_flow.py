@@ -42,8 +42,16 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertEqual(app.state.mode, "mission_new")
 
         app._dispatch_button("new_mission:pursuit")
+        self.assertEqual(app.state.mode, "mission_track_setup")
+        self.assertEqual(app.pending_mission_scenario, "pursuit")
+        self.assertGreaterEqual(len(app.pending_track_section_types), 3)
+
+        generated = tuple(app.pending_track_section_types)
+        app._dispatch_button("accept_mission_track")
+
         self.assertEqual(app.state.mode, "tactical")
         self.assertEqual(app.state.scenario_id, "pursuit")
+        self.assertEqual(tuple(app.state.track_section_types), generated)
         self.assertEqual(app.state.save_path, str(ui_pygame.DEFAULT_MISSION_SAVE_PATH))
 
     def test_campaign_contract_button_starts_current_campaign_scenario(self):
@@ -53,9 +61,30 @@ class PygameMissionFlowTests(unittest.TestCase):
 
         app._dispatch_button("start_campaign_contract")
 
+        self.assertEqual(app.state.mode, "mission_track_setup")
+        self.assertTrue(app.pending_campaign_contract)
+        app._dispatch_button("accept_mission_track")
+
         self.assertEqual(app.state.mode, "tactical")
         self.assertEqual(app.state.scenario_id, "pursuit")
-        self.assertIn("Started campaign Pursuit contract", app.ui_status)
+        self.assertIn("Started Pursuit mission", app.ui_status)
+
+    def test_mission_track_setup_rerolls_before_accepting(self):
+        app = ui_pygame.App()
+        app.state.game_over = True
+        app.state.dice.queue = [
+            1, 1, 1, 1, 1, 1, 1,
+            5, 5, 1, 1, 1, 1, 1, 1,
+        ]
+
+        app._dispatch_button("new_mission:intercept")
+        first = tuple(app.pending_track_section_types)
+        app._dispatch_button("reroll_mission_track")
+        second = tuple(app.pending_track_section_types)
+
+        self.assertNotEqual(first, second)
+        self.assertEqual(second[:3], ("straight", "straight", "straight"))
+        self.assertIn("curve30to60_left", second)
 
     def test_campaign_view_exposes_settlement_and_new_contract_actions_when_game_over(self):
         app = ui_pygame.App()
