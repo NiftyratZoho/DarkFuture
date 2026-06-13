@@ -458,11 +458,10 @@ class App:
             self._draw_campaign()
         elif screen == "records":
             self._draw_records()
-            self._draw_action_panel()
         else:
             self._draw_board()
             self._draw_debug_panel()
-        if screen not in {"home", "mission_menu", "mission_new", "mission_track_setup", "mission_load"}:
+        if screen not in {"home", "mission_menu", "mission_new", "mission_track_setup", "mission_load", "records"}:
             self._draw_log()
         self._present()
 
@@ -1252,10 +1251,11 @@ class App:
 
     def _draw_records(self) -> None:
         records = build_vehicle_records_model(self.state)
-        pygame.draw.rect(self.screen, COLORS["panel"], (16, 82, 790, 430), border_radius=4)
-        self.screen.blit(self.font.render("Vehicle Records", True, COLORS["text"]), (32, 104))
-        y = 146
+        self._panel((16, 92, 760, 690), "Vehicle Records")
+        y = 150
         for vehicle in records.records:
+            row_rect = pygame.Rect(38, y - 8, 704, 150)
+            pygame.draw.rect(self.screen, COLORS["panel2"], row_rect, border_radius=5)
             lines = [
                 f"{vehicle.id}: {vehicle.label}",
                 f"Template {vehicle.template_id} | Side {vehicle.side} | Damage {vehicle.damage} | {vehicle.status.title()}",
@@ -1263,19 +1263,29 @@ class App:
                 f"Weapon {vehicle.weapon} Acc {vehicle.weapon_accuracy} Dmg +{vehicle.weapon_damage_modifier}",
                 f"Control {vehicle.control_state} Driver {vehicle.driver_skill} Criticals: {', '.join(vehicle.critical_notes) or 'none'}",
             ]
-            for line in lines:
-                self.screen.blit(self.font.render(line, True, COLORS["text"]), (34, y))
-                y += 24
-            y += 18
-        self._panel((830, 82, 426, 430), "Known Rule / Art Blockers")
+            for index, line in enumerate(lines):
+                color = COLORS["text"] if index == 0 else COLORS["muted"]
+                self._draw_text_clipped(line, 58, y + index * 24, 660, color, font=self.font)
+            y += 170
+        self._panel((804, 92, 452, 530), "Known Rule / Art Blockers")
         blocker_lines = self._known_blocker_lines()
-        for index, line in enumerate(blocker_lines[:12]):
-            wrapped = self._wrap_text_to_width(line, 378, 2)
-            line_y = 132 + index * 58
-            bullet_rect = pygame.Rect(852, line_y + 5, 8, 8)
+        line_y = 150
+        for line in blocker_lines[:8]:
+            wrapped = self._wrap_text_to_width(line, 376, 3)
+            bullet_rect = pygame.Rect(830, line_y + 5, 8, 8)
             pygame.draw.rect(self.screen, COLORS["speed_text"], bullet_rect, border_radius=2)
             for wrapped_index, wrapped_line in enumerate(wrapped):
-                self._draw_text_clipped(wrapped_line, 872, line_y + wrapped_index * 18, 338, COLORS["muted"])
+                self._draw_text_clipped(wrapped_line, 850, line_y + wrapped_index * 18, 366, COLORS["muted"])
+            line_y += 22 + len(wrapped) * 18
+        self._panel((804, 644, 452, 138), "Navigation")
+        resume = pygame.Rect(828, 700, 178, 34)
+        pygame.draw.rect(self.screen, COLORS["button"], resume, border_radius=4)
+        self.screen.blit(self.small.render("Resume Mission", True, COLORS["text"]), (resume.x + 18, resume.y + 9))
+        self.buttons.append(Button(resume, "resume_current_mission", "Resume Mission"))
+        mission = pygame.Rect(1024, 700, 178, 34)
+        pygame.draw.rect(self.screen, COLORS["button"], mission, border_radius=4)
+        self.screen.blit(self.small.render("Mission Menu", True, COLORS["text"]), (mission.x + 22, mission.y + 9))
+        self.buttons.append(Button(mission, "open_mission", "Mission Menu"))
 
     def _known_blocker_lines(self) -> list[str]:
         return [
