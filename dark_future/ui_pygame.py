@@ -21,6 +21,7 @@ from .engine import (
     load_game,
     new_game,
     initial_track_layout,
+    save_game,
 )
 from .ui_model import (
     VehicleTokenModel,
@@ -60,6 +61,7 @@ TOKEN_DIR = PROJECT_ROOT / "assets" / "tokens" / "processed"
 SAVE_DIR = PROJECT_ROOT / "saves"
 DESIGN_LIBRARY_PATH = SAVE_DIR / "designs.json"
 DEFAULT_MISSION_SAVE_PATH = SAVE_DIR / "last_mission.json"
+MISSION_SLOT_PREFIX = "mission_slot_"
 WEAPON_ICON_INDEX_PATH = PROJECT_ROOT / "assets" / "weapons" / "processed" / "weapons.json"
 VEHICLE_SHEET_INDEX_PATH = PROJECT_ROOT / "assets" / "vehicle_sheets" / "processed" / "vehicle_sheets.json"
 TOKEN_FILES = {
@@ -315,6 +317,10 @@ class App:
                 return
             self._set_screen("mission_menu")
             self.ui_status = "No saved mission found. Choose New to start one."
+            return
+        if action_id.startswith("save_mission_slot:"):
+            slot = int(action_id.split(":", 1)[1])
+            self._save_mission_slot(slot)
             return
         if action_id == "mission_load":
             self._set_screen("mission_load")
@@ -623,8 +629,15 @@ class App:
                     ),
                 ]
             )
-        for index, (title, body, action_id) in enumerate(actions[:5]):
-            self._draw_large_menu_button(title, body, action_id, 42, 220 + index * 104)
+        else:
+            actions.extend(
+                [
+                    (f"Save Slot {slot}", f"Write current mission to slot {slot}.", f"save_mission_slot:{slot}")
+                    for slot in range(1, 4)
+                ]
+            )
+        for index, (title, body, action_id) in enumerate(actions[:6]):
+            self._draw_large_menu_button(title, body, action_id, 42, 210 + index * 92)
         self._draw_current_mission_summary(650, 220)
 
     def _draw_mission_new(self) -> None:
@@ -681,6 +694,7 @@ class App:
         ]
         for i, line in enumerate(rules):
             self._draw_text_clipped(line, 720, 258 + i * 32, 450, COLORS["muted"])
+        self._draw_track_setup_preview(self.pending_track_section_types, 696, 504, 500, 80)
         self._draw_large_menu_button("Accept Track", "Start the mission with this generated road.", "accept_mission_track", 42, 620)
         self._draw_large_menu_button("Reroll", "Generate a different initial road.", "reroll_mission_track", 650, 620)
         self._draw_large_menu_button("Back", "Return to contract selection.", "new_mission", 650, 720)
@@ -694,6 +708,37 @@ class App:
             "curve30to60_right": "90-degree corner right",
         }
         return labels.get(section_type, section_type)
+
+    def _draw_track_setup_preview(self, section_types: list[str], x: int, y: int, width: int, height: int) -> None:
+        pygame.draw.rect(self.screen, COLORS["panel2"], (x, y, width, height), border_radius=4)
+        self.screen.blit(self.small.render("Preview", True, COLORS["text"]), (x + 12, y + 8))
+        if not section_types:
+            self._draw_text_clipped("No sections generated.", x + 12, y + 36, width - 24, COLORS["muted"])
+            return
+        usable_width = width - 28
+        section_count = min(len(section_types), 10)
+        piece_w = max(28, min(44, (usable_width - (section_count - 1) * 6) // section_count))
+        start_x = x + 14
+        base_y = y + 38
+        for index, section_type in enumerate(section_types[:section_count]):
+            rect = pygame.Rect(start_x + index * (piece_w + 6), base_y, piece_w, 26)
+            is_curve = section_type.startswith("curve")
+            color = COLORS["curve"] if is_curve else COLORS["road"]
+            pygame.draw.rect(self.screen, color, rect, border_radius=3)
+            pygame.draw.rect(self.screen, COLORS["road_line"], rect, 1, border_radius=3)
+            label = self._track_preview_label(section_type)
+            self._draw_text_clipped(label, rect.x + 3, rect.y + 6, rect.width - 6, COLORS["speed_text"], font=self.tiny)
+        if len(section_types) > section_count:
+            self._draw_text_clipped(f"+{len(section_types) - section_count}", start_x + section_count * (piece_w + 6), base_y + 6, 40, COLORS["muted"])
+
+    def _track_preview_label(self, section_type: str) -> str:
+        if section_type == "straight":
+            return "S"
+        if section_type.startswith("curve50to80"):
+            return "60L" if section_type.endswith("_left") else "60R"
+        if section_type.startswith("curve30to60"):
+            return "90L" if section_type.endswith("_left") else "90R"
+        return "?"
 
     def _draw_mission_load(self) -> None:
         pygame.draw.rect(self.screen, COLORS["panel"], (16, 92, 1240, 690), border_radius=4)
@@ -1228,6 +1273,25 @@ class App:
                 self.screen.blit(self.font.render(line, True, COLORS["text"]), (34, y))
                 y += 24
             y += 18
+        self._panel((830, 82, 426, 430), "Known Rule / Art Blockers")
+        blocker_lines = self._known_blocker_lines()
+        for index, line in enumerate(blocker_lines[:12]):
+            wrapped = self._wrap_text_to_width(line, 378, 2)
+            line_y = 132 + index * 58
+            bullet_rect = pygame.Rect(852, line_y + 5, 8, 8)
+            pygame.draw.rect(self.screen, COLORS["speed_text"], bullet_rect, border_radius=2)
+            for wrapped_index, wrapped_line in enumerate(wrapped):
+                self._draw_text_clipped(wrapped_line, 872, line_y + wrapped_index * 18, 338, COLORS["muted"])
+
+    def _known_blocker_lines(self) -> list[str]:
+        return [
+            "Exact physical curve atlas needs traced lane/space nodes for faithful edge-to-edge placement.",
+            "Skid, spin, and bootlegger final-position diagrams need extracting into structured movement results.",
+            "Full TGSM and submunition hit-location tables need transcription before exact combat automation.",
+            "Scenario deployment diagrams need structured setup rows for all contracts beyond current defaults.",
+            "Campaign random tables still need complete extraction: approach, loot, disorders, psychosis, salvage.",
+            "Bike, trike, and sidecar target matrices need proofread entries before faithful vehicle design use.",
+        ]
 
     def _draw_debug_panel(self) -> None:
         self._draw_action_panel()
@@ -1567,6 +1631,17 @@ class App:
             )
         unique: dict[str, Path] = {str(path.resolve()): path for path in paths}
         return sorted(unique.values(), key=lambda path: path.stat().st_mtime, reverse=True)
+
+    def _mission_slot_path(self, slot: int) -> Path:
+        slot = max(1, min(3, int(slot)))
+        return SAVE_DIR / f"{MISSION_SLOT_PREFIX}{slot}.json"
+
+    def _save_mission_slot(self, slot: int) -> None:
+        path = self._mission_slot_path(slot)
+        save_game(self.state, path)
+        self.state.save_path = str(path)
+        self.state.campaign.last_save_path = str(path)
+        self.ui_status = f"Saved mission slot {slot}."
 
     def _mission_save_summary(self, save_path: Path) -> str:
         try:

@@ -134,6 +134,41 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertIn("Load", labels)
         self.assertNotIn("New", labels)
         self.assertNotIn("Campaign Contract", labels)
+        self.assertIn("Save Slot 1", labels)
+        self.assertIn("Save Slot 2", labels)
+        self.assertIn("Save Slot 3", labels)
+
+    def test_save_mission_slot_writes_named_save(self):
+        app = ui_pygame.App()
+
+        app._dispatch_button("save_mission_slot:2")
+
+        path = app._mission_slot_path(2)
+        self.assertTrue(path.exists())
+        self.assertEqual(app.state.save_path, str(path))
+        self.assertIn("slot 2", app.ui_status)
+        self.assertIn(path, app._mission_save_paths())
+
+    def test_track_setup_draws_preview_and_accept_controls(self):
+        app = ui_pygame.App()
+        app.state.game_over = True
+
+        app._dispatch_button("new_mission:intercept")
+        app._draw()
+
+        labels = [button.label for button in app.buttons]
+        self.assertIn("Accept Track", labels)
+        self.assertIn("Reroll", labels)
+        self.assertEqual(app._track_preview_label("curve50to80_left"), "60L")
+        self.assertEqual(app._track_preview_label("curve30to60_right"), "90R")
+
+    def test_records_view_exposes_known_blockers(self):
+        app = ui_pygame.App()
+        app._set_screen("records")
+
+        app._draw()
+
+        self.assertTrue(any("curve atlas" in line for line in app._known_blocker_lines()))
 
     def test_continue_loads_last_saved_mission(self):
         app = ui_pygame.App()
