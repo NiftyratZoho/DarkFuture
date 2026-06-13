@@ -7,6 +7,7 @@ from dark_future.engine import (
     apply_action,
     apply_critical_effect,
     apply_rocket_booster_critical,
+    choose_next_actor,
     curve_safety_limit,
     generate_track_layout,
     load_game,
@@ -15,6 +16,7 @@ from dark_future.engine import (
     phase_moves,
     save_game,
     speed_factor,
+    vehicle_acts_in_phase,
     vehicle_by_id,
     provisional_track_layout,
     shoot_targets,
@@ -49,6 +51,71 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(phase_moves(60, 1), 1)
         self.assertEqual(phase_moves(60, 3), 1)
         self.assertEqual(phase_moves(60, 4), 0)
+
+    def test_stationary_vehicles_act_only_in_phase_one(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        vehicle.mph = 0
+
+        self.assertTrue(vehicle_acts_in_phase(vehicle, 1))
+        self.assertFalse(vehicle_acts_in_phase(vehicle, 2))
+
+    def test_stationary_vehicle_gets_phase_one_activation(self):
+        state = new_game()
+        for vehicle in state.vehicles:
+            vehicle.mph = 0
+            vehicle.acted_this_phase = False
+        state.phase = 1
+        state.active_vehicle_id = None
+
+        choose_next_actor(state)
+
+        self.assertIsNotNone(state.active_vehicle_id)
+
+    def test_stationary_vehicle_has_move_off_and_stationary_actions(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.mph = 0
+        state.active_vehicle_id = agency.id
+
+        action_ids = {action.id for action in legal_actions(state)}
+
+        self.assertIn("accelerate", action_ids)
+        self.assertIn("shoot", action_ids)
+        self.assertIn("drop_smoke", action_ids)
+        self.assertNotIn("steady", action_ids)
+        self.assertNotIn("brake", action_ids)
+        self.assertNotIn("drop_oil", action_ids)
+
+    def test_stationary_move_off_accelerates_and_moves_one_space(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.mph = 0
+        state.active_vehicle_id = agency.id
+
+        apply_action(state, "accelerate")
+
+        self.assertEqual((agency.section, agency.space), (1, 2))
+        self.assertEqual(agency.mph, 20)
+
+    def test_stationary_shoot_does_not_move(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.mph = 0
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 4
+        outlaw.section = 1
+        outlaw.space = 3
+        outlaw.lane_pair = 4
+        state.active_vehicle_id = agency.id
+        state.dice.queue = [5, 6]
+
+        apply_action(state, "shoot")
+
+        self.assertEqual((agency.section, agency.space), (1, 1))
+        self.assertLess(outlaw.damage, 18)
 
     def test_steady_forward_moves_active_vehicle(self):
         state = new_game()

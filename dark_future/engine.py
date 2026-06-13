@@ -380,6 +380,12 @@ def phase_moves(mph: int, phase: int) -> int:
     return 1 if phase <= min(factor, 6) else 0
 
 
+def vehicle_acts_in_phase(vehicle: Vehicle, phase: int) -> bool:
+    if vehicle.mph <= 0:
+        return phase == 1
+    return phase_moves(vehicle.mph, phase) > 0
+
+
 def vehicle_by_id(state: GameState, vehicle_id: str) -> Vehicle:
     for vehicle in state.vehicles:
         if vehicle.id == vehicle_id:
@@ -407,7 +413,7 @@ def choose_next_actor(state: GameState) -> None:
         for vehicle in state.vehicles
         if not vehicle.destroyed
         and not vehicle.acted_this_phase
-        and phase_moves(vehicle.mph, state.phase) > 0
+        and vehicle_acts_in_phase(vehicle, state.phase)
     ]
     if not eligible:
         state.active_vehicle_id = None
@@ -488,6 +494,16 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
             Action("regain_control", "Regain Control", "hazard", "Roll to recover control."),
             Action("wait", "Hold", "action", "Skip this activation."),
         ]
+    if actor.mph <= 0:
+        actions = [
+            Action("accelerate", "Move Off", "speed", f"Move one space and accelerate up to +{min(20, actor.acceleration_mph)} mph."),
+            Action("shoot", "Shoot", "shoot", f"Fire {actor.weapon_label} while stationary."),
+            Action("drop_smoke", "Drop Smoke", "passive", "Place smoke behind the stationary vehicle."),
+            Action("wait", "Hold", "action", "Skip this activation."),
+        ]
+        if actor.weapon_disabled:
+            actions = [action for action in actions if action.id != "shoot"]
+        return actions
     actions = [
         Action("steady", "Steady Forward", "move", "Move one space forward."),
         Action("shoot", "Shoot", "shoot", f"Fire {actor.weapon_label} at a target ahead."),
@@ -1387,6 +1403,9 @@ def apply_action(state: GameState, action_id: str) -> None:
         return
     if action_id == "drop_smoke":
         drop_marker(state, vehicle, "smoke")
+        return
+    if vehicle.mph <= 0 and action_id == "shoot":
+        apply_shoot(state, vehicle)
         return
     if action_id == "u_turn":
         geometry_ok, geometry_reason = _u_turn_geometry_status(state, vehicle)
