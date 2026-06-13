@@ -122,7 +122,7 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertEqual(tuple(app.state.campaign.roster), before_roster)
         self.assertIn("locked", app.ui_status)
 
-    def test_mission_menu_hides_new_contract_actions_during_active_mission(self):
+    def test_mission_menu_allows_new_solo_but_hides_campaign_contract_during_active_mission(self):
         app = ui_pygame.App()
         app._dispatch_button("open_mission")
 
@@ -132,11 +132,21 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertIn("Resume Current", labels)
         self.assertIn("Continue", labels)
         self.assertIn("Load", labels)
-        self.assertNotIn("New", labels)
+        self.assertIn("New", labels)
         self.assertNotIn("Campaign Contract", labels)
         self.assertIn("Save Slot 1", labels)
         self.assertIn("Save Slot 2", labels)
         self.assertIn("Save Slot 3", labels)
+
+    def test_new_solo_contract_can_replace_active_mission(self):
+        app = ui_pygame.App()
+
+        app._dispatch_button("new_mission")
+        self.assertEqual(app.state.mode, "mission_new")
+
+        app._dispatch_button("new_mission:ambush")
+        self.assertEqual(app.state.mode, "mission_track_setup")
+        self.assertEqual(app.pending_mission_scenario, "ambush")
 
     def test_save_mission_slot_writes_named_save(self):
         app = ui_pygame.App()

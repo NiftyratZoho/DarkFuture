@@ -269,7 +269,7 @@ class App:
         if action_id == "open_mission":
             self._set_screen("mission_menu")
             if self._mission_in_progress():
-                self.ui_status = "Mission in progress. Resume, save, or load; finish before starting another contract."
+                self.ui_status = "Mission in progress. Resume, save, load, or choose New to replace it."
             else:
                 self.ui_status = "Choose Continue, Load, or New mission."
             return
@@ -281,9 +281,6 @@ class App:
             self.ui_status = "Choose a solo mission type."
             return
         if action_id.startswith("new_mission:"):
-            if self._mission_in_progress():
-                self.ui_status = "Finish or load away from the active mission before starting a new one."
-                return
             scenario = action_id.split(":", 1)[1]
             self._prepare_mission_track_setup(scenario, campaign_contract=False)
             return
@@ -617,23 +614,16 @@ class App:
             ("Resume Current", "Return to the active roadfight.", "resume_current_mission"),
             ("Continue", "Load the last saved mission.", "continue_mission"),
             ("Load", "Choose a previously saved mission.", "mission_load"),
+            ("New", "Start a fresh solo mission, replacing the current roadfight if one is active.", "new_mission"),
         ]
         if not self._mission_in_progress():
             actions.extend(
                 [
-                    ("New", "Start a fresh solo mission.", "new_mission"),
                     (
                         "Campaign Contract",
                         f"Start the campaign's {SCENARIOS[self.state.campaign.current_scenario]['label']} contract.",
                         "start_campaign_contract",
                     ),
-                ]
-            )
-        else:
-            actions.extend(
-                [
-                    (f"Save Slot {slot}", f"Write current mission to slot {slot}.", f"save_mission_slot:{slot}")
-                    for slot in range(1, 4)
                 ]
             )
         for index, (title, body, action_id) in enumerate(actions[:6]):
@@ -645,13 +635,11 @@ class App:
         self.screen.blit(self.big.render("New Solo Contract", True, COLORS["text"]), (42, 126))
         if self._mission_in_progress():
             self.screen.blit(
-                self.font.render("A mission is active. Resume or load a save before setting up another.", True, COLORS["speed_text"]),
+                self.font.render("A mission is active. Selecting a contract here will replace the current roadfight.", True, COLORS["speed_text"]),
                 (42, 164),
             )
-            self._draw_large_menu_button("Resume Current", "Return to the active roadfight.", "resume_current_mission", 42, 220)
-            self._draw_large_menu_button("Back", "Return to Mission menu.", "open_mission", 650, 472)
-            return
-        self.screen.blit(self.font.render("Choose the contract type to set up.", True, COLORS["muted"]), (42, 164))
+        else:
+            self.screen.blit(self.font.render("Choose the contract type to set up.", True, COLORS["muted"]), (42, 164))
         y = 220
         for scenario_id, scenario in SCENARIOS.items():
             self._draw_large_menu_button(
@@ -785,6 +773,12 @@ class App:
         pygame.draw.rect(self.screen, COLORS["button"], rect, border_radius=4)
         self.screen.blit(self.small.render("Resume Current", True, COLORS["text"]), (rect.x + 16, rect.y + 7))
         self.buttons.append(Button(rect, "resume_current_mission", "Resume Current"))
+        if self._mission_in_progress():
+            for slot in range(1, 4):
+                save_rect = pygame.Rect(x + 18 + (slot - 1) * 112, y + 238, 100, 30)
+                pygame.draw.rect(self.screen, COLORS["button"], save_rect, border_radius=4)
+                self.screen.blit(self.tiny.render(f"Save {slot}", True, COLORS["text"]), (save_rect.x + 26, save_rect.y + 8))
+                self.buttons.append(Button(save_rect, f"save_mission_slot:{slot}", f"Save Slot {slot}"))
         if self.state.game_over and self.state.campaign.settlement_pending:
             settle = pygame.Rect(x + 218, y + 286, 136, 30)
             pygame.draw.rect(self.screen, COLORS["button"], settle, border_radius=4)
