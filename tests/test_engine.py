@@ -81,6 +81,7 @@ class EngineTests(unittest.TestCase):
         action_ids = {action.id for action in legal_actions(state)}
 
         self.assertIn("accelerate", action_ids)
+        self.assertIn("reverse", action_ids)
         self.assertIn("shoot", action_ids)
         self.assertIn("drop_smoke", action_ids)
         self.assertNotIn("steady", action_ids)
@@ -97,6 +98,36 @@ class EngineTests(unittest.TestCase):
 
         self.assertEqual((agency.section, agency.space), (1, 2))
         self.assertEqual(agency.mph, 20)
+
+    def test_stationary_reverse_moves_back_one_space_and_ends_at_zero(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.mph = 0
+        agency.section = 1
+        agency.space = 2
+        state.phase = 1
+        state.active_vehicle_id = agency.id
+
+        apply_action(state, "reverse")
+
+        self.assertEqual((agency.section, agency.space), (1, 1))
+        self.assertEqual(agency.mph, 0)
+        self.assertTrue(any("reverses at 10 mph" in entry.message for entry in state.logs))
+
+    def test_reverse_is_only_available_to_stationary_phase_one_cars(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.mph = 0
+        state.phase = 2
+        state.active_vehicle_id = agency.id
+
+        phase_two_actions = {action.id for action in legal_actions(state)}
+        state.phase = 1
+        agency.template_id = "bike"
+        bike_actions = {action.id for action in legal_actions(state)}
+
+        self.assertNotIn("reverse", phase_two_actions)
+        self.assertNotIn("reverse", bike_actions)
 
     def test_stationary_shoot_does_not_move(self):
         state = new_game()
@@ -116,6 +147,46 @@ class EngineTests(unittest.TestCase):
 
         self.assertEqual((agency.section, agency.space), (1, 1))
         self.assertLess(outlaw.damage, 18)
+
+    def test_stationary_ai_uses_legal_move_off_action_when_no_target(self):
+        state = new_game()
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw.mph = 0
+        outlaw.direction = 1
+        outlaw.section = 0
+        outlaw.space = 1
+        agency.section = 4
+        agency.space = 1
+        state.phase = 1
+
+        self.assertEqual(ai_choose_action(state, outlaw), "accelerate")
+
+    def test_vehicle_with_no_driver_cannot_shoot(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.driver_skill = 0
+        outlaw.section = agency.section
+        outlaw.space = agency.space + 2
+        outlaw.lane_pair = agency.lane_pair
+        state.active_vehicle_id = agency.id
+
+        action_ids = {action.id for action in legal_actions(state)}
+        apply_action(state, "shoot")
+
+        self.assertNotIn("shoot", action_ids)
+        self.assertEqual(outlaw.damage, 18)
+        self.assertTrue(any("no driver" in entry.message for entry in state.logs))
+
+    def test_driver_killed_critical_causes_control_loss(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+
+        apply_critical_effect(state, agency, {"kind": "setDriveSkill", "value": 0})
+
+        self.assertEqual(agency.driver_skill, 0)
+        self.assertEqual(agency.control_state, "out_of_control")
 
     def test_steady_forward_moves_active_vehicle(self):
         state = new_game()
@@ -435,6 +506,53 @@ class EngineTests(unittest.TestCase):
         self.assertLess(outlaw.damage, 18)
         self.assertTrue(any(entry.kind == "damage" for entry in state.logs))
 
+    def test_natural_one_always_misses(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.weapon_accuracy = 10
+        outlaw.section = agency.section
+        outlaw.space = agency.space + 2
+        outlaw.lane_pair = agency.lane_pair
+        state.dice.queue = [1]
+
+        apply_action(state, "shoot")
+
+        self.assertEqual(outlaw.damage, 18)
+        self.assertTrue(any("natural 1" in entry.message for entry in state.logs))
+
+    def test_shooting_uses_counted_range_as_hit_number(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.weapon_accuracy = 0
+        outlaw.section = agency.section + 1
+        outlaw.space = 2
+        outlaw.lane_pair = agency.lane_pair
+        state.dice.queue = [3, 6]
+
+        apply_action(state, "shoot")
+
+        self.assertLess(outlaw.damage, 18)
+        self.assertTrue(any("vs range 3" in entry.message for entry in state.logs))
+
+    def test_shooting_range_number_is_capped_at_six(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.weapon_accuracy = 0
+        agency.section = 0
+        agency.space = 1
+        outlaw.section = 2
+        outlaw.space = 3
+        outlaw.lane_pair = agency.lane_pair
+        state.dice.queue = [6, 6]
+
+        apply_action(state, "shoot")
+
+        self.assertLess(outlaw.damage, 18)
+        self.assertTrue(any("vs range 6" in entry.message for entry in state.logs))
+
     def test_shooting_is_cancelled_if_movement_hazard_causes_control_loss(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
@@ -571,6 +689,8 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.control_state, "controlled")
+        self.assertEqual((agency.section, agency.space), (1, 2))
+        self.assertTrue(any("compulsory straight move" in entry.message for entry in state.logs))
 
     def test_critical_hit_applies_concrete_effect(self):
         state = new_game()

@@ -33,6 +33,7 @@ class PygameMissionFlowTests(unittest.TestCase):
 
     def test_mission_tab_opens_menu_then_new_mission_picker(self):
         app = ui_pygame.App()
+        app.state.game_over = True
 
         app._dispatch_button("open_mission")
         self.assertEqual(app.state.mode, "mission_menu")
@@ -47,6 +48,7 @@ class PygameMissionFlowTests(unittest.TestCase):
 
     def test_campaign_contract_button_starts_current_campaign_scenario(self):
         app = ui_pygame.App()
+        app.state.game_over = True
         app.state.campaign.current_scenario = "pursuit"
 
         app._dispatch_button("start_campaign_contract")
@@ -67,6 +69,42 @@ class PygameMissionFlowTests(unittest.TestCase):
         labels = [button.label for button in app.buttons]
         self.assertIn("Settle Campaign", labels)
         self.assertIn("New Contract", labels)
+
+    def test_campaign_view_hides_setup_actions_during_active_mission(self):
+        app = ui_pygame.App()
+        app._set_screen("campaign")
+
+        app._draw()
+
+        labels = [button.label for button in app.buttons]
+        self.assertIn("Resume Mission", labels)
+        self.assertIn("Save Mission", labels)
+        self.assertNotIn("Recruit Driver", labels)
+        self.assertNotIn("Cycle Scenario", labels)
+        self.assertNotIn("Generate Track", labels)
+        self.assertNotIn("Start Contract", labels)
+
+    def test_campaign_setup_action_is_blocked_during_active_mission(self):
+        app = ui_pygame.App()
+        before_roster = tuple(app.state.campaign.roster)
+
+        app._dispatch_button("recruit_driver")
+
+        self.assertEqual(tuple(app.state.campaign.roster), before_roster)
+        self.assertIn("locked", app.ui_status)
+
+    def test_mission_menu_hides_new_contract_actions_during_active_mission(self):
+        app = ui_pygame.App()
+        app._dispatch_button("open_mission")
+
+        app._draw()
+
+        labels = [button.label for button in app.buttons]
+        self.assertIn("Resume Current", labels)
+        self.assertIn("Continue", labels)
+        self.assertIn("Load", labels)
+        self.assertNotIn("New", labels)
+        self.assertNotIn("Campaign Contract", labels)
 
     def test_continue_loads_last_saved_mission(self):
         app = ui_pygame.App()
@@ -196,6 +234,18 @@ class PygameMissionFlowTests(unittest.TestCase):
         self.assertEqual(app.board_zoom, before_zoom)
         self.assertEqual(app.log_scroll, 3)
         self.assertEqual([entry.message for entry in app._visible_log_entries(tuple(app.state.logs))][0], "line 2")
+
+    def test_log_panel_draws_scroll_buttons_for_long_logs(self):
+        app = ui_pygame.App()
+        app._set_screen("tactical")
+        app.state.logs = [LogEntry(f"line {index} with a long message that should be clipped safely", "test") for index in range(20)]
+
+        app._draw()
+        app._dispatch_button("log_scroll_up")
+
+        self.assertEqual(app.log_scroll, 1)
+        self.assertIn("Up", [button.label for button in app.buttons])
+        self.assertIn("Down", [button.label for button in app.buttons])
 
 
 if __name__ == "__main__":

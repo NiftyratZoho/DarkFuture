@@ -497,11 +497,14 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
     if actor.mph <= 0:
         actions = [
             Action("accelerate", "Move Off", "speed", f"Move one space and accelerate up to +{min(20, actor.acceleration_mph)} mph."),
+            Action("reverse", "Reverse", "move", "Move one space backward at 10 mph, then return to 0 mph."),
             Action("shoot", "Shoot", "shoot", f"Fire {actor.weapon_label} while stationary."),
             Action("drop_smoke", "Drop Smoke", "passive", "Place smoke behind the stationary vehicle."),
             Action("wait", "Hold", "action", "Skip this activation."),
         ]
-        if actor.weapon_disabled:
+        if state.phase != 1 or actor.template_id == "bike":
+            actions = [action for action in actions if action.id != "reverse"]
+        if actor.weapon_disabled or actor.driver_skill <= 0:
             actions = [action for action in actions if action.id != "shoot"]
         return actions
     actions = [
@@ -528,7 +531,7 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
                 actions.insert(3, Action(action_id, label, "move", "Move forward, then shift one lane pair."))
     if _can_offer_u_turn(state, actor):
         actions.insert(5, Action("u_turn", "U-Turn", "move", "Turn through 180 degrees using the U-turn speed bands."))
-    if actor.weapon_disabled:
+    if actor.weapon_disabled or actor.driver_skill <= 0:
         actions = [action for action in actions if action.id != "shoot"]
     return actions
 
@@ -827,6 +830,10 @@ def marker_position_behind(state: GameState, vehicle: Vehicle) -> tuple[int, int
     return section, space
 
 
+def reverse_position(state: GameState, vehicle: Vehicle) -> tuple[int, int]:
+    return marker_position_behind(state, vehicle)
+
+
 def drop_marker(state: GameState, vehicle: Vehicle, kind: MarkerKind) -> None:
     section, space = marker_position_behind(state, vehicle)
     if section < 0 or section >= state.track_sections:
@@ -932,8 +939,12 @@ def apply_critical_effect(state: GameState, target: Vehicle, effect) -> None:
     kind = effect.get("kind") if hasattr(effect, "get") else None
     if kind == "driveSkillDelta":
         target.driver_skill = max(0, target.driver_skill + int(effect["value"]))
+        if target.driver_skill <= 0:
+            target.control_state = "out_of_control"
     elif kind == "setDriveSkill":
         target.driver_skill = max(0, int(effect["value"]))
+        if target.driver_skill <= 0:
+            target.control_state = "out_of_control"
     elif kind == "handlingDelta":
         target.handling += int(effect["value"])
     elif kind == "setHandling":
@@ -1034,6 +1045,8 @@ def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -
 
 
 def shoot_targets(state: GameState, shooter: Vehicle) -> list[Vehicle]:
+    if shooter.weapon_disabled or shooter.driver_skill <= 0:
+        return []
     return [
         target
         for target in state.vehicles
@@ -1153,6 +1166,16 @@ def apply_damage(
 
 
 def apply_shoot(state: GameState, shooter: Vehicle, *, finish_activation: bool = True) -> None:
+    if shooter.driver_skill <= 0:
+        state.logs.append(LogEntry(f"{shooter.label} has no driver able to fire.", "shoot", SHOOT_SOURCE))
+        if finish_activation:
+            _finish_activation(state, shooter)
+        return
+    if shooter.weapon_disabled:
+        state.logs.append(LogEntry(f"{shooter.label}'s weapon is disabled.", "shoot", SHOOT_SOURCE))
+        if finish_activation:
+            _finish_activation(state, shooter)
+        return
     targets = shoot_targets(state, shooter)
     if not targets:
         state.logs.append(LogEntry(f"{shooter.label} has no target in its forward corridor.", "shoot", SHOOT_SOURCE))
@@ -1161,16 +1184,19 @@ def apply_shoot(state: GameState, shooter: Vehicle, *, finish_activation: bool =
         return
     target = min(targets, key=lambda item: _distance_spaces(state, shooter, item))
     hit_roll = state.dice.d6()
-    range_penalty = 1 if _distance_spaces(state, shooter, target) > 4 else 0
-    total = hit_roll + shooter.weapon_accuracy - range_penalty
+    distance = _distance_spaces(state, shooter, target)
+    range_number = min(max(1, distance), 6)
+    total = hit_roll + shooter.weapon_accuracy
     state.logs.append(
         LogEntry(
-            f"{shooter.label} fires {shooter.weapon_label} at {target.label}: d6 {hit_roll} + accuracy {shooter.weapon_accuracy} - range {range_penalty} = {total}.",
+            f"{shooter.label} fires {shooter.weapon_label} at {target.label}: d6 {hit_roll} + accuracy {shooter.weapon_accuracy} = {total} vs range {range_number}.",
             "shoot",
             SHOOT_SOURCE,
         )
     )
-    if total >= 6:
+    if hit_roll == 1:
+        state.logs.append(LogEntry(f"{shooter.label} misses on a natural 1.", "shoot", SHOOT_SOURCE))
+    elif total >= range_number:
         apply_damage(
             state,
             target,
@@ -1340,6 +1366,54 @@ def copy_state(target: GameState, source: GameState) -> None:
     target.save_path = source.save_path
 
 
+def _resolve_forced_straight_move(state: GameState, vehicle: Vehicle, reason: str) -> bool:
+    lane_pair = vehicle.lane_pair
+    next_position = _forward_position_in_state(state, vehicle)
+    if next_position is None:
+        section = vehicle.section + vehicle.direction
+        space = 1
+    else:
+        section, space = next_position
+    old = (vehicle.section, vehicle.space, vehicle.lane_pair)
+
+    if section < 0 or section >= state.track_sections:
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+        state.logs.append(LogEntry(f"{vehicle.label} exits the test road during {reason}.", "scenario"))
+        vehicle.acted_this_phase = True
+        if vehicle.side == "agency" and state.scenario_id in {"intercept", "ambush"}:
+            state.game_over = True
+            state.winner = "agency"
+            state.campaign.settlement_pending = True
+            state.logs.append(LogEntry("Agency vehicle exits successfully.", "victory"))
+        elif vehicle.side == "outlaw" and state.scenario_id == "pursuit":
+            state.game_over = True
+            state.winner = "outlaw"
+            state.campaign.settlement_pending = True
+            state.logs.append(LogEntry("Outlaw escapes the pursuit.", "victory"))
+        choose_next_actor(state)
+        return True
+
+    for other in state.vehicles:
+        if _overlap(vehicle, section, space, lane_pair, other):
+            check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+            resolve_ram(state, vehicle, other)
+            _finish_activation(state, vehicle)
+            return True
+
+    vehicle.section = section
+    vehicle.space = space
+    state.logs.append(
+        LogEntry(
+            f"{vehicle.label} compulsory straight move after {reason}: {old[0]+1}.{old[1]} LP{old[2]} -> {section+1}.{space} LP{lane_pair}.",
+            "move",
+            HAZARD_SOURCE,
+        )
+    )
+    check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+    check_movement_hazards(state, vehicle, "forced_straight", old_section=old[0], old_lane_pair=old[2])
+    return False
+
+
 def apply_action(state: GameState, action_id: str) -> None:
     if action_id == "recruit_driver":
         recruit_driver(state)
@@ -1393,6 +1467,8 @@ def apply_action(state: GameState, action_id: str) -> None:
         if not result.control_lost:
             vehicle.control_state = "controlled"
             state.logs.append(LogEntry(f"{vehicle.label} regains control: table total {result.total} gives {result.effect}.", "hazard", HAZARD_SOURCE))
+            if _resolve_forced_straight_move(state, vehicle, "regaining control"):
+                return
         else:
             vehicle.mph = max(0, vehicle.mph - 10)
             state.logs.append(LogEntry(f"{vehicle.label} remains out of control ({result.effect}) and slows to {vehicle.mph} mph.", "control-loss", HAZARD_SOURCE))
@@ -1406,6 +1482,36 @@ def apply_action(state: GameState, action_id: str) -> None:
         return
     if vehicle.mph <= 0 and action_id == "shoot":
         apply_shoot(state, vehicle)
+        return
+    if action_id == "reverse":
+        if vehicle.mph != 0 or state.phase != 1 or vehicle.template_id == "bike":
+            state.logs.append(LogEntry(f"{vehicle.label} cannot reverse unless stationary in phase 1.", "illegal-action", MOVE_SOURCE))
+            _finish_activation(state, vehicle)
+            return
+        old = (vehicle.section, vehicle.space, vehicle.lane_pair)
+        section, space = reverse_position(state, vehicle)
+        if section < 0 or section >= state.track_sections:
+            state.logs.append(LogEntry(f"{vehicle.label} cannot reverse; rear space is off road.", "illegal-action", MOVE_SOURCE))
+            _finish_activation(state, vehicle)
+            return
+        for other in state.vehicles:
+            if _overlap(vehicle, section, space, vehicle.lane_pair, other):
+                vehicle.mph = 10
+                resolve_ram(state, vehicle, other)
+                vehicle.mph = 0
+                _finish_activation(state, vehicle)
+                return
+        vehicle.section = section
+        vehicle.space = space
+        vehicle.mph = 0
+        state.logs.append(
+            LogEntry(
+                f"{vehicle.label} reverses at 10 mph: {old[0]+1}.{old[1]} LP{old[2]} -> {section+1}.{space} LP{vehicle.lane_pair}, speed 0 mph.",
+                "move",
+                MOVE_SOURCE,
+            )
+        )
+        _finish_activation(state, vehicle)
         return
     if action_id == "u_turn":
         geometry_ok, geometry_reason = _u_turn_geometry_status(state, vehicle)
@@ -1534,6 +1640,11 @@ def apply_action(state: GameState, action_id: str) -> None:
 def ai_choose_action(state: GameState, vehicle: Vehicle) -> str:
     if vehicle.control_state != "controlled":
         return "regain_control"
+
+    if vehicle.mph <= 0:
+        if shoot_targets(state, vehicle):
+            return "shoot"
+        return "accelerate" if state.phase == 1 else "wait"
 
     next_position = _forward_position_in_state(state, vehicle)
     if next_position is not None:

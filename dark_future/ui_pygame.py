@@ -257,9 +257,15 @@ class App:
                     self.ui.selected_vehicle_id = vehicle.id
 
     def _dispatch_button(self, action_id: str) -> None:
+        if action_id in {"log_scroll_up", "log_scroll_down"}:
+            self._scroll_log(1 if action_id == "log_scroll_up" else -1)
+            return
         if action_id == "open_mission":
             self._set_screen("mission_menu")
-            self.ui_status = "Choose Continue, Load, or New mission."
+            if self._mission_in_progress():
+                self.ui_status = "Mission in progress. Resume, save, or load; finish before starting another contract."
+            else:
+                self.ui_status = "Choose Continue, Load, or New mission."
             return
         if action_id.startswith("screen:"):
             self._set_screen(action_id.split(":", 1)[1])
@@ -269,6 +275,9 @@ class App:
             self.ui_status = "Choose a solo mission type."
             return
         if action_id.startswith("new_mission:"):
+            if self._mission_in_progress():
+                self.ui_status = "Finish or load away from the active mission before starting a new one."
+                return
             scenario = action_id.split(":", 1)[1]
             campaign = self.state.campaign
             self.state = new_game(scenario, campaign)
@@ -278,6 +287,9 @@ class App:
             self.ui_status = f"Started {scenario} mission."
             return
         if action_id == "start_campaign_contract":
+            if self._mission_in_progress():
+                self.ui_status = "A mission is already active. Resume or complete it before starting a campaign contract."
+                return
             scenario = self.state.campaign.current_scenario
             campaign = self.state.campaign
             self.state = new_game(scenario, campaign)
@@ -355,6 +367,9 @@ class App:
         self._apply_game_action(action_id)
 
     def _apply_game_action(self, action_id: str) -> None:
+        if self._blocks_campaign_setup_action(action_id):
+            self.ui_status = "Campaign setup is locked while a mission is active."
+            return
         before = len(self.state.logs)
         apply_action(self.state, action_id)
         if len(self.state.logs) > before:
@@ -367,6 +382,19 @@ class App:
         screen = self._current_screen()
         index = modes.index(screen) if screen in modes else 0
         self._set_screen(modes[(index + 1) % len(modes)])
+
+    def _mission_in_progress(self) -> bool:
+        return not self.state.game_over
+
+    def _blocks_campaign_setup_action(self, action_id: str) -> bool:
+        campaign_setup_actions = {
+            "generate_track",
+            "recruit_driver",
+            "repair_agency",
+            "cycle_scenario",
+            "start_campaign_contract",
+        }
+        return self._mission_in_progress() and action_id in campaign_setup_actions
 
     def _toggle_fullscreen(self) -> None:
         flags = self.display.get_flags()
@@ -414,7 +442,9 @@ class App:
         result = f" | Winner: {self.state.winner or 'none'}" if self.state.game_over else ""
         status = f"{self._current_screen().upper()} | Turn {self.state.turn} Phase {self.state.phase} | Active: {panel.actor_label}{result}"
         self.screen.blit(self.font.render(status, True, COLORS["muted"]), (240, 26))
-        setup_keys = " | G track" if self._current_screen() in {"campaign", "debug"} else ""
+        setup_keys = " | G track" if self._current_screen() == "debug" or (
+            self._current_screen() == "campaign" and not self._mission_in_progress()
+        ) else ""
         help_text = f"F11 fullscreen | Tab mode | 1-9 action | Space phase{setup_keys} | F5/F9 save/load"
         self.screen.blit(self.small.render(help_text, True, COLORS["muted"]), (760, 30))
         x = 24
@@ -449,23 +479,41 @@ class App:
             color = COLORS["text"] if index == 0 else COLORS["muted"]
             self.screen.blit(self.small.render(str(line)[:width], True, color), (x, y + index * step))
 
-    def _draw_wrapped_text(self, text: str, x: int, y: int, max_chars: int, max_lines: int, color) -> None:
-        words = text.split()
+    def _draw_text_clipped(self, text: str, x: int, y: int, max_width: int, color, *, font=None) -> None:
+        font = font or self.small
+        value = str(text)
+        if font.size(value)[0] <= max_width:
+            self.screen.blit(font.render(value, True, color), (x, y))
+            return
+        ellipsis = "..."
+        while value and font.size(value + ellipsis)[0] > max_width:
+            value = value[:-1]
+        self.screen.blit(font.render((value + ellipsis) if value else ellipsis, True, color), (x, y))
+
+    def _wrap_text_to_width(self, text: str, max_width: int, max_lines: int, *, font=None) -> list[str]:
+        font = font or self.small
+        words = str(text).split()
         lines: list[str] = []
         current = ""
         for word in words:
             candidate = f"{current} {word}".strip()
-            if len(candidate) <= max_chars:
+            if font.size(candidate)[0] <= max_width:
                 current = candidate
-            else:
-                if current:
-                    lines.append(current)
-                current = word
+                continue
+            if current:
+                lines.append(current)
             if len(lines) >= max_lines:
                 break
+            current = word
+            while font.size(current)[0] > max_width and len(current) > 1:
+                current = current[:-1]
         if current and len(lines) < max_lines:
             lines.append(current)
-        for index, line in enumerate(lines[:max_lines]):
+        return lines[:max_lines]
+
+    def _draw_wrapped_text(self, text: str, x: int, y: int, max_chars: int, max_lines: int, color) -> None:
+        width = max_chars * max(1, self.small.size("M")[0])
+        for index, line in enumerate(self._wrap_text_to_width(text, width, max_lines)):
             self.screen.blit(self.small.render(line, True, color), (x, y + index * 17))
 
     def _command_row(self, x: int, y: int, width: int, title: str, body: str, action_id: str) -> None:
@@ -530,39 +578,37 @@ class App:
         pygame.draw.rect(self.screen, COLORS["panel"], (16, 92, 1240, 690), border_radius=4)
         self.screen.blit(self.big.render("Contract Desk", True, COLORS["text"]), (42, 126))
         self.screen.blit(self.font.render(self.ui_status, True, COLORS["speed_text"]), (42, 164))
-        self._draw_large_menu_button(
-            "Continue",
-            "Load the last saved mission.",
-            "continue_mission",
-            42,
-            220,
-        )
-        self._draw_large_menu_button(
-            "Load",
-            "Choose a previously saved mission.",
-            "mission_load",
-            42,
-            346,
-        )
-        self._draw_large_menu_button(
-            "New",
-            "Start a fresh solo mission.",
-            "new_mission",
-            42,
-            472,
-        )
-        self._draw_large_menu_button(
-            "Campaign Contract",
-            f"Start the campaign's {SCENARIOS[self.state.campaign.current_scenario]['label']} contract.",
-            "start_campaign_contract",
-            42,
-            598,
-        )
+        actions = [
+            ("Resume Current", "Return to the active roadfight.", "resume_current_mission"),
+            ("Continue", "Load the last saved mission.", "continue_mission"),
+            ("Load", "Choose a previously saved mission.", "mission_load"),
+        ]
+        if not self._mission_in_progress():
+            actions.extend(
+                [
+                    ("New", "Start a fresh solo mission.", "new_mission"),
+                    (
+                        "Campaign Contract",
+                        f"Start the campaign's {SCENARIOS[self.state.campaign.current_scenario]['label']} contract.",
+                        "start_campaign_contract",
+                    ),
+                ]
+            )
+        for index, (title, body, action_id) in enumerate(actions[:5]):
+            self._draw_large_menu_button(title, body, action_id, 42, 220 + index * 104)
         self._draw_current_mission_summary(650, 220)
 
     def _draw_mission_new(self) -> None:
         pygame.draw.rect(self.screen, COLORS["panel"], (16, 92, 1240, 690), border_radius=4)
         self.screen.blit(self.big.render("New Solo Contract", True, COLORS["text"]), (42, 126))
+        if self._mission_in_progress():
+            self.screen.blit(
+                self.font.render("A mission is active. Resume or load a save before setting up another.", True, COLORS["speed_text"]),
+                (42, 164),
+            )
+            self._draw_large_menu_button("Resume Current", "Return to the active roadfight.", "resume_current_mission", 42, 220)
+            self._draw_large_menu_button("Back", "Return to Mission menu.", "open_mission", 650, 472)
+            return
         self.screen.blit(self.font.render("Choose the contract type to set up.", True, COLORS["muted"]), (42, 164))
         y = 220
         for scenario_id, scenario in SCENARIOS.items():
@@ -854,32 +900,36 @@ class App:
     def _draw_action_panel(self) -> None:
         panel = build_action_panel_model(self.state)
         x = ACTION_PANEL_X
-        pygame.draw.rect(self.screen, COLORS["panel"], (x, 82, ACTION_PANEL_W, 500), border_radius=4)
+        panel_rect = pygame.Rect(x, 82, ACTION_PANEL_W, 500)
+        pygame.draw.rect(self.screen, COLORS["panel"], panel_rect, border_radius=4)
+        previous_clip = self.screen.get_clip()
+        self.screen.set_clip(panel_rect)
         self.screen.blit(self.font.render("Driver Console", True, COLORS["text"]), (x + 16, 100))
         actor_lines = list(panel.actor_lines)
-        for i, line in enumerate(actor_lines[:5]):
-            self.screen.blit(self.small.render(line[:54], True, COLORS["muted"]), (x + 16, 132 + i * 19))
+        for i, line in enumerate(actor_lines[:6]):
+            self._draw_text_clipped(line, x + 16, 132 + i * 18, ACTION_PANEL_W - 32, COLORS["muted"])
 
         count_suffix = f" ({min(8, len(panel.actions))}/{len(panel.actions)})" if len(panel.actions) > 8 else ""
-        self.screen.blit(self.small.render(f"Legal Actions{count_suffix}", True, COLORS["speed_text"]), (x + 16, 238))
+        self.screen.blit(self.small.render(f"Legal Actions{count_suffix}", True, COLORS["speed_text"]), (x + 16, 246))
         visible_actions = panel.actions[:8]
+        mouse = pygame.Vector2(self._display_to_canvas(pygame.mouse.get_pos()))
         for index, action in enumerate(visible_actions):
-            row_y = 260 + index * 27
-            rect = pygame.Rect(x + 16, row_y, 240, 23)
-            mouse = pygame.mouse.get_pos()
+            row_y = 268 + index * 25
+            rect = pygame.Rect(x + 16, row_y, 286, 22)
             color = COLORS["button_hover"] if rect.collidepoint(mouse) else COLORS["button"]
             pygame.draw.rect(self.screen, color, rect, border_radius=4)
-            self.screen.blit(self.small.render(f"{action.hotkey}. {action.label}", True, COLORS["text"]), (rect.x + 10, rect.y + 3))
+            self._draw_text_clipped(f"{action.hotkey}. {action.label}", rect.x + 10, rect.y + 3, rect.width - 18, COLORS["text"])
             button = Button(rect, action.id, action.label)
             self.buttons.append(button)
             self.action_buttons.append(button)
-            self.screen.blit(self.small.render(action.kind[:12], True, COLORS["speed_text"]), (x + 270, row_y + 4))
+            self._draw_text_clipped(action.kind, x + 314, row_y + 4, 94, COLORS["speed_text"])
 
         preview = visible_actions[0] if visible_actions else None
         pygame.draw.rect(self.screen, COLORS["panel2"], (x + 16, 476, 394, 54), border_radius=4)
         if preview is not None:
-            self.screen.blit(self.small.render(f"Preview: {preview.label}", True, COLORS["text"]), (x + 28, 486))
-            self._draw_wrapped_text(preview.details, x + 28, 508, 46, 1, COLORS["muted"])
+            self._draw_text_clipped(f"Preview: {preview.label}", x + 28, 486, 370, COLORS["text"])
+            for line_index, line in enumerate(self._wrap_text_to_width(preview.details, 370, 2)):
+                self.screen.blit(self.small.render(line, True, COLORS["muted"]), (x + 28, 506 + line_index * 15))
         else:
             self.screen.blit(self.small.render("No legal action for current actor.", True, COLORS["muted"]), (x + 28, 498))
         quick = [("Contracts", "open_mission"), ("Phase", "next_phase")]
@@ -888,8 +938,9 @@ class App:
         for idx, (label, action_id) in enumerate(quick):
             rect = pygame.Rect(x + 16 + idx * 132, 544, 124, 26)
             pygame.draw.rect(self.screen, COLORS["button"], rect, border_radius=4)
-            self.screen.blit(self.small.render(label[:14], True, COLORS["text"]), (rect.x + 8, rect.y + 5))
+            self._draw_text_clipped(label, rect.x + 8, rect.y + 5, rect.width - 16, COLORS["text"])
             self.buttons.append(Button(rect, action_id, label))
+        self.screen.set_clip(previous_clip)
 
     def _draw_campaign(self) -> None:
         c = build_campaign_summary_model(self.state)
@@ -914,22 +965,29 @@ class App:
         self._draw_lines(garage_lines, 442, 376, width=42)
 
         self._panel((830, 82, 426, 498), "Campaign Actions")
-        actions = [
-            ("Start Contract", f"Launch {SCENARIOS[self.state.campaign.current_scenario]['label']}.", "start_campaign_contract"),
-            ("Recruit Driver", "Hire into roster.", "recruit_driver"),
-            ("Repair Agency", "Resolve current repair bill.", "repair_agency"),
-            ("Cycle Scenario", "Step to next solo contract.", "cycle_scenario"),
-            ("Generate Track", "Roll a new road layout.", "generate_track"),
-            ("Save Campaign", "Save current state.", "save_game"),
-            ("Load Campaign", "Load saved state.", "load_game"),
-        ]
         if self.state.game_over:
-            actions.insert(0, ("New Contract", "Start another roadfight.", "new_contract"))
+            actions = [
+                ("New Contract", "Start another roadfight.", "new_contract"),
+                ("Start Contract", f"Launch {SCENARIOS[self.state.campaign.current_scenario]['label']}.", "start_campaign_contract"),
+                ("Recruit Driver", "Hire into roster.", "recruit_driver"),
+                ("Repair Agency", "Resolve current repair bill.", "repair_agency"),
+                ("Cycle Scenario", "Step to next solo contract.", "cycle_scenario"),
+                ("Generate Track", "Roll a new road layout.", "generate_track"),
+                ("Save Campaign", "Save current state.", "save_game"),
+                ("Load Campaign", "Load saved state.", "load_game"),
+            ]
             if self.state.campaign.settlement_pending:
                 actions.insert(0, ("Settle Campaign", "Apply rewards and repairs.", "settle_campaign"))
+        else:
+            actions = [
+                ("Resume Mission", "Return to the active roadfight.", "resume_current_mission"),
+                ("Save Mission", "Save current tactical state.", "save_game"),
+                ("Load Mission", "Load a mission save.", "load_game"),
+            ]
         for index, (title, body, action_id) in enumerate(actions):
             self._command_row(852, 126 + index * 52, 374, title, body, action_id)
-        self.screen.blit(self.small.render(c.placeholder[:52], True, COLORS["speed_text"]), (852, 530))
+        footer = c.placeholder if self.state.game_over else "Campaign setup unlocks when the current mission is complete."
+        self._draw_text_clipped(footer, 852, 530, 360, COLORS["speed_text"])
 
     def _draw_garage(self) -> None:
         design = build_vehicle_design_model(self.state, self.selected_vehicle_id)
@@ -1117,16 +1175,22 @@ class App:
         pygame.draw.rect(self.screen, COLORS["panel"], rect, border_radius=4)
         self.screen.blit(self.font.render(log.title, True, COLORS["text"]), (32, LOG_Y + 18))
         entries = self._visible_log_entries(log.entries)
+        content_rect = pygame.Rect(rect.x + 16, LOG_Y + 48, rect.width - 32, rect.height - 58)
         previous_clip = self.screen.get_clip()
-        self.screen.set_clip(rect)
+        self.screen.set_clip(content_rect)
         for i, entry in enumerate(entries):
             color = COLORS["debug"] if entry.kind in {"phase", "activation"} else COLORS["text"]
             text = f"[{entry.kind}] {entry.message}"
-            self.screen.blit(self.small.render(text[:148], True, color), (32, LOG_Y + 50 + i * 18))
+            self._draw_text_clipped(text, content_rect.x, content_rect.y + i * 18, content_rect.width - 12, color)
         self.screen.set_clip(previous_clip)
         if self._max_log_scroll(log.entries) > 0:
             position = f"{self.log_scroll + 1}-{self.log_scroll + len(entries)} / {len(log.entries)}"
-            self.screen.blit(self.tiny.render(position, True, COLORS["muted"]), (1130, LOG_Y + 20))
+            self.screen.blit(self.tiny.render(position, True, COLORS["muted"]), (1090, LOG_Y + 20))
+            for label, action_id, x in (("Up", "log_scroll_up", 1162), ("Down", "log_scroll_down", 1206)):
+                button = pygame.Rect(x, LOG_Y + 18, 42, 18)
+                pygame.draw.rect(self.screen, COLORS["button"], button, border_radius=3)
+                self._draw_text_clipped(label, button.x + 5, button.y + 3, button.width - 10, COLORS["text"], font=self.tiny)
+                self.buttons.append(Button(button, action_id, label))
 
     def _log_rect(self) -> pygame.Rect:
         return pygame.Rect(16, LOG_Y, 1240, 190)
