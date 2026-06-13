@@ -120,12 +120,12 @@
 
 ### MV-002 Bulldozer result and displacement
 
-- Status: `data-ready`
+- Status: `resolved`
 - Source to check: White Line Fever p. 8.
-- Blocker type: code implementation missing.
-- Missing information: none for text rule; implementation still required.
-- Blocks implementation: WLF bulldozer manoeuvre resolution.
-- Current code behaviour: bulldozer is not fully implemented.
+- Blocker type: none.
+- Missing information: none for the implemented text rule.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: bulldozer is available to cars at 20 mph or less when the next space contains a stationary unaligned vehicle; the target is displaced two lane pairs, aligned to the grid, and both vehicles take a single low-damage hit with no critical roll.
 - Implementation notes: WLF p.8 is readable. Implement prerequisites, target alignment, two-lane push, single -1 damage hit to both vehicles, ignore criticals, and fallback to ram/head-on cases.
 - User notes:
 

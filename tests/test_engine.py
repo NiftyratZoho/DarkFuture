@@ -547,6 +547,44 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(shoot_targets(state, shooter), [friendly])
         self.assertIn("shoot", {action.id for action in legal_actions(state, shooter)})
 
+    def test_bulldozer_pushes_stationary_unaligned_target_two_lanes(self):
+        state = new_game()
+        rammer = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        rammer.mph = 20
+        rammer.section = 1
+        rammer.space = 1
+        rammer.lane_pair = 4
+        target.section = 1
+        target.space = 2
+        target.lane_pair = 4
+        target.mph = 0
+        target.aligned_to_grid = False
+        state.dice.queue = [6, 6]
+
+        self.assertIn("bulldozer", {action.id for action in legal_actions(state, rammer)})
+        apply_action(state, "bulldozer")
+
+        self.assertEqual((rammer.section, rammer.space, rammer.lane_pair), (1, 2, 4))
+        self.assertEqual(target.lane_pair, 2)
+        self.assertTrue(target.aligned_to_grid)
+        self.assertEqual(rammer.damage, 23)
+        self.assertEqual(target.damage, 17)
+        self.assertTrue(any(entry.kind == "bulldozer" for entry in state.logs))
+
+    def test_bulldozer_not_offered_above_twenty_mph(self):
+        state = new_game()
+        rammer = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        rammer.mph = 21
+        target.section = rammer.section
+        target.space = rammer.space + 1
+        target.lane_pair = rammer.lane_pair
+        target.mph = 0
+        target.aligned_to_grid = False
+
+        self.assertNotIn("bulldozer", {action.id for action in legal_actions(state, rammer)})
+
     def test_tyre_destroyed_critical_uses_lower_of_current_max_minus_ten_and_sixty(self):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")

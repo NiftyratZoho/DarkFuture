@@ -99,6 +99,7 @@ class Vehicle:
     action_cancelled_this_phase: bool = False
     hostile_systems: list[str] = field(default_factory=list)
     friendly_fire_only: bool = False
+    aligned_to_grid: bool = True
 
     @property
     def lane_rows(self) -> tuple[int, int]:
@@ -206,6 +207,11 @@ MANOEUVRE_SOURCE = SourceRef(
     "Dark Future Rulebook",
     (13, 14, 15),
     "Manoeuvres are declared before movement; drifts happen after the forward move, and U-turns use speed bands plus curve-edge restrictions.",
+)
+WLF_MANOEUVRE_SOURCE = SourceRef(
+    "White Line Fever",
+    (8,),
+    "Bulldozer move for slow cars pushing a stationary unaligned vehicle out of the path.",
 )
 
 
@@ -583,6 +589,8 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
                 actions.insert(3, Action(action_id, label, "move", "Move forward, then shift one lane pair."))
     if _can_offer_u_turn(state, actor):
         actions.insert(5, Action("u_turn", "U-Turn", "move", "Turn through 180 degrees using the U-turn speed bands."))
+    if _bulldozer_target(state, actor) is not None:
+        actions.insert(3, Action("bulldozer", "Bulldozer", "move", "Push a stationary unaligned vehicle two lanes aside."))
     if actor.weapon_disabled or actor.driver_skill <= 0 or (actor.friendly_fire_only and not shoot_targets(state, actor)):
         actions = [action for action in actions if action.id != "shoot"]
     return actions
@@ -638,6 +646,66 @@ def _overlap(a: Vehicle, section: int, space: int, lane_pair: int, other: Vehicl
         return False
     lanes = {lane_pair, lane_pair + 1}
     return bool(lanes.intersection(other.lane_rows))
+
+
+def _bulldozer_displacement_lane_pair(target: Vehicle) -> int | None:
+    lane_delta = -2 if target.lane_pair <= 4 else 2
+    displaced = target.lane_pair + lane_delta
+    if MIN_LANE_PAIR <= displaced <= MAX_LANE_PAIR:
+        return displaced
+    alternate = target.lane_pair - lane_delta
+    if MIN_LANE_PAIR <= alternate <= MAX_LANE_PAIR:
+        return alternate
+    return None
+
+
+def _bulldozer_target(state: GameState, vehicle: Vehicle) -> Vehicle | None:
+    if vehicle.template_id == "bike" or vehicle.mph > 20:
+        return None
+    next_position = _forward_position_in_state(state, vehicle)
+    if next_position is None:
+        return None
+    section, space = next_position
+    candidates = [
+        other
+        for other in state.vehicles
+        if other.id != vehicle.id
+        and _overlap(vehicle, section, space, vehicle.lane_pair, other)
+        and other.mph <= 0
+        and not other.aligned_to_grid
+        and _bulldozer_displacement_lane_pair(other) is not None
+    ]
+    return candidates[0] if candidates else None
+
+
+def apply_bulldozer_move(state: GameState, rammer: Vehicle) -> bool:
+    target = _bulldozer_target(state, rammer)
+    if target is None:
+        return False
+    next_position = _forward_position_in_state(state, rammer)
+    if next_position is None:
+        return False
+    displaced_lane = _bulldozer_displacement_lane_pair(target)
+    if displaced_lane is None:
+        return False
+    old_rammer = (rammer.section, rammer.space, rammer.lane_pair)
+    old_target = (target.section, target.space, target.lane_pair)
+    target.lane_pair = displaced_lane
+    target.aligned_to_grid = True
+    rammer.section, rammer.space = next_position
+    rammer.aligned_to_grid = True
+    state.logs.append(
+        LogEntry(
+            f"{rammer.label} bulldozes {target.label}: target LP{old_target[2]} -> LP{target.lane_pair}; rammer {old_rammer[0]+1}.{old_rammer[1]} -> {rammer.section+1}.{rammer.space}.",
+            "bulldozer",
+            WLF_MANOEUVRE_SOURCE,
+        )
+    )
+    apply_damage(state, rammer, state.dice.d6(), -1, WLF_MANOEUVRE_SOURCE, "bulldozer")
+    apply_damage(state, target, state.dice.d6(), -1, WLF_MANOEUVRE_SOURCE, "bulldozer")
+    check_passive_markers_on_exit(state, rammer, old_rammer[0], old_rammer[1], old_rammer[2])
+    _finish_activation(state, rammer)
+    return True
 
 
 def _finish_activation(state: GameState, vehicle: Vehicle) -> None:
@@ -1535,6 +1603,19 @@ def apply_action(state: GameState, action_id: str) -> None:
             vehicle.mph = max(0, vehicle.mph - 10)
             state.logs.append(LogEntry(f"{vehicle.label} remains out of control ({result.effect}) and slows to {vehicle.mph} mph.", "control-loss", HAZARD_SOURCE))
         _finish_activation(state, vehicle)
+        return
+    if action_id == "bulldozer":
+        if not apply_bulldozer_move(state, vehicle):
+            next_position = _forward_position_in_state(state, vehicle)
+            if next_position is not None:
+                section, space = next_position
+                for other in state.vehicles:
+                    if _overlap(vehicle, section, space, vehicle.lane_pair, other):
+                        resolve_ram(state, vehicle, other)
+                        _finish_activation(state, vehicle)
+                        return
+            state.logs.append(LogEntry(f"{vehicle.label} cannot make a bulldozer move.", "illegal-action", WLF_MANOEUVRE_SOURCE))
+            _finish_activation(state, vehicle)
         return
     if action_id == "drop_oil":
         drop_marker(state, vehicle, "oil")

@@ -460,8 +460,8 @@
       ],
       "resultOwner": "ramsAndCrashes",
       "damageNotes": {
-        "status": "needsProofread",
-        "summary": "OCR indicates both vehicles suffer a single low-damage hit and critical hits are ignored."
+        "status": "implemented",
+        "summary": "Both vehicles suffer one -1 damage hit and critical hits are ignored."
       },
       "source": {
         "book": "White Line Fever",
