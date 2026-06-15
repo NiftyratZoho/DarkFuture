@@ -1006,6 +1006,13 @@ def _design_from_spec(spec: dict[str, Any]) -> VehicleDesign:
             installed_id=str(row.get("id") or _new_id("weapon")),
         )
         _apply_weapon_ammo_spec(design, weapon, row)
+    for row in spec.get("fireControlComputers", []):
+        install_item(
+            design,
+            str(row["computerId"]),
+            mount_id=str(row["mountId"]),
+            installed_id=str(row.get("id") or _new_id("firecontrol")),
+        )
     for group in spec.get("linkedGroups", []):
         link_weapons(
             design,

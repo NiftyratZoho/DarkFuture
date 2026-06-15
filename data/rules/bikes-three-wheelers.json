@@ -450,16 +450,50 @@
     }
   },
   "trikeTargetMatrix": {
-    "status": "needsProofreadForOcrDamage",
+    "status": "proofreadDraft",
     "source": { "book": "White Line Fever", "pages": [39] },
-    "notes": "Rows are reconstructed from OCR and need image proofread before coding.",
-    "matrixRef": "wlf.trikeTargetMatrix"
+    "matrixRef": "wlf.trikeTargetMatrix",
+    "attackArcs": {
+      "front": [
+        { "range": { "min": 1, "max": 4 }, "component": "mainBodyRider" },
+        { "range": { "min": 5, "max": 6 }, "component": "sidecarOrOutriggerWheel" }
+      ],
+      "sidecarSide": [
+        { "range": { "min": 1, "max": 3 }, "component": "sidecarStructure" },
+        { "range": { "min": 4, "max": 6 }, "component": "mainBikeRider" }
+      ],
+      "nonSidecarSide": [
+        { "range": { "min": 1, "max": 5 }, "component": "mainBikeRider" },
+        { "range": { "min": 6, "max": 6 }, "component": "sidecarStructurePassThrough" }
+      ],
+      "rear": [
+        { "range": { "min": 1, "max": 5 }, "component": "mainBikeRearDrive" },
+        { "range": { "min": 6, "max": 6 }, "component": "sidecar" }
+      ]
+    }
   },
   "motorcycleCombinationTargetMatrix": {
-    "status": "needsProofreadForOcrDamage",
+    "status": "proofreadDraft",
     "source": { "book": "White Line Fever", "pages": [40] },
-    "notes": "Separate sidecar matrix; rows are OCR-damaged and should be checked against the page image.",
-    "matrixRef": "wlf.motorcycleCombinationTargetMatrix"
+    "matrixRef": "wlf.motorcycleCombinationTargetMatrix",
+    "attackArcs": {
+      "front": [
+        { "range": { "min": 1, "max": 4 }, "component": "mainBodyRider" },
+        { "range": { "min": 5, "max": 6 }, "component": "sidecarOrOutriggerWheel" }
+      ],
+      "sidecarSide": [
+        { "range": { "min": 1, "max": 3 }, "component": "sidecarStructure" },
+        { "range": { "min": 4, "max": 6 }, "component": "mainBikeRider" }
+      ],
+      "nonSidecarSide": [
+        { "range": { "min": 1, "max": 5 }, "component": "mainBikeRider" },
+        { "range": { "min": 6, "max": 6 }, "component": "sidecarStructurePassThrough" }
+      ],
+      "rear": [
+        { "range": { "min": 1, "max": 5 }, "component": "mainBikeRearDrive" },
+        { "range": { "min": 6, "max": 6 }, "component": "sidecar" }
+      ]
+    }
   },
   "implementationHandoffs": [
     { "system": "Movement", "requires": ["bikeDodgeAction", "illegalBikeActions", "bikeMovingOffDifferentDirection", "trikeCarMovement"] },
@@ -510,7 +544,8 @@
     {
       "id": "trikeTargetMatrixOcrDamage",
       "source": { "book": "White Line Fever", "pages": [39] },
-      "description": "Trike matrix is too damaged for final coding without page-image proofread."
+      "status": "resolvedByUserProofread",
+      "description": "Trike and sidecar target matrix rows supplied as structured transcription."
     },
     {
       "id": "trikePintleCorridor",

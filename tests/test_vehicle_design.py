@@ -270,6 +270,46 @@ class VehicleDesignBackendTests(unittest.TestCase):
             "turret.*missile|missile.*turret",
         )
 
+    def test_cupola_pintle_and_fire_computer_validation_uses_wlf_text_rules(self):
+        cupola = self.build(
+            self.core_spec(
+                mountUpgrades=["cupola"],
+                installedWeapons=[
+                    {"id": "mg-1", "weaponId": "machineGun6mm", "mountId": "cupola", "facing": "rear"}
+                ],
+                fireControlComputers=[
+                    {"id": "tfc-1", "computerId": "turretFireComputer", "mountId": "cupola"}
+                ],
+            )
+        )
+        cupola_mount = by_id(cupola["mounts"], "cupola")
+        self.assertEqual(cupola_mount["installedWeapons"][0]["weaponId"], "machineGun6mm")
+
+        self.assert_invalid(
+            self.core_spec(
+                mountUpgrades=["pintle"],
+                installedWeapons=[
+                    {"id": "mg-1", "weaponId": "machineGun6mm", "mountId": "pintle", "facing": "rear"}
+                ],
+                fireControlComputers=[
+                    {"id": "tfc-1", "computerId": "turretFireComputer", "mountId": "pintle"}
+                ],
+            ),
+            "turret fire computer.*turret or cupola|compatible turret or cupola",
+        )
+        self.assert_invalid(
+            self.core_spec(
+                mountUpgrades=["turret"],
+                installedWeapons=[
+                    {"id": "missile-1", "weaponId": "missilePod", "mountId": "turret", "facing": "front"}
+                ],
+                fireControlComputers=[
+                    {"id": "tfc-1", "computerId": "turretFireComputer", "mountId": "missile-1"}
+                ],
+            ),
+            "missile.*turret|turret.*missile",
+        )
+
     def test_rear_hardpoints_use_proofread_capacity_and_facing_rules(self):
         interceptor = self.build(
             self.core_spec(

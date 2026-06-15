@@ -1291,10 +1291,10 @@ class App:
         return [
             "Exact physical curve atlas needs traced lane/space nodes for faithful edge-to-edge placement.",
             "Skid, spin, and bootlegger final-position diagrams need extracting into structured movement results.",
-            "Full TGSM and submunition hit-location tables need transcription before exact combat automation.",
+            "TGSM tables are transcribed; remaining missile automation needs weapon-selection UI and tactical ammo flow.",
             "Scenario deployment diagrams need structured setup rows for all contracts beyond current defaults.",
             "Campaign random tables still need complete extraction: approach, loot, disorders, psychosis, salvage.",
-            "Bike, trike, and sidecar target matrices need proofread entries before faithful vehicle design use.",
+            "Interceptor cupola/pintle blind-spot mask still needs diagram grid encoding.",
         ]
 
     def _draw_debug_panel(self) -> None:

@@ -67,6 +67,16 @@ def hazard_tables() -> dict[str, Any]:
     return load_rule_json("hazard-results.json")
 
 
+@lru_cache(maxsize=1)
+def equipment_tables() -> dict[str, Any]:
+    return load_rule_json("equipment.json")
+
+
+@lru_cache(maxsize=1)
+def bikes_three_wheelers_tables() -> dict[str, Any]:
+    return load_rule_json("bikes-three-wheelers.json")
+
+
 def _validate_d6(roll: int) -> None:
     if roll < 1 or roll > 6:
         raise ValueError(f"d6 roll must be between 1 and 6, got {roll}")
@@ -262,3 +272,37 @@ def safety_limit(safety_limit_id: str) -> int | None:
             value = row["safetyLimitMph"]
             return int(value) if value is not None else None
     raise KeyError(f"Unknown safety limit: {safety_limit_id}")
+
+
+def _missile_ammunition(ammo_id: str) -> dict[str, Any]:
+    for row in equipment_tables()["ammunitionTypes"]:
+        if row["id"] == ammo_id:
+            return row
+    raise KeyError(f"Unknown ammunition type: {ammo_id}")
+
+
+def tgsm_submunition_count(roll: int) -> int:
+    _validate_d6(roll)
+    tgsm = _missile_ammunition("missile.tgsm")
+    row = _matching_row(tgsm["resolution"]["submunitionCountTable"], roll)
+    return int(row["submunitions"])
+
+
+def tgsm_hit_location(roll: int) -> dict[str, Any]:
+    _validate_d6(roll)
+    tgsm = _missile_ammunition("missile.tgsm")
+    return dict(_matching_row(tgsm["resolution"]["hitLocationTable"], roll))
+
+
+def resolve_tgsm_hit(count_roll: int, location_rolls: tuple[int, ...]) -> tuple[dict[str, Any], ...]:
+    count = tgsm_submunition_count(count_roll)
+    if len(location_rolls) != count:
+        raise ValueError(f"TGSM count roll requires {count} hit-location rolls")
+    return tuple(tgsm_hit_location(roll) for roll in location_rolls)
+
+
+def three_wheeler_hit_component(matrix_id: str, attack_arc: str, roll: int) -> str:
+    _validate_d6(roll)
+    matrix = bikes_three_wheelers_tables()[matrix_id]
+    rows = matrix["attackArcs"][attack_arc]
+    return str(_matching_row(rows, roll)["component"])

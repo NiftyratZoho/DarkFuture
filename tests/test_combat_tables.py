@@ -5,8 +5,12 @@ from dark_future.combat_tables import (
     damage_increment_penalties,
     resolve_control_loss_test,
     resolve_damage,
+    resolve_tgsm_hit,
     resolve_hazard_test,
     safety_limit,
+    tgsm_hit_location,
+    tgsm_submunition_count,
+    three_wheeler_hit_component,
     weapon_damage_modifier,
 )
 
@@ -192,6 +196,28 @@ class CombatTableTests(unittest.TestCase):
         self.assertEqual(safety_limit("passive.smoke"), 60)
         self.assertEqual(safety_limit("roadHazard.debris"), 10)
         self.assertEqual(safety_limit("manoeuvre.uTurn"), 10)
+
+    def test_tgsm_tables_resolve_submunitions_and_hit_locations(self):
+        self.assertEqual(tgsm_submunition_count(1), 1)
+        self.assertEqual(tgsm_submunition_count(4), 2)
+        self.assertEqual(tgsm_submunition_count(6), 3)
+
+        self.assertEqual(tgsm_hit_location(1)["armourFacing"], "front")
+        self.assertEqual(tgsm_hit_location(3)["armourFacing"], "side")
+        self.assertEqual(tgsm_hit_location(5)["armourFacing"], "rear")
+        roof = tgsm_hit_location(6)
+        self.assertEqual(roof["armourFacing"], "roof")
+        self.assertTrue(roof["bypassesStandardFacingArmour"])
+
+        resolved = resolve_tgsm_hit(5, (1, 4, 6))
+        self.assertEqual([item["location"] for item in resolved], ["front", "rear", "roof"])
+
+    def test_three_wheeler_target_matrix_uses_transcribed_arcs(self):
+        self.assertEqual(three_wheeler_hit_component("trikeTargetMatrix", "front", 4), "mainBodyRider")
+        self.assertEqual(three_wheeler_hit_component("trikeTargetMatrix", "front", 5), "sidecarOrOutriggerWheel")
+        self.assertEqual(three_wheeler_hit_component("trikeTargetMatrix", "sidecarSide", 3), "sidecarStructure")
+        self.assertEqual(three_wheeler_hit_component("trikeTargetMatrix", "nonSidecarSide", 6), "sidecarStructurePassThrough")
+        self.assertEqual(three_wheeler_hit_component("motorcycleCombinationTargetMatrix", "rear", 6), "sidecar")
 
 
 if __name__ == "__main__":

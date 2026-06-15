@@ -40,13 +40,13 @@
 
 ### VD-003 Missile ammunition proofread
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: White Line Fever pp. 28-29 and 43.
 - Data rows: `data/rules/equipment.json` ammunition types `missile.cannister`, `missile.smoke`, `missile.tgsm`; `missile.shapedPlastic` is cost/weight-present but still marked for proofread.
-- Blocker type: structured transcription needed for TGSM tactical tables.
-- Missing information: TGSM submunition count table and TGSM hit-location table from WLF p. 29 still need extraction for tactical damage resolution.
-- Blocks implementation: no longer blocks missile pod campaign/design loadouts. Still blocks faithful TGSM tactical resolution.
-- Current code behaviour: missile shaped plastic, cannister, smoke, and TGSM all have proofread cost/weight rows for loadout design. Tactical effects are stored as structured data where supplied.
+- Blocker type: none.
+- Missing information: none for missile ammunition tables listed here.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: missile shaped plastic, cannister, smoke, and TGSM all have proofread cost/weight rows for loadout design. TGSM now stores and exposes the D6 submunition-count table plus D6 hit-location table for tactical resolution after a successful standard missile accuracy check.
 - User notes: Cannister  cannot be fired in a turn after a hazard roll or manoeuver. hits an entire track section automaticallly damaghe +3 and damage is on roof. cost $10k and weighs 30.  Shaped plastic is weight 30 and cost 5,000 per missile. smoke lands on  the 6th space away from the firer and fills 6 spaces and 4 lanes wide. its persistant and doesnt clear. if a missile fire computer is used it is any space at least 2 spaces away up to the 6th at the choice of the firer. , cost 2000, weight 30. TGSM cost 12,500 and weight 30 with +4 asccuracy and +4 damaHE for each sub munitioion which there is a table to determine the number after it hgas already gone through a standard accuracy check for a missile. with a dice roll to determine where it hits in a specific table on page 29 of the rules.
 - Implementation notes: updated `data/rules/equipment.json`; missile reload tests cover cannister, smoke, and TGSM design loadout.
 
@@ -75,13 +75,13 @@
 
 ### VD-006 Cupola/pintle detailed behaviour
 
-- Status: `data-ready`
+- Status: `partial`
 - Source to check: White Line Fever pp. 34 and 43.
 - Data rows: `cupola`, `pintle`, `turretFireComputer`.
-- Blocker type: code implementation missing for text rules; diagram/grid tracing needed for the Interceptor blind spot.
-- Missing information: none for the text rules. The Interceptor tailgate/turret/cupola/pintle blind spot is diagram-defined and needs grid-cell encoding, not rule clarification.
-- Blocks implementation: tactical cupola/pintle firing, tail-gunner crew state, and blind-spot grid integration beyond basic design purchase.
-- Current code behaviour: proofread cost/weight is available; basic design mount support exists; turret fire computers are restricted to turret/cupola non-missile weapons and excluded from pintles.
+- Blocker type: diagram/grid tracing needed for the Interceptor blind spot.
+- Missing information: none for text rules. The Interceptor tailgate/turret/cupola/pintle blind spot is diagram-defined and needs grid-cell encoding.
+- Blocks implementation: final Interceptor blind-spot grid integration.
+- Current code behaviour: proofread cost/weight and $5,000 extra crewman data are available; basic design mount support exists; turret fire computers are restricted to turret/cupola non-missile weapons and excluded from pintles; cupola fire-computer operation is recorded as tail-gunner operated.
 - Implementation notes: WLF p.34 confirms turret fire computers can control cupola-mounted weapons but not pintle-mounted weapons; when controlling a cupola-mounted weapon, it must be operated by the gunner, not the driver. Turret-mounted missile pods require missile fire computers. WLF p.43 confirms cupola cars-only `$10,000`/200, pintle `$6,000`/100, and that mount weight includes the tail gunner while the additional crewman costs `$5,000`. WLF p.13 gives the Interceptor blind-spot diagram for tailgate weapon plus turret/cupola/pintle; implement as a diagram-derived grid mask.
 - User notes:
 
@@ -335,13 +335,13 @@
 
 ### BK-002 Trike and sidecar target matrices
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: White Line Fever three-wheeler target matrix tables.
 - Data rows: `data/rules/bikes-three-wheelers.json`.
-- Blocker type: structured transcription needed.
-- Missing information: page images are readable enough for extraction, but target-matrix rows and column values still need structured transcription/proofread.
-- Blocks implementation: faithful trike/sidecar damage targeting.
-- Current code behaviour: conservative extracted rows exist but remain proofread-blocked.
+- Blocker type: none.
+- Missing information: none for the supplied trike and motorcycle-combination target matrices.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: trike and motorcycle-combination target matrices are structured by attack arc and D6 component ranges.
 - User notes:
 
 ## Resolved In This Pass
