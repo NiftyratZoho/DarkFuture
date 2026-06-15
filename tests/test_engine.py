@@ -903,13 +903,30 @@ class EngineTests(unittest.TestCase):
         agency.driver_skill = 6
         state.dice.queue = [1]
 
-        apply_action(state, "bootlegger")
+        apply_action(state, "bootlegger_right")
 
         self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 1, 4))
         self.assertEqual(agency.direction, -1)
         self.assertEqual(agency.control_state, "controlled")
 
-    def test_bootlegger_failed_control_roll_slides_to_position_roll_lane_pair(self):
+    def test_bootlegger_legal_actions_depend_on_four_lane_gap_side(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.mph = 40
+        agency.lane_pair = 1
+
+        action_ids = {action.id for action in legal_actions(state)}
+
+        self.assertIn("bootlegger_right", action_ids)
+        self.assertNotIn("bootlegger_left", action_ids)
+
+        agency.lane_pair = 7
+        action_ids = {action.id for action in legal_actions(state)}
+
+        self.assertIn("bootlegger_left", action_ids)
+        self.assertNotIn("bootlegger_right", action_ids)
+
+    def test_bootlegger_failed_control_roll_slides_to_declared_right_side(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
         agency.section = 1
@@ -920,11 +937,42 @@ class EngineTests(unittest.TestCase):
         agency.driver_skill = 0
         state.dice.queue = [5, 3]
 
-        apply_action(state, "bootlegger")
+        apply_action(state, "bootlegger_right")
 
         self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 3))
         self.assertEqual(agency.control_state, "out_of_control")
         self.assertTrue(any("position roll 3" in entry.message for entry in state.logs))
+
+    def test_bootlegger_failed_control_roll_slides_to_declared_left_side(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 7
+        agency.mph = 120
+        agency.handling = 0
+        agency.driver_skill = 0
+        state.dice.queue = [5, 3]
+
+        apply_action(state, "bootlegger_left")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 5))
+        self.assertEqual(agency.control_state, "out_of_control")
+        self.assertTrue(any("bootlegger left" in entry.message for entry in state.logs))
+
+    def test_bootlegger_rejects_side_without_four_lane_gap(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 1
+        agency.mph = 40
+
+        apply_action(state, "bootlegger_left")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 1, 1))
+        self.assertEqual(agency.direction, 1)
+        self.assertTrue(any("four-lane gap" in entry.message for entry in state.logs))
 
     def test_bootlegger_natural_six_causes_tyre_critical_and_out_of_control_move(self):
         state = new_game()
@@ -935,7 +983,7 @@ class EngineTests(unittest.TestCase):
         agency.mph = 50
         state.dice.queue = [6]
 
-        apply_action(state, "bootlegger")
+        apply_action(state, "bootlegger_right")
 
         self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 1))
         self.assertEqual(agency.control_state, "out_of_control")
@@ -953,7 +1001,7 @@ class EngineTests(unittest.TestCase):
         agency.driver_skill = 6
         state.dice.queue = [1]
 
-        apply_action(state, "bootlegger")
+        apply_action(state, "bootlegger_right")
 
         self.assertEqual((agency.section, agency.space, agency.lane_pair), (3, 2, 4))
         self.assertEqual(agency.direction, 1)
