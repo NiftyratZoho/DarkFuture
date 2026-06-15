@@ -194,9 +194,40 @@ class CombatTableTests(unittest.TestCase):
         self.assertTrue(result.control_lost)
 
     def test_spin_template_speed_loss_uses_extracted_rows(self):
-        self.assertEqual(spin_template_speed_loss(6), 40)
-        self.assertEqual(spin_template_speed_loss(7), 40)
-        self.assertIsNone(spin_template_speed_loss(8))
+        red_expected = {
+            2: 40,
+            3: 40,
+            4: 20,
+            5: 20,
+            6: 20,
+            7: 20,
+            8: 30,
+            9: 40,
+            10: 40,
+            11: 40,
+            12: 40,
+            13: 40,
+        }
+        blue_expected = {
+            2: 20,
+            3: 20,
+            4: 20,
+            5: 20,
+            6: 20,
+            7: 20,
+            8: 30,
+            9: 40,
+            10: 40,
+            11: 40,
+            12: 40,
+            13: 40,
+        }
+
+        for total, speed_loss in red_expected.items():
+            self.assertEqual(spin_template_speed_loss(total, "redClockwise"), speed_loss)
+        for total, speed_loss in blue_expected.items():
+            self.assertEqual(spin_template_speed_loss(total, "blueCounterClockwise"), speed_loss)
+        self.assertEqual(spin_template_speed_loss(2), 40)
 
     def test_safety_limit_lookup_uses_extracted_ids(self):
         self.assertEqual(safety_limit("passive.smoke"), 60)

@@ -310,26 +310,34 @@
     "alreadySpunSpinTemplate": {
       "source": "user-supplied spin template image",
       "alignment": "Align the template with the front of the vehicle.",
-      "implementedRows": [
-        {
-          "range": { "min": 6, "max": 6 },
-          "speedLossMph": 40,
-          "status": "readableFromTemplate"
-        },
-        {
-          "range": { "min": 7, "max": 7 },
-          "speedLossMph": 40,
-          "status": "readableFromTemplate"
-        }
-      ],
+      "orientation": "12+ is straight ahead from the vehicle front. Red values run clockwise from the front; blue values run counter-clockwise from the front.",
+      "rowsByColour": {
+        "redClockwise": [
+          { "range": { "min": 2, "max": 3 }, "speedLossMph": 40 },
+          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20 },
+          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20 },
+          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30 },
+          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40 },
+          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40 },
+          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40 },
+          { "range": { "min": 12 }, "speedLossMph": 40 }
+        ],
+        "blueCounterClockwise": [
+          { "range": { "min": 2, "max": 3 }, "speedLossMph": 20 },
+          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20 },
+          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20 },
+          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30 },
+          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40 },
+          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40 },
+          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40 },
+          { "range": { "min": 12 }, "speedLossMph": 40 }
+        ]
+      },
+      "defaultColour": "redClockwise",
       "unimplementedRows": [
         {
-          "range": { "min": 8 },
-          "reason": "Control-loss total 8+ is owned by the roll result, not the spin result."
-        },
-        {
-          "label": "facing/reorientation wedges",
-          "reason": "The supplied image confirms the circular template and several speed-loss values, but the exact final facing/realignment wedges are not all legible enough to encode as definitive grid coordinates."
+          "label": "facing/reorientation coordinates",
+          "reason": "The speed-loss table is transcribed. Exact final facing and grid realignment still need to be linked to tactical map coordinates."
         }
       ]
     }

@@ -266,9 +266,14 @@ def resolve_control_loss_test(
     )
 
 
-def spin_template_speed_loss(total: int) -> int | None:
+def spin_template_speed_loss(total: int, colour: str | None = None) -> int | None:
     template = hazard_tables()["advancedSpin"].get("alreadySpunSpinTemplate", {})
-    for row in template.get("implementedRows", []):
+    rows_by_colour = template.get("rowsByColour", {})
+    colour_key = colour or str(template.get("defaultColour", "redClockwise"))
+    rows = rows_by_colour.get(colour_key)
+    if rows is None:
+        raise KeyError(f"Unknown spin template colour: {colour_key}")
+    for row in rows:
         range_data = row["range"]
         minimum = int(range_data.get("min", -999))
         maximum = int(range_data.get("max", 999))

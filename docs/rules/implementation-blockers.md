@@ -157,10 +157,10 @@
 - Status: `partial`
 - Source to check: Dark Future skid/spin result diagrams.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact spin-template final facing/realignment coordinates for all wedges. The supplied spin-template image clearly supports the spin-result speed loss rows for control-loss totals 6 and 7.
+- Missing information: exact spin-template final facing/realignment coordinates for tactical map placement. The red/blue speed-loss values are now transcribed.
 - Blocks implementation: faithful final-facing/grid realignment for spin and exact skid/roll movement templates.
-- Current code behaviour: control-loss `spin` results apply the extracted spin-template -40 mph speed loss for totals 6 and 7 and mark the vehicle unaligned. Exact final facing is not yet changed because the template's facing wedges are not fully legible.
-- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun.
+- Current code behaviour: control-loss `spin` results apply the extracted spin-template speed loss using the default red/clockwise table and mark the vehicle unaligned. Red and blue speed-loss rows are stored in data; exact final facing is not yet changed because the rows still need to be mapped to tactical headings/grid coordinates.
+- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun. Red numbers go clockwise from the vehicle front; blue numbers go counter-clockwise. `12+` is straight ahead.
 
 ### HZ-004 Passive marker exception
 

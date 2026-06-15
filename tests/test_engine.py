@@ -889,9 +889,9 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.control_state, "out_of_control")
-        self.assertEqual(agency.mph, 0)
+        self.assertEqual(agency.mph, 20)
         self.assertFalse(agency.aligned_to_grid)
-        self.assertTrue(any(entry.kind == "spin" and "-40 mph" in entry.message for entry in state.logs))
+        self.assertTrue(any(entry.kind == "spin" and "-20 mph" in entry.message for entry in state.logs))
 
     def test_bootlegger_on_straight_success_reverses_facing(self):
         state = new_game()
