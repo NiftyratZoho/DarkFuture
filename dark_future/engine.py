@@ -12,6 +12,7 @@ from .combat_tables import (
     resolve_control_loss_test,
     resolve_damage as table_resolve_damage,
     resolve_hazard_test,
+    spin_template_colour_for_roll,
     spin_template_speed_loss,
 )
 from .data_loader import load_rule_json, speed_phase_rows, track_inventory, vehicle_template
@@ -1154,15 +1155,25 @@ def apply_zero_damage_tyre_critical(state: GameState, target: Vehicle, reason: s
 def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, reason: str) -> None:
     if total is None:
         return
-    speed_loss = spin_template_speed_loss(total)
+    direction_roll = state.dice.d6()
+    colour = spin_template_colour_for_roll(direction_roll)
+    direction_label = "anti-clockwise" if colour == "blueCounterClockwise" else "clockwise"
+    speed_loss = spin_template_speed_loss(total, colour)
     if speed_loss is None:
+        state.logs.append(
+            LogEntry(
+                f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}, but total {total} has no spin-template speed row.",
+                "spin",
+                HAZARD_SOURCE,
+            )
+        )
         return
     old_mph = vehicle.mph
     vehicle.mph = max(0, vehicle.mph - speed_loss)
     vehicle.aligned_to_grid = False
     state.logs.append(
         LogEntry(
-            f"{vehicle.label} applies the spin template for {reason}: -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and remains unaligned.",
+            f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}; template {colour} applies -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and remains unaligned.",
             "spin",
             HAZARD_SOURCE,
         )

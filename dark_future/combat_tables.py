@@ -282,6 +282,12 @@ def spin_template_speed_loss(total: int, colour: str | None = None) -> int | Non
     return None
 
 
+def spin_template_colour_for_roll(roll: int) -> str:
+    _validate_d6(roll)
+    spin_test = hazard_tables()["advancedSpin"]["alreadySpunSpinTemplate"]["spinTest"]
+    return str(spin_test["odd"] if roll % 2 else spin_test["even"])
+
+
 def safety_limit(safety_limit_id: str) -> int | None:
     for row in hazard_tables()["safetyLimits"]:
         if row["id"] == safety_limit_id:

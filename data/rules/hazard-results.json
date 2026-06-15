@@ -311,6 +311,11 @@
       "source": "user-supplied spin template image",
       "alignment": "Align the template with the front of the vehicle.",
       "orientation": "12+ is straight ahead from the vehicle front. Red values run clockwise from the front; blue values run counter-clockwise from the front.",
+      "spinTest": {
+        "dice": { "kind": "d6", "count": 1 },
+        "odd": "blueCounterClockwise",
+        "even": "redClockwise"
+      },
       "rowsByColour": {
         "redClockwise": [
           { "range": { "min": 2, "max": 3 }, "speedLossMph": 40 },

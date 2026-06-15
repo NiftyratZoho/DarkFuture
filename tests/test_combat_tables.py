@@ -8,6 +8,7 @@ from dark_future.combat_tables import (
     resolve_tgsm_hit,
     resolve_hazard_test,
     safety_limit,
+    spin_template_colour_for_roll,
     spin_template_speed_loss,
     tgsm_hit_location,
     tgsm_submunition_count,
@@ -228,6 +229,12 @@ class CombatTableTests(unittest.TestCase):
         for total, speed_loss in blue_expected.items():
             self.assertEqual(spin_template_speed_loss(total, "blueCounterClockwise"), speed_loss)
         self.assertEqual(spin_template_speed_loss(2), 40)
+
+    def test_spin_template_colour_uses_odd_anti_clockwise_even_clockwise(self):
+        self.assertEqual(spin_template_colour_for_roll(1), "blueCounterClockwise")
+        self.assertEqual(spin_template_colour_for_roll(2), "redClockwise")
+        self.assertEqual(spin_template_colour_for_roll(5), "blueCounterClockwise")
+        self.assertEqual(spin_template_colour_for_roll(6), "redClockwise")
 
     def test_safety_limit_lookup_uses_extracted_ids(self):
         self.assertEqual(safety_limit("passive.smoke"), 60)

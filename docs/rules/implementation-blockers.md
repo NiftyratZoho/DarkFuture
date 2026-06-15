@@ -159,8 +159,8 @@
 - Blocker type: diagram/grid tracing needed.
 - Missing information: exact spin-template final facing/realignment coordinates for tactical map placement. The red/blue speed-loss values are now transcribed.
 - Blocks implementation: faithful final-facing/grid realignment for spin and exact skid/roll movement templates.
-- Current code behaviour: control-loss `spin` results apply the extracted spin-template speed loss using the default red/clockwise table and mark the vehicle unaligned. Red and blue speed-loss rows are stored in data; exact final facing is not yet changed because the rows still need to be mapped to tactical headings/grid coordinates.
-- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun. Red numbers go clockwise from the vehicle front; blue numbers go counter-clockwise. `12+` is straight ahead.
+- Current code behaviour: control-loss `spin` results roll a single spin-test die; odd uses the blue/anti-clockwise table, even uses the red/clockwise table. The extracted speed loss is applied and the vehicle is marked unaligned. Exact final facing is not yet changed because the rows still need to be mapped to tactical headings/grid coordinates.
+- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun. Red numbers go clockwise from the vehicle front; blue numbers go counter-clockwise. `12+` is straight ahead. A spin test is a single die: odd is anti-clockwise and even is clockwise.
 
 ### HZ-004 Passive marker exception
 
