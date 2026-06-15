@@ -157,10 +157,10 @@
 - Status: `partial`
 - Source to check: Dark Future skid/spin result diagrams.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact spin-template final facing/realignment coordinates for tactical map placement. The red/blue speed-loss values are now transcribed.
-- Blocks implementation: faithful final-facing/grid realignment for spin and exact skid/roll movement templates.
-- Current code behaviour: control-loss `spin` results roll a single spin-test die; odd uses the blue/anti-clockwise table, even uses the red/clockwise table. The extracted speed loss is applied and the vehicle is marked unaligned. Exact final facing is not yet changed because the rows still need to be mapped to tactical headings/grid coordinates.
-- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun. Red numbers go clockwise from the vehicle front; blue numbers go counter-clockwise. `12+` is straight ahead. A spin test is a single die: odd is anti-clockwise and even is clockwise.
+- Missing information: exact spin-template centre displacement/contact cells if the template moves the vehicle's centre, plus exact skid/roll movement templates.
+- Blocks implementation: faithful spin contact resolution and exact skid/roll movement templates.
+- Current code behaviour: control-loss `spin` results roll a single spin-test die; odd uses the blue/anti-clockwise table, even uses the red/clockwise table. The extracted speed loss is applied, the vehicle is marked unaligned, and final facing is snapped to 45-degree increments relative to the current track heading.
+- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun. Red numbers go clockwise from the vehicle front; blue numbers go counter-clockwise. `12+` is straight ahead. A spin test is a single die: odd is anti-clockwise and even is clockwise. Results are at 45-degree increments to the track: aligned/360, 45, 90, 135, 180, 225, 270, or 315 degrees.
 
 ### HZ-004 Passive marker exception
 

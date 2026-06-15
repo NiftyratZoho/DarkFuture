@@ -8,6 +8,7 @@ from dark_future.combat_tables import (
     resolve_tgsm_hit,
     resolve_hazard_test,
     safety_limit,
+    spin_template_angle_offset,
     spin_template_colour_for_roll,
     spin_template_speed_loss,
     tgsm_hit_location,
@@ -235,6 +236,15 @@ class CombatTableTests(unittest.TestCase):
         self.assertEqual(spin_template_colour_for_roll(2), "redClockwise")
         self.assertEqual(spin_template_colour_for_roll(5), "blueCounterClockwise")
         self.assertEqual(spin_template_colour_for_roll(6), "redClockwise")
+
+    def test_spin_template_angle_offsets_are_45_degree_increments(self):
+        red_expected = {2: 45, 4: 90, 6: 135, 8: 180, 9: 225, 10: 270, 11: 315, 12: 0}
+        blue_expected = {2: 315, 4: 270, 6: 225, 8: 180, 9: 135, 10: 90, 11: 45, 12: 0}
+
+        for total, angle in red_expected.items():
+            self.assertEqual(spin_template_angle_offset(total, "redClockwise"), angle)
+        for total, angle in blue_expected.items():
+            self.assertEqual(spin_template_angle_offset(total, "blueCounterClockwise"), angle)
 
     def test_safety_limit_lookup_uses_extracted_ids(self):
         self.assertEqual(safety_limit("passive.smoke"), 60)

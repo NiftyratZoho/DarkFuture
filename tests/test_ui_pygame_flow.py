@@ -292,6 +292,19 @@ class PygameMissionFlowTests(unittest.TestCase):
 
         self.assertEqual(app._token_render_angle(pose), -60)
 
+    def test_spun_vehicle_pose_uses_spin_facing_angle(self):
+        app = ui_pygame.App()
+        vehicle = app.state.vehicles[0]
+        vehicle.spin_facing_degrees = 135
+        vehicle.aligned_to_grid = False
+        board = ui_pygame.build_tactical_board_model(app.state)
+        placements = app._section_placements(board)
+        token = next(token for token in board.vehicles if token.id == vehicle.id)
+
+        pose = app._vehicle_pose(token, board, placements)
+
+        self.assertEqual(pose.angle_degrees, placements[vehicle.section].heading_degrees + 135)
+
     def test_tactical_screen_hides_track_generation_controls(self):
         app = ui_pygame.App()
         app._set_screen("tactical")

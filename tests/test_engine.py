@@ -891,6 +891,7 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(agency.control_state, "out_of_control")
         self.assertEqual(agency.mph, 20)
         self.assertFalse(agency.aligned_to_grid)
+        self.assertEqual(agency.spin_facing_degrees, 225)
         self.assertTrue(any(entry.kind == "spin" and "anti-clockwise" in entry.message and "-20 mph" in entry.message for entry in state.logs))
 
     def test_regain_control_spin_result_uses_even_clockwise_spin_test(self):
@@ -907,7 +908,22 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(agency.control_state, "out_of_control")
         self.assertEqual(agency.mph, 20)
         self.assertFalse(agency.aligned_to_grid)
+        self.assertEqual(agency.spin_facing_degrees, 135)
         self.assertTrue(any(entry.kind == "spin" and "clockwise" in entry.message and "-20 mph" in entry.message for entry in state.logs))
+
+    def test_reverse_facing_vehicle_spin_facing_starts_from_vehicle_front(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.control_state = "out_of_control"
+        agency.direction = -1
+        agency.mph = 40
+        agency.handling = 0
+        agency.driver_skill = 0
+        state.dice.queue = [2, 2]
+
+        apply_action(state, "regain_control")
+
+        self.assertEqual(agency.spin_facing_degrees, 315)
 
     def test_bootlegger_on_straight_success_reverses_facing(self):
         state = new_game()

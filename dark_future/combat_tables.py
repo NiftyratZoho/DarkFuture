@@ -282,6 +282,22 @@ def spin_template_speed_loss(total: int, colour: str | None = None) -> int | Non
     return None
 
 
+def spin_template_angle_offset(total: int, colour: str | None = None) -> int | None:
+    template = hazard_tables()["advancedSpin"].get("alreadySpunSpinTemplate", {})
+    rows_by_colour = template.get("rowsByColour", {})
+    colour_key = colour or str(template.get("defaultColour", "redClockwise"))
+    rows = rows_by_colour.get(colour_key)
+    if rows is None:
+        raise KeyError(f"Unknown spin template colour: {colour_key}")
+    for row in rows:
+        range_data = row["range"]
+        minimum = int(range_data.get("min", -999))
+        maximum = int(range_data.get("max", 999))
+        if minimum <= total <= maximum:
+            return int(row["angleOffsetDegrees"])
+    return None
+
+
 def spin_template_colour_for_roll(roll: int) -> str:
     _validate_d6(roll)
     spin_test = hazard_tables()["advancedSpin"]["alreadySpunSpinTemplate"]["spinTest"]

@@ -12,6 +12,7 @@ from .combat_tables import (
     resolve_control_loss_test,
     resolve_damage as table_resolve_damage,
     resolve_hazard_test,
+    spin_template_angle_offset,
     spin_template_colour_for_roll,
     spin_template_speed_loss,
 )
@@ -102,6 +103,7 @@ class Vehicle:
     hostile_systems: list[str] = field(default_factory=list)
     friendly_fire_only: bool = False
     aligned_to_grid: bool = True
+    spin_facing_degrees: int | None = None
 
     @property
     def lane_rows(self) -> tuple[int, int]:
@@ -1159,6 +1161,7 @@ def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, r
     colour = spin_template_colour_for_roll(direction_roll)
     direction_label = "anti-clockwise" if colour == "blueCounterClockwise" else "clockwise"
     speed_loss = spin_template_speed_loss(total, colour)
+    angle_offset = spin_template_angle_offset(total, colour)
     if speed_loss is None:
         state.logs.append(
             LogEntry(
@@ -1168,12 +1171,14 @@ def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, r
             )
         )
         return
+    current_front = 0 if vehicle.direction == 1 else 180
+    vehicle.spin_facing_degrees = (current_front + (angle_offset or 0)) % 360
     old_mph = vehicle.mph
     vehicle.mph = max(0, vehicle.mph - speed_loss)
     vehicle.aligned_to_grid = False
     state.logs.append(
         LogEntry(
-            f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}; template {colour} applies -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and remains unaligned.",
+            f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}; template {colour} applies -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and facing {vehicle.spin_facing_degrees} degrees.",
             "spin",
             HAZARD_SOURCE,
         )
@@ -1612,6 +1617,8 @@ def _resolve_forced_straight_move(state: GameState, vehicle: Vehicle, reason: st
 
     vehicle.section = section
     vehicle.space = space
+    vehicle.aligned_to_grid = True
+    vehicle.spin_facing_degrees = None
     state.logs.append(
         LogEntry(
             f"{vehicle.label} compulsory straight move after {reason}: {old[0]+1}.{old[1]} LP{old[2]} -> {section+1}.{space} LP{lane_pair}.",
@@ -1798,6 +1805,8 @@ def apply_action(state: GameState, action_id: str) -> None:
         )
         if not result.control_lost:
             vehicle.control_state = "controlled"
+            vehicle.aligned_to_grid = True
+            vehicle.spin_facing_degrees = None
             state.logs.append(LogEntry(f"{vehicle.label} regains control: table total {result.total} gives {result.effect}.", "hazard", HAZARD_SOURCE))
             if _resolve_forced_straight_move(state, vehicle, "regaining control"):
                 return
@@ -1979,6 +1988,8 @@ def apply_action(state: GameState, action_id: str) -> None:
     vehicle.section = section
     vehicle.space = space
     vehicle.lane_pair = lane_pair
+    vehicle.aligned_to_grid = True
+    vehicle.spin_facing_degrees = None
     if speed_change:
         vehicle.mph += speed_change
     if action_id in {"rocket_pulse", "rocket_cruise", "rocket_off"}:

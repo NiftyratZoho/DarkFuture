@@ -318,24 +318,24 @@
       },
       "rowsByColour": {
         "redClockwise": [
-          { "range": { "min": 2, "max": 3 }, "speedLossMph": 40 },
-          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20 },
-          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20 },
-          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30 },
-          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40 },
-          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40 },
-          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40 },
-          { "range": { "min": 12 }, "speedLossMph": 40 }
+          { "range": { "min": 2, "max": 3 }, "speedLossMph": 40, "angleOffsetDegrees": 45 },
+          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20, "angleOffsetDegrees": 90 },
+          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20, "angleOffsetDegrees": 135 },
+          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30, "angleOffsetDegrees": 180 },
+          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40, "angleOffsetDegrees": 225 },
+          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40, "angleOffsetDegrees": 270 },
+          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40, "angleOffsetDegrees": 315 },
+          { "range": { "min": 12 }, "speedLossMph": 40, "angleOffsetDegrees": 0 }
         ],
         "blueCounterClockwise": [
-          { "range": { "min": 2, "max": 3 }, "speedLossMph": 20 },
-          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20 },
-          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20 },
-          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30 },
-          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40 },
-          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40 },
-          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40 },
-          { "range": { "min": 12 }, "speedLossMph": 40 }
+          { "range": { "min": 2, "max": 3 }, "speedLossMph": 20, "angleOffsetDegrees": 315 },
+          { "range": { "min": 4, "max": 5 }, "speedLossMph": 20, "angleOffsetDegrees": 270 },
+          { "range": { "min": 6, "max": 7 }, "speedLossMph": 20, "angleOffsetDegrees": 225 },
+          { "range": { "min": 8, "max": 8 }, "speedLossMph": 30, "angleOffsetDegrees": 180 },
+          { "range": { "min": 9, "max": 9 }, "speedLossMph": 40, "angleOffsetDegrees": 135 },
+          { "range": { "min": 10, "max": 10 }, "speedLossMph": 40, "angleOffsetDegrees": 90 },
+          { "range": { "min": 11, "max": 11 }, "speedLossMph": 40, "angleOffsetDegrees": 45 },
+          { "range": { "min": 12 }, "speedLossMph": 40, "angleOffsetDegrees": 0 }
         ]
       },
       "defaultColour": "redClockwise",

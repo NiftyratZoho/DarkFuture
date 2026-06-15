@@ -62,6 +62,7 @@ class VehicleTokenModel:
     lane_pair: int
     lane_rows: tuple[int, int]
     direction: int
+    spin_facing_degrees: int | None
     mph: int
     active: bool
     destroyed: bool
@@ -314,6 +315,7 @@ def build_tactical_board_model(state: GameState) -> TacticalBoardModel:
             lane_pair=vehicle.lane_pair,
             lane_rows=vehicle.lane_rows,
             direction=vehicle.direction,
+            spin_facing_degrees=vehicle.spin_facing_degrees,
             mph=vehicle.mph,
             active=vehicle.id == state.active_vehicle_id,
             destroyed=vehicle.destroyed,

@@ -986,6 +986,8 @@ class App:
             tangent = placement.heading_degrees + angle_step * (vehicle.space - 0.5)
             if vehicle.direction == -1:
                 tangent += 180
+            if vehicle.spin_facing_degrees is not None:
+                tangent = placement.heading_degrees + vehicle.spin_facing_degrees
             return TokenPose(self._world_to_screen((cx, cy)), tangent, lane_w, car_length)
         x, y = point_on_straight(
             placement,
@@ -995,6 +997,8 @@ class App:
             car_length=cell_w,
         )
         angle = placement.heading_degrees if vehicle.direction == 1 else placement.heading_degrees + 180
+        if vehicle.spin_facing_degrees is not None:
+            angle = placement.heading_degrees + vehicle.spin_facing_degrees
         return TokenPose(self._world_to_screen((x, y)), angle, lane_w, car_length)
 
     def _vehicle_rect(self, vehicle: VehicleTokenModel, board=None, placements=None) -> pygame.Rect:
