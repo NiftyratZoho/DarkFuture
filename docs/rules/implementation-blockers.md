@@ -93,10 +93,10 @@
 - Source to check: physical track pieces, trace images, Dark Future pp. 13-14.
 - Data rows/docs: `docs/rules/clean/curve-atlas-trace-plan.md`, `docs/rules/clean/track-geometry.md`.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact forward links, outside-divider mappings, drift-out links, edge contacts, and lateral contact zones for each lane/space on 90-degree corners and 60-degree bends. Rule text is readable; the remaining work is coordinate tracing from the curve images/track pieces.
-- Blocks implementation: exact curve drawing/contact/U-turn edge checks.
-- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits, but contact-zone geometry is conservative.
-- User notes:
+- Missing information: exact curve contact zones, edge contacts, lateral sideswipe zones, and U-turn sweep cells for each lane/space on 90-degree corners and 60-degree bends. Ordinary forward movement and outward-drift lane links are no longer blocked.
+- Blocks implementation: exact curve contact, sideswipe, crash, and U-turn edge checks.
+- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Contact-zone geometry remains conservative.
+- User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage.
 
 ### TG-002 U-turn contact template near curves
 

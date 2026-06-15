@@ -178,7 +178,7 @@ class PygameMissionFlowTests(unittest.TestCase):
 
         app._draw()
 
-        self.assertTrue(any("curve atlas" in line for line in app._known_blocker_lines()))
+        self.assertTrue(any("curve contact zones" in line for line in app._known_blocker_lines()))
         labels = [button.label for button in app.buttons]
         self.assertIn("Resume Mission", labels)
         self.assertIn("Mission Menu", labels)

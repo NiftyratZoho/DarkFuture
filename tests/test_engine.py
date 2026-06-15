@@ -262,7 +262,25 @@ class EngineTests(unittest.TestCase):
 
         apply_action(state, "drift_right")
 
-        self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (3, 2, 5))
+        self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (3, 3, 5))
+
+    def test_curve_drift_outward_into_occupied_next_space_line_resolves_ram(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        vehicle.section = 3
+        vehicle.space = 1
+        vehicle.lane_pair = 4
+        target.section = 3
+        target.space = 3
+        target.lane_pair = 5
+        target.direction = vehicle.direction
+        target.mph = 20
+
+        apply_action(state, "drift_right")
+
+        self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (3, 1, 4))
+        self.assertTrue(any(entry.kind == "ram" for entry in state.logs))
 
     def test_curve_to_straight_drift_can_go_either_direction(self):
         state = new_game()

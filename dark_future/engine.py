@@ -786,6 +786,25 @@ def _legal_drift_lane_pair(
     return target, None
 
 
+def _drift_space_after_forward(
+    state: GameState,
+    vehicle: Vehicle,
+    action_id: str,
+    forward_section: int,
+    forward_space: int,
+    target_lane_pair: int,
+) -> int:
+    current_piece = current_section_type(state, vehicle)
+    forward_piece = _section_type_at(state, forward_section)
+    if not (_is_curve_section(current_piece) and not _is_straight_section(forward_piece)):
+        return forward_space
+    if action_id != "drift_right":
+        return forward_space
+    target_limit = lane_pair_section_count(forward_piece, target_lane_pair)
+    next_space_line = forward_space + vehicle.direction
+    return max(1, min(target_limit, next_space_line))
+
+
 def _u_turn_geometry_status(state: GameState, vehicle: Vehicle) -> tuple[bool, str | None]:
     section_type = current_section_type(state, vehicle)
     adjacent_types = {
@@ -1729,6 +1748,7 @@ def apply_action(state: GameState, action_id: str) -> None:
             _finish_activation(state, vehicle)
             return
         lane_pair = drift_lane
+        space = _drift_space_after_forward(state, vehicle, action_id, section, space, lane_pair)
 
     old = (vehicle.section, vehicle.space, vehicle.lane_pair)
 
