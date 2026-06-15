@@ -877,6 +877,22 @@ class EngineTests(unittest.TestCase):
         self.assertEqual((agency.section, agency.space), (1, 2))
         self.assertTrue(any("compulsory straight move" in entry.message for entry in state.logs))
 
+    def test_regain_control_spin_result_applies_spin_template(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.control_state = "out_of_control"
+        agency.mph = 40
+        agency.handling = 0
+        agency.driver_skill = 0
+        state.dice.queue = [2]
+
+        apply_action(state, "regain_control")
+
+        self.assertEqual(agency.control_state, "out_of_control")
+        self.assertEqual(agency.mph, 0)
+        self.assertFalse(agency.aligned_to_grid)
+        self.assertTrue(any(entry.kind == "spin" and "-40 mph" in entry.message for entry in state.logs))
+
     def test_bootlegger_on_straight_success_reverses_facing(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")

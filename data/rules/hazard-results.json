@@ -306,7 +306,33 @@
     },
     "collisionInterruptsMove": true,
     "driftSkidCollisionRamType": "sideswipe",
-    "oppositeDirectionDriftSkidCollisionRamType": "opposedSideswipe"
+    "oppositeDirectionDriftSkidCollisionRamType": "opposedSideswipe",
+    "alreadySpunSpinTemplate": {
+      "source": "user-supplied spin template image",
+      "alignment": "Align the template with the front of the vehicle.",
+      "implementedRows": [
+        {
+          "range": { "min": 6, "max": 6 },
+          "speedLossMph": 40,
+          "status": "readableFromTemplate"
+        },
+        {
+          "range": { "min": 7, "max": 7 },
+          "speedLossMph": 40,
+          "status": "readableFromTemplate"
+        }
+      ],
+      "unimplementedRows": [
+        {
+          "range": { "min": 8 },
+          "reason": "Control-loss total 8+ is owned by the roll result, not the spin result."
+        },
+        {
+          "label": "facing/reorientation wedges",
+          "reason": "The supplied image confirms the circular template and several speed-loss values, but the exact final facing/realignment wedges are not all legible enough to encode as definitive grid coordinates."
+        }
+      ]
+    }
   },
   "spinningOnCurves": {
     "source": {

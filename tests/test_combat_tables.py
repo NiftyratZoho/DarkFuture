@@ -8,6 +8,7 @@ from dark_future.combat_tables import (
     resolve_tgsm_hit,
     resolve_hazard_test,
     safety_limit,
+    spin_template_speed_loss,
     tgsm_hit_location,
     tgsm_submunition_count,
     three_wheeler_hit_component,
@@ -191,6 +192,11 @@ class CombatTableTests(unittest.TestCase):
         self.assertEqual(result.total, 10)
         self.assertEqual(result.effect, "roll")
         self.assertTrue(result.control_lost)
+
+    def test_spin_template_speed_loss_uses_extracted_rows(self):
+        self.assertEqual(spin_template_speed_loss(6), 40)
+        self.assertEqual(spin_template_speed_loss(7), 40)
+        self.assertIsNone(spin_template_speed_loss(8))
 
     def test_safety_limit_lookup_uses_extracted_ids(self):
         self.assertEqual(safety_limit("passive.smoke"), 60)

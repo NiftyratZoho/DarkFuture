@@ -12,6 +12,7 @@ from .combat_tables import (
     resolve_control_loss_test,
     resolve_damage as table_resolve_damage,
     resolve_hazard_test,
+    spin_template_speed_loss,
 )
 from .data_loader import load_rule_json, speed_phase_rows, track_inventory, vehicle_template
 from .track import (
@@ -1147,6 +1148,24 @@ def apply_zero_damage_tyre_critical(state: GameState, target: Vehicle, reason: s
     state.logs.append(LogEntry(f"{reason}: 0-damage tyre critical on {target.label}.", "critical", MANOEUVRE_SOURCE))
 
 
+def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, reason: str) -> None:
+    if total is None:
+        return
+    speed_loss = spin_template_speed_loss(total)
+    if speed_loss is None:
+        return
+    old_mph = vehicle.mph
+    vehicle.mph = max(0, vehicle.mph - speed_loss)
+    vehicle.aligned_to_grid = False
+    state.logs.append(
+        LogEntry(
+            f"{vehicle.label} applies the spin template for {reason}: -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and remains unaligned.",
+            "spin",
+            HAZARD_SOURCE,
+        )
+    )
+
+
 def apply_critical_hit(state: GameState, target: Vehicle, source: SourceRef, reason: str) -> None:
     table_roll = state.dice.d6()
     result_roll = state.dice.d6()
@@ -1667,6 +1686,8 @@ def _resolve_bootlegger(state: GameState, vehicle: Vehicle) -> None:
     if not _is_straight_section(current_section_type(state, vehicle)):
         if result.control_lost:
             vehicle.control_state = "out_of_control"
+            if result.effect == "spin":
+                apply_spin_template(state, vehicle, result.total, "curve bootlegger attempt")
             state.logs.append(LogEntry(f"{vehicle.label} loses control attempting a bootlegger on a curve.", "control-loss", MANOEUVRE_SOURCE))
         else:
             state.logs.append(LogEntry(f"{vehicle.label} cannot bootlegger on a curve and moves normally.", "illegal-action", MANOEUVRE_SOURCE))
@@ -1748,7 +1769,10 @@ def apply_action(state: GameState, action_id: str) -> None:
             if _resolve_forced_straight_move(state, vehicle, "regaining control"):
                 return
         else:
-            vehicle.mph = max(0, vehicle.mph - 10)
+            if result.effect == "spin":
+                apply_spin_template(state, vehicle, result.total, "control-loss test")
+            else:
+                vehicle.mph = max(0, vehicle.mph - 10)
             state.logs.append(LogEntry(f"{vehicle.label} remains out of control ({result.effect}) and slows to {vehicle.mph} mph.", "control-loss", HAZARD_SOURCE))
         _finish_activation(state, vehicle)
         return
@@ -1819,17 +1843,20 @@ def apply_action(state: GameState, action_id: str) -> None:
             _finish_activation(state, vehicle)
             return
         if vehicle.mph >= 31:
+            test_mph = vehicle.mph
             roll = state.dice.d6()
             result = resolve_control_loss_test(
                 roll=roll,
-                mph=vehicle.mph,
+                mph=test_mph,
                 handling=vehicle.handling,
                 drive_skill=vehicle.driver_skill,
             )
             vehicle.control_state = "out_of_control" if result.control_lost else "controlled"
+            if result.effect == "spin":
+                apply_spin_template(state, vehicle, result.total, "too-fast U-turn")
             state.logs.append(
                 LogEntry(
-                    f"{vehicle.label} is too fast for a U-turn at {vehicle.mph} mph; immediate control-loss test total {result.total} gives {result.effect}.",
+                    f"{vehicle.label} is too fast for a U-turn at {test_mph} mph; immediate control-loss test total {result.total} gives {result.effect}.",
                     "control-loss",
                     MANOEUVRE_SOURCE,
                 )

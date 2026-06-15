@@ -1290,7 +1290,7 @@ class App:
     def _known_blocker_lines(self) -> list[str]:
         return [
             "Curve movement links are rules-derived; exact curve contact zones still need diagram/grid encoding.",
-            "Skid, spin, and bootlegger final-position diagrams need extracting into structured movement results.",
+            "Skid, roll, and exact spin final-facing diagrams need extracting into structured movement results.",
             "TGSM tables are transcribed; remaining missile automation needs weapon-selection UI and tactical ammo flow.",
             "Scenario deployment diagrams need structured setup rows for all contracts beyond current defaults.",
             "Campaign random tables still need complete extraction: approach, loot, disorders, psychosis, salvage.",

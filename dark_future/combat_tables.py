@@ -266,6 +266,17 @@ def resolve_control_loss_test(
     )
 
 
+def spin_template_speed_loss(total: int) -> int | None:
+    template = hazard_tables()["advancedSpin"].get("alreadySpunSpinTemplate", {})
+    for row in template.get("implementedRows", []):
+        range_data = row["range"]
+        minimum = int(range_data.get("min", -999))
+        maximum = int(range_data.get("max", 999))
+        if minimum <= total <= maximum:
+            return int(row["speedLossMph"])
+    return None
+
+
 def safety_limit(safety_limit_id: str) -> int | None:
     for row in hazard_tables()["safetyLimits"]:
         if row["id"] == safety_limit_id:

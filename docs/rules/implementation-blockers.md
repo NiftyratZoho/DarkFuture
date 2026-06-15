@@ -157,10 +157,10 @@
 - Status: `partial`
 - Source to check: Dark Future skid/spin result diagrams.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact spin-template result positions/speed reductions and realignment coordinates. Skid procedure, spin process, collision handling, rolling, and re-alignment text are readable.
-- Blocks implementation: faithful control-loss movement.
-- Current code behaviour: playable control-loss effects exist, but exact skid/spin templates are not traced.
-- User notes:
+- Missing information: exact spin-template final facing/realignment coordinates for all wedges. The supplied spin-template image clearly supports the spin-result speed loss rows for control-loss totals 6 and 7.
+- Blocks implementation: faithful final-facing/grid realignment for spin and exact skid/roll movement templates.
+- Current code behaviour: control-loss `spin` results apply the extracted spin-template -40 mph speed loss for totals 6 and 7 and mark the vehicle unaligned. Exact final facing is not yet changed because the template's facing wedges are not fully legible.
+- User notes: Spin template image supplied. It says to align the template with the front of vehicles which have already spun.
 
 ### HZ-004 Passive marker exception
 
