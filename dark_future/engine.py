@@ -589,6 +589,7 @@ def legal_actions(state: GameState, vehicle: Vehicle | None = None) -> list[Acti
                 actions.insert(3, Action(action_id, label, "move", "Move forward, then shift one lane pair."))
     if _can_offer_u_turn(state, actor):
         actions.insert(5, Action("u_turn", "U-Turn", "move", "Turn through 180 degrees using the U-turn speed bands."))
+    actions.insert(5, Action("bootlegger", "Bootlegger", "move", "Attempt a bootlegger reverse; curves trigger a control test and no bootlegger."))
     if _bulldozer_target(state, actor) is not None:
         actions.insert(3, Action("bulldozer", "Bulldozer", "move", "Push a stationary unaligned vehicle two lanes aside."))
     if actor.weapon_disabled or actor.driver_skill <= 0 or (actor.friendly_fire_only and not shoot_targets(state, actor)):
@@ -1138,6 +1139,14 @@ def apply_critical_effect(state: GameState, target: Vehicle, effect) -> None:
             take_hazard_test(state, target, safety, "critical hazard")
 
 
+def apply_zero_damage_tyre_critical(state: GameState, target: Vehicle, reason: str) -> None:
+    target.handling -= 2
+    target.max_mph = max(0, min(target.max_mph - 10, 60))
+    target.mph = min(target.mph, target.max_mph)
+    target.critical_notes.append("wheels: tyreDestroyed")
+    state.logs.append(LogEntry(f"{reason}: 0-damage tyre critical on {target.label}.", "critical", MANOEUVRE_SOURCE))
+
+
 def apply_critical_hit(state: GameState, target: Vehicle, source: SourceRef, reason: str) -> None:
     table_roll = state.dice.d6()
     result_roll = state.dice.d6()
@@ -1582,6 +1591,102 @@ def _resolve_forced_straight_move(state: GameState, vehicle: Vehicle, reason: st
     return False
 
 
+def _resolve_bootlegger_failed_slide(state: GameState, vehicle: Vehicle, position_roll: int) -> None:
+    lane_shift = ceil(position_roll / 2)
+    next_position = _forward_position_in_state(state, vehicle)
+    old = (vehicle.section, vehicle.space, vehicle.lane_pair)
+    if next_position is None:
+        section = vehicle.section + vehicle.direction
+        space = 1
+    else:
+        section, space = next_position
+    lane_pair = vehicle.lane_pair + lane_shift
+    if section < 0 or section >= state.track_sections or lane_pair > MAX_LANE_PAIR:
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+        vehicle.control_state = "out_of_control"
+        apply_damage(state, vehicle, state.dice.d6(), speed_factor(vehicle.mph), MANOEUVRE_SOURCE, "bootlegger crash")
+        state.logs.append(
+            LogEntry(
+                f"{vehicle.label} fails the bootlegger and crashes after sliding off the road on position roll {position_roll}.",
+                "crash",
+                MANOEUVRE_SOURCE,
+            )
+        )
+        return
+    if space > section_space_limit(section, lane_pair, state):
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+        vehicle.control_state = "out_of_control"
+        apply_damage(state, vehicle, state.dice.d6(), speed_factor(vehicle.mph), MANOEUVRE_SOURCE, "bootlegger crash")
+        state.logs.append(
+            LogEntry(
+                f"{vehicle.label} fails the bootlegger and crashes because the final slide position is outside the lane grid.",
+                "crash",
+                MANOEUVRE_SOURCE,
+            )
+        )
+        return
+    for other in state.vehicles:
+        if _overlap(vehicle, section, space, lane_pair, other):
+            check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+            vehicle.section = section
+            vehicle.space = space
+            vehicle.lane_pair = lane_pair
+            resolve_ram(state, vehicle, other)
+            return
+    vehicle.section = section
+    vehicle.space = space
+    vehicle.lane_pair = lane_pair
+    state.logs.append(
+        LogEntry(
+            f"{vehicle.label} fails the bootlegger and slides to {section+1}.{space} LP{lane_pair} on position roll {position_roll}.",
+            "move",
+            MANOEUVRE_SOURCE,
+        )
+    )
+    check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+    check_movement_hazards(state, vehicle, "bootlegger failed slide", old_section=old[0], old_lane_pair=old[2])
+
+
+def _resolve_bootlegger(state: GameState, vehicle: Vehicle) -> None:
+    roll = state.dice.d6()
+    if roll == 6:
+        vehicle.control_state = "out_of_control"
+        apply_zero_damage_tyre_critical(state, vehicle, "Bootlegger natural 6")
+        state.logs.append(LogEntry(f"{vehicle.label} rolls a natural 6 and does not make the bootlegger.", "control-loss", MANOEUVRE_SOURCE))
+        if not _resolve_forced_straight_move(state, vehicle, "out-of-control bootlegger"):
+            _finish_activation(state, vehicle)
+        return
+
+    result = resolve_control_loss_test(
+        roll=roll,
+        mph=vehicle.mph,
+        handling=vehicle.handling,
+        drive_skill=vehicle.driver_skill,
+    )
+    state.logs.append(LogEntry(f"{vehicle.label} bootlegger control test: table total {result.total} gives {result.effect}.", "hazard", MANOEUVRE_SOURCE))
+    if not _is_straight_section(current_section_type(state, vehicle)):
+        if result.control_lost:
+            vehicle.control_state = "out_of_control"
+            state.logs.append(LogEntry(f"{vehicle.label} loses control attempting a bootlegger on a curve.", "control-loss", MANOEUVRE_SOURCE))
+        else:
+            state.logs.append(LogEntry(f"{vehicle.label} cannot bootlegger on a curve and moves normally.", "illegal-action", MANOEUVRE_SOURCE))
+        if not _resolve_forced_straight_move(state, vehicle, "curve bootlegger attempt"):
+            _finish_activation(state, vehicle)
+        return
+
+    if result.control_lost:
+        vehicle.control_state = "out_of_control"
+        position_roll = state.dice.d6()
+        _resolve_bootlegger_failed_slide(state, vehicle, position_roll)
+        _finish_activation(state, vehicle)
+        return
+
+    old_direction = vehicle.direction
+    vehicle.direction = -vehicle.direction
+    state.logs.append(LogEntry(f"{vehicle.label} completes a bootlegger and reverses facing from {old_direction} to {vehicle.direction}.", "move", MANOEUVRE_SOURCE))
+    _finish_activation(state, vehicle)
+
+
 def apply_action(state: GameState, action_id: str) -> None:
     if action_id == "recruit_driver":
         recruit_driver(state)
@@ -1659,6 +1764,9 @@ def apply_action(state: GameState, action_id: str) -> None:
                         return
             state.logs.append(LogEntry(f"{vehicle.label} cannot make a bulldozer move.", "illegal-action", WLF_MANOEUVRE_SOURCE))
             _finish_activation(state, vehicle)
+        return
+    if action_id == "bootlegger":
+        _resolve_bootlegger(state, vehicle)
         return
     if action_id == "drop_oil":
         drop_marker(state, vehicle, "oil")

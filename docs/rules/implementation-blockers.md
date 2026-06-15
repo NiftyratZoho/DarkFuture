@@ -110,13 +110,13 @@
 
 ### MV-001 Bootlegger reverse failure result
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: Dark Future movement table/diagram around bootlegger reverse.
-- Blocker type: diagram/grid tracing needed for final positions.
-- Missing information: final-position diagram coordinates. The 2-3 failure aftermath, forced next phase-1 reverse move, tyre critical at 0 damage, and collision wording are readable.
-- Blocks implementation: faithful bootlegger failure chain.
-- Current code behaviour: only non-ambiguous manoeuvre/hazard effects are implemented.
-- User notes:
+- Blocker type: none for the supplied bootlegger failure diagram.
+- Missing information: none for the currently implemented bootlegger pass/fail/natural-six/curve-attempt rules. Exact out-of-control skid, spin, and roll templates remain tracked under HZ-004.
+- Blocks implementation: none.
+- Current code behaviour: bootlegger is available as a moving manoeuvre. On a straight, a passed control test reverses facing in place. A failed control test rolls a D6 for the final slide position: 1-2 shifts one lane-pair outward one space ahead, 3-4 shifts two lane-pairs outward one space ahead, and 5-6 shifts three lane-pairs outward one space ahead. Final-position rams, crashes, passives, and hazards resolve. A natural 6 before modifiers causes loss of control, applies a 0-damage tyre critical, and resolves an out-of-control forward move instead of the bootlegger. Curve/corner attempts trigger an automatic control test; on success the vehicle moves normally with no bootlegger.
+- User notes: If the bootlegger roll fails, the vehicle slides farther than expected and rolls a D6 for final position. Natural 6 before modifiers loses control, causes a 0-damage tyre critical, and resolves as an out-of-control move. Bootlegger must be on a straight; attempting one on a curve/corner causes an automatic control test and, if passed, normal movement only.
 
 ### MV-002 Bulldozer result and displacement
 

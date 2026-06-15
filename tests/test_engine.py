@@ -877,6 +877,73 @@ class EngineTests(unittest.TestCase):
         self.assertEqual((agency.section, agency.space), (1, 2))
         self.assertTrue(any("compulsory straight move" in entry.message for entry in state.logs))
 
+    def test_bootlegger_on_straight_success_reverses_facing(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.mph = 40
+        agency.handling = 6
+        agency.driver_skill = 6
+        state.dice.queue = [1]
+
+        apply_action(state, "bootlegger")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 1, 4))
+        self.assertEqual(agency.direction, -1)
+        self.assertEqual(agency.control_state, "controlled")
+
+    def test_bootlegger_failed_control_roll_slides_to_position_roll_lane_pair(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 1
+        agency.mph = 120
+        agency.handling = 0
+        agency.driver_skill = 0
+        state.dice.queue = [5, 3]
+
+        apply_action(state, "bootlegger")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 3))
+        self.assertEqual(agency.control_state, "out_of_control")
+        self.assertTrue(any("position roll 3" in entry.message for entry in state.logs))
+
+    def test_bootlegger_natural_six_causes_tyre_critical_and_out_of_control_move(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 1
+        agency.mph = 50
+        state.dice.queue = [6]
+
+        apply_action(state, "bootlegger")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 1))
+        self.assertEqual(agency.control_state, "out_of_control")
+        self.assertIn("wheels: tyreDestroyed", agency.critical_notes)
+        self.assertTrue(any("natural 6" in entry.message for entry in state.logs))
+
+    def test_bootlegger_on_curve_passes_control_test_but_moves_normally(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 3
+        agency.space = 1
+        agency.lane_pair = 4
+        agency.mph = 40
+        agency.handling = 6
+        agency.driver_skill = 6
+        state.dice.queue = [1]
+
+        apply_action(state, "bootlegger")
+
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (3, 2, 4))
+        self.assertEqual(agency.direction, 1)
+        self.assertEqual(agency.control_state, "controlled")
+        self.assertTrue(any("moves normally" in entry.message for entry in state.logs))
+
     def test_critical_hit_applies_concrete_effect(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")
