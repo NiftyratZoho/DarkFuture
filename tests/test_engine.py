@@ -309,17 +309,24 @@ class EngineTests(unittest.TestCase):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")
         vehicle.mph = 10
+        vehicle.section = 1
+        vehicle.space = 1
+        vehicle.lane_pair = 1
         original_direction = vehicle.direction
 
         apply_action(state, "u_turn")
 
         self.assertEqual(vehicle.direction, -original_direction)
+        self.assertEqual((vehicle.section, vehicle.space, vehicle.lane_pair), (1, 1, 5))
         self.assertFalse(any(entry.kind == "hazard" for entry in state.logs))
 
     def test_u_turn_from_eleven_to_thirty_mph_triggers_hazard_roll(self):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")
         vehicle.mph = 20
+        vehicle.section = 1
+        vehicle.space = 1
+        vehicle.lane_pair = 1
         vehicle.handling = 6
         vehicle.driver_skill = 6
         state.dice.queue = [1]
@@ -327,12 +334,16 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "u_turn")
 
         self.assertEqual(vehicle.direction, -1)
+        self.assertEqual(vehicle.lane_pair, 5)
         self.assertTrue(any(entry.kind == "hazard" and "U-turn" in entry.message for entry in state.logs))
 
     def test_u_turn_at_thirty_one_or_more_triggers_control_loss_instead(self):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")
         vehicle.mph = 31
+        vehicle.section = 1
+        vehicle.space = 1
+        vehicle.lane_pair = 1
         vehicle.handling = 0
         vehicle.driver_skill = 0
         state.dice.queue = [6]
@@ -340,21 +351,68 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "u_turn")
 
         self.assertEqual(vehicle.direction, 1)
+        self.assertEqual(vehicle.lane_pair, 1)
         self.assertEqual(vehicle.control_state, "out_of_control")
         self.assertTrue(any(entry.kind == "control-loss" and "too fast" in entry.message for entry in state.logs))
 
-    def test_curve_edge_u_turn_is_blocked_until_contact_geometry_exists(self):
+    def test_u_turn_requires_six_lane_width(self):
         state = new_game()
         vehicle = vehicle_by_id(state, "agency-1")
-        vehicle.section = 3
+        vehicle.section = 1
         vehicle.space = 1
+        vehicle.lane_pair = 4
+        vehicle.mph = 10
+
+        apply_action(state, "u_turn")
+
+        self.assertEqual(vehicle.direction, 1)
+        self.assertEqual(vehicle.lane_pair, 4)
+        self.assertTrue(any(entry.kind == "illegal-action" and "six-lane width" in entry.message for entry in state.logs))
+
+    def test_u_turn_swept_zone_must_be_on_straight(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        vehicle.section = 2
+        vehicle.space = 3
         vehicle.lane_pair = 1
         vehicle.mph = 10
 
         apply_action(state, "u_turn")
 
         self.assertEqual(vehicle.direction, 1)
-        self.assertTrue(any(entry.kind == "illegal-action" and "contact-zone geometry" in entry.message for entry in state.logs))
+        self.assertEqual(vehicle.lane_pair, 1)
+        self.assertTrue(any(entry.kind == "illegal-action" and "must be one space ahead on a straight" in entry.message for entry in state.logs))
+
+    def test_u_turn_contact_zone_blocks_occupied_forward_lanes(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        vehicle.section = 1
+        vehicle.space = 1
+        vehicle.lane_pair = 1
+        vehicle.mph = 10
+        outlaw.section = 1
+        outlaw.space = 2
+        outlaw.lane_pair = 3
+
+        apply_action(state, "u_turn")
+
+        self.assertEqual(vehicle.direction, 1)
+        self.assertEqual(vehicle.lane_pair, 1)
+        self.assertTrue(any(entry.kind == "illegal-action" and "swept six-lane" in entry.message for entry in state.logs))
+
+    def test_u_turn_from_far_side_lanes_crosses_to_near_side(self):
+        state = new_game()
+        vehicle = vehicle_by_id(state, "agency-1")
+        vehicle.section = 1
+        vehicle.space = 1
+        vehicle.lane_pair = 7
+        vehicle.mph = 10
+
+        apply_action(state, "u_turn")
+
+        self.assertEqual(vehicle.direction, -1)
+        self.assertEqual(vehicle.lane_pair, 3)
 
     def test_curve_safety_limit_uses_lower_occupied_lane_limit(self):
         state = new_game()

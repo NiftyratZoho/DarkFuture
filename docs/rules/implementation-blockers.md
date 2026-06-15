@@ -93,20 +93,20 @@
 - Source to check: physical track pieces, trace images, Dark Future pp. 13-14.
 - Data rows/docs: `docs/rules/clean/curve-atlas-trace-plan.md`, `docs/rules/clean/track-geometry.md`.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact curve contact zones, edge contacts, lateral sideswipe zones, and U-turn sweep cells for each lane/space on 90-degree corners and 60-degree bends. Ordinary forward movement and outward-drift lane links are no longer blocked.
-- Blocks implementation: exact curve contact, sideswipe, crash, and U-turn edge checks.
+- Missing information: exact curve contact zones, edge contacts, and lateral sideswipe zones for each lane/space on 90-degree corners and 60-degree bends. Ordinary forward movement, outward-drift lane links, and U-turn swept-lane resolution are no longer blocked.
+- Blocks implementation: exact curve contact, sideswipe, and crash checks.
 - Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Contact-zone geometry remains conservative.
 - User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage.
 
 ### TG-002 U-turn contact template near curves
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: Dark Future pp. 13-14 and U-turn diagrams.
-- Blocker type: diagram/grid tracing needed.
-- Missing information: exact six-lane swept contact cells when a vehicle starts or ends a U-turn on/near a curve. The six-lane width and curve-edge legality are readable; exact cells depend on the curve atlas.
-- Blocks implementation: curve-edge U-turn resolution.
-- Current code behaviour: curve-edge/adjacent-to-curve U-turns are rejected rather than guessed.
-- User notes:
+- Blocker type: none.
+- Missing information: none for the U-turn contact template supplied by user transcription.
+- Blocks implementation: none.
+- Current code behaviour: a U-turn requires room for the current two lanes, a clear two-lane gap, and the final two lanes. The swept contact zone is one space in front of the vehicle and must be on a straight. The vehicle ends in the same section/space/vertical plane, four lane-pairs across from the start, with facing reversed. Vehicles in the swept six-lane forward square or final two-lane position block the manoeuvre.
+- User notes: A U-turn occurs through the six lanes one space in front of the vehicle, including the two lanes directly in front, and ends in the same vertical plane with a clear two-lane gap. Example: lanes 1-2 end in lanes 5-6. The six-lane, one-space-wide part of the U-turn must be on a straight.
 
 ### MV-001 Bootlegger reverse failure result
 

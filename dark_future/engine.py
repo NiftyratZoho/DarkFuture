@@ -805,29 +805,53 @@ def _drift_space_after_forward(
     return max(1, min(target_limit, next_space_line))
 
 
+def _u_turn_target_lane_pair(vehicle: Vehicle) -> int | None:
+    outward_target = vehicle.lane_pair + 4
+    if outward_target <= MAX_LANE_PAIR:
+        return outward_target
+    inward_target = vehicle.lane_pair - 4
+    if inward_target >= MIN_LANE_PAIR:
+        return inward_target
+    return None
+
+
+def _u_turn_swept_lanes(vehicle: Vehicle, target_lane_pair: int) -> set[int]:
+    start_min = min(vehicle.lane_pair, target_lane_pair)
+    start_max = max(vehicle.lane_pair + 1, target_lane_pair + 1)
+    return set(range(start_min, start_max + 1))
+
+
 def _u_turn_geometry_status(state: GameState, vehicle: Vehicle) -> tuple[bool, str | None]:
-    section_type = current_section_type(state, vehicle)
-    adjacent_types = {
-        _section_type_at(state, vehicle.section - 1),
-        _section_type_at(state, vehicle.section + 1),
-    }
-    if _is_curve_section(section_type):
-        if vehicle.lane_pair in {MIN_LANE_PAIR, MAX_LANE_PAIR} and "straight" in adjacent_types:
-            return False, "Curve-edge U-turn needs traced six-lane contact-zone geometry before it can be resolved."
-        return False, "U-turns are prohibited on ordinary curved track spaces."
-    if _is_straight_section(section_type) and any(_is_curve_section(piece) for piece in adjacent_types):
-        return False, "Straight-next-to-curve U-turn needs traced six-lane contact-zone geometry before it can be resolved."
+    target_lane_pair = _u_turn_target_lane_pair(vehicle)
+    if target_lane_pair is None:
+        return False, "U-turn needs a six-lane width: current two lanes, a two-lane gap, and the final two lanes."
+    next_position = _forward_position_in_state(state, vehicle)
+    if next_position is None:
+        return False, "U-turn six-lane contact zone leaves the road."
+    forward_section, _ = next_position
+    if not _is_straight_section(_section_type_at(state, forward_section)):
+        return False, "U-turn six-lane contact zone must be one space ahead on a straight."
+    if vehicle.space > section_space_limit(vehicle.section, target_lane_pair, state):
+        return False, "U-turn final vehicle position is not valid on this track piece."
     return True, None
 
 
 def _u_turn_contact_zone_clear(state: GameState, vehicle: Vehicle) -> tuple[bool, str | None]:
+    target_lane_pair = _u_turn_target_lane_pair(vehicle)
+    next_position = _forward_position_in_state(state, vehicle)
+    if target_lane_pair is None or next_position is None:
+        return False, "U-turn contact zone is outside the road."
+    forward_section, forward_space = next_position
+    swept_lanes = _u_turn_swept_lanes(vehicle, target_lane_pair)
+    final_lanes = {target_lane_pair, target_lane_pair + 1}
     for other in state.vehicles:
         if other.id == vehicle.id or other.destroyed:
             continue
-        if other.section == vehicle.section and other.space == vehicle.space and set(vehicle.lane_rows).intersection(other.lane_rows):
-            return False, "U-turn contact zone overlaps another vehicle."
-        if other.section == vehicle.section and abs(other.space - vehicle.space) <= 1:
-            return False, "U-turn six-lane contact zone needs traced diagram geometry to judge nearby vehicles."
+        other_lanes = set(other.lane_rows)
+        if other.section == forward_section and other.space == forward_space and swept_lanes.intersection(other_lanes):
+            return False, "U-turn swept six-lane contact zone overlaps another vehicle."
+        if other.section == vehicle.section and other.space == vehicle.space and final_lanes.intersection(other_lanes):
+            return False, "U-turn final position overlaps another vehicle."
     return True, None
 
 
@@ -1705,10 +1729,17 @@ def apply_action(state: GameState, action_id: str) -> None:
             _finish_activation(state, vehicle)
             return
         old_direction = vehicle.direction
+        old_lane_pair = vehicle.lane_pair
+        target_lane_pair = _u_turn_target_lane_pair(vehicle)
+        if target_lane_pair is None:
+            state.logs.append(LogEntry(f"{vehicle.label} cannot U-turn: U-turn target lanes are outside the road.", "illegal-action", MANOEUVRE_SOURCE))
+            _finish_activation(state, vehicle)
+            return
+        vehicle.lane_pair = target_lane_pair
         vehicle.direction = -vehicle.direction
         state.logs.append(
             LogEntry(
-                f"{vehicle.label} completes a U-turn and reverses facing from {old_direction} to {vehicle.direction}.",
+                f"{vehicle.label} completes a U-turn: LP{old_lane_pair} -> LP{vehicle.lane_pair}, facing {old_direction} -> {vehicle.direction}.",
                 "move",
                 MANOEUVRE_SOURCE,
             )
