@@ -857,6 +857,84 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(outlaw.mph, 0)
         self.assertTrue(any(entry.kind == "ram" for entry in state.logs))
 
+    def test_shunt_hazard_rolls_after_speed_change_and_victim_ignores_panic_brake(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 3
+        agency.mph = 80
+        agency.handling = 0
+        agency.driver_skill = 0
+        outlaw.section = 1
+        outlaw.space = 2
+        outlaw.lane_pair = 3
+        outlaw.direction = agency.direction
+        outlaw.mph = 20
+        outlaw.handling = 0
+        outlaw.driver_skill = 0
+        state.dice.queue = [4, 4, 1, 1]
+
+        apply_action(state, "steady")
+
+        self.assertEqual(agency.mph, 40)
+        self.assertEqual(outlaw.mph, 50)
+        self.assertTrue(any("panic brakes" in entry.message and "Interceptor" in entry.message for entry in state.logs))
+        self.assertTrue(any("ignores panic braking" in entry.message and "Renegade" in entry.message for entry in state.logs))
+
+    def test_same_direction_sideswipe_only_loser_takes_hazard_at_forty(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 3
+        agency.mph = 80
+        agency.handling = 0
+        agency.driver_skill = 0
+        outlaw.section = 1
+        outlaw.space = 2
+        outlaw.lane_pair = 4
+        outlaw.direction = agency.direction
+        outlaw.mph = 80
+        outlaw.handling = 0
+        outlaw.driver_skill = 0
+        state.dice.queue = [6, 1, 4, 1]
+
+        apply_action(state, "steady")
+
+        self.assertEqual(agency.mph, 70)
+        self.assertEqual(outlaw.mph, 50)
+        self.assertTrue(any("sideswipe loser" in entry.message and "Renegade" in entry.message for entry in state.logs))
+        self.assertFalse(any("hazard test for sideswipe loser" in entry.message and "Interceptor" in entry.message for entry in state.logs))
+
+    def test_opposed_sideswipe_winner_tests_at_forty_and_loser_at_twenty(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 3
+        agency.mph = 80
+        agency.handling = 0
+        agency.driver_skill = 0
+        outlaw.section = 1
+        outlaw.space = 2
+        outlaw.lane_pair = 4
+        outlaw.direction = -1
+        outlaw.mph = 80
+        outlaw.handling = 0
+        outlaw.driver_skill = 0
+        state.dice.queue = [6, 1, 4, 1, 1]
+
+        apply_action(state, "steady")
+
+        self.assertEqual(agency.mph, 45)
+        self.assertEqual(outlaw.control_state, "out_of_control")
+        self.assertTrue(any("opposed sideswipe winner" in entry.message and "Interceptor" in entry.message for entry in state.logs))
+        self.assertTrue(any("opposed sideswipe loser" in entry.message and "Renegade" in entry.message for entry in state.logs))
+
     def test_drop_oil_places_passive_marker_behind_vehicle(self):
         state = new_game()
         agency = vehicle_by_id(state, "agency-1")

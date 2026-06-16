@@ -882,7 +882,14 @@ def _can_offer_u_turn(state: GameState, vehicle: Vehicle) -> bool:
     return contact_ok
 
 
-def take_hazard_test(state: GameState, vehicle: Vehicle, safety_limit_mph: int, reason: str) -> bool:
+def take_hazard_test(
+    state: GameState,
+    vehicle: Vehicle,
+    safety_limit_mph: int,
+    reason: str,
+    *,
+    ignore_panic_brake: bool = False,
+) -> bool:
     if vehicle.destroyed:
         return True
     roll = state.dice.d6()
@@ -904,6 +911,15 @@ def take_hazard_test(state: GameState, vehicle: Vehicle, safety_limit_mph: int, 
         )
     )
     if result.speed_loss_mph:
+        if ignore_panic_brake:
+            state.logs.append(
+                LogEntry(
+                    f"{vehicle.label} ignores panic braking from {reason}.",
+                    "hazard",
+                    HAZARD_SOURCE,
+                )
+            )
+            return True
         vehicle.mph = max(0, vehicle.mph - result.speed_loss_mph)
         vehicle.action_cancelled_this_phase = True
         state.logs.append(
@@ -1689,17 +1705,75 @@ def apply_shoot(state: GameState, shooter: Vehicle, *, finish_activation: bool =
         _finish_activation(state, shooter)
 
 
+def _optimum_control(vehicle: Vehicle) -> int:
+    return max(vehicle.handling, vehicle.driver_skill)
+
+
+def _adverse_control(vehicle: Vehicle) -> int:
+    return min(vehicle.handling, vehicle.driver_skill)
+
+
+def _sideswipe_test_total(state: GameState, vehicle: Vehicle, *, rammer_bonus: int = 0) -> tuple[int, int]:
+    roll = state.dice.d6()
+    control = _optimum_control(vehicle) if vehicle.control_state == "controlled" else _adverse_control(vehicle)
+    return roll, roll + control + rammer_bonus
+
+
+def _resolve_sideswipe_test(
+    state: GameState,
+    rammer: Vehicle,
+    target: Vehicle,
+    ram_type: str,
+) -> Literal["rammer", "target", "draw"]:
+    rammer_roll, rammer_total = _sideswipe_test_total(state, rammer, rammer_bonus=1)
+    target_roll, target_total = _sideswipe_test_total(state, target)
+    state.logs.append(
+        LogEntry(
+            f"{rammer.label} sideswipe test: d6 {rammer_roll} + control + 1 = {rammer_total}; "
+            f"{target.label}: d6 {target_roll} + control = {target_total}.",
+            "ram",
+            RAM_SOURCE,
+        )
+    )
+    if rammer_total > target_total:
+        return "target"
+    if target_total > rammer_total:
+        return "rammer"
+    state.logs.append(LogEntry(f"{rammer.label} and {target.label} draw the {ram_type} sideswipe test.", "ram", RAM_SOURCE))
+    return "draw"
+
+
+def _take_post_ram_hazard(
+    state: GameState,
+    vehicle: Vehicle,
+    safety_limit_mph: int,
+    reason: str,
+    *,
+    ignore_panic_brake: bool = False,
+) -> None:
+    if vehicle.destroyed or vehicle.mph <= 0 or vehicle.control_state != "controlled":
+        return
+    take_hazard_test(
+        state,
+        vehicle,
+        safety_limit_mph,
+        reason,
+        ignore_panic_brake=ignore_panic_brake,
+    )
+
+
 def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
     rammer_sf = speed_factor(rammer.mph)
     target_sf = speed_factor(target.mph)
-    if rammer.direction != target.direction:
+    same_lane_pair = rammer.lane_pair == target.lane_pair
+    if rammer.direction != target.direction and same_lane_pair:
         ram_type = "head-on"
         modifier = rammer_sf + target_sf
         rammer.mph = 0
         target.mph = 0
         apply_damage(state, rammer, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
         apply_damage(state, target, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
-    else:
+    elif rammer.direction == target.direction and same_lane_pair:
         ram_type = "shunt"
         modifier = abs(rammer_sf - target_sf)
         if modifier == 0:
@@ -1715,6 +1789,38 @@ def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
         else:
             rammer.mph += change
             target.mph -= change
+        _take_post_ram_hazard(state, rammer, 40, "shunt")
+        _take_post_ram_hazard(state, target, 40, "shunt victim", ignore_panic_brake=True)
+    else:
+        same_direction = rammer.direction == target.direction
+        ram_type = "sideswipe" if same_direction else "opposed sideswipe"
+        loser = _resolve_sideswipe_test(state, rammer, target, ram_type)
+        modifier = abs(rammer_sf - target_sf) if same_direction else rammer_sf + target_sf
+        if loser in {"rammer", "draw"}:
+            apply_damage(state, rammer, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
+        if loser in {"target", "draw"}:
+            apply_damage(state, target, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
+        speed_loss = 10 if same_direction else 20
+        rammer.mph = max(0, rammer.mph - speed_loss)
+        target.mph = max(0, target.mph - speed_loss)
+        if same_direction:
+            if loser == "rammer":
+                _take_post_ram_hazard(state, rammer, 40, "sideswipe loser")
+            elif loser == "target":
+                _take_post_ram_hazard(state, target, 40, "sideswipe loser")
+            else:
+                _take_post_ram_hazard(state, rammer, 40, "drawn sideswipe")
+                _take_post_ram_hazard(state, target, 40, "drawn sideswipe")
+        else:
+            if loser == "rammer":
+                _take_post_ram_hazard(state, target, 40, "opposed sideswipe winner")
+                _take_post_ram_hazard(state, rammer, 20, "opposed sideswipe loser")
+            elif loser == "target":
+                _take_post_ram_hazard(state, rammer, 40, "opposed sideswipe winner")
+                _take_post_ram_hazard(state, target, 20, "opposed sideswipe loser")
+            else:
+                _take_post_ram_hazard(state, rammer, 20, "drawn opposed sideswipe")
+                _take_post_ram_hazard(state, target, 20, "drawn opposed sideswipe")
     state.logs.append(LogEntry(f"{rammer.label} resolves a {ram_type} ram with {target.label}.", "ram", RAM_SOURCE))
 
 
