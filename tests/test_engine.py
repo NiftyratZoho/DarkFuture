@@ -8,6 +8,7 @@ from dark_future.engine import (
     apply_critical_effect,
     apply_hostile_system_effect,
     apply_rocket_booster_critical,
+    apply_spin_template,
     choose_next_actor,
     curve_safety_limit,
     generate_track_layout,
@@ -924,6 +925,36 @@ class EngineTests(unittest.TestCase):
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.spin_facing_degrees, 315)
+
+    def test_spin_footprint_is_two_lanes_when_aligned_and_four_when_angled(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.lane_pair = 4
+
+        self.assertEqual(agency.occupied_lanes, (4, 5))
+
+        agency.spin_facing_degrees = 135
+        self.assertEqual(agency.occupied_lanes, (3, 4, 5, 6))
+
+        agency.lane_pair = 1
+        self.assertEqual(agency.occupied_lanes, (1, 2, 3, 4))
+
+        agency.lane_pair = 7
+        self.assertEqual(agency.occupied_lanes, (5, 6, 7, 8))
+
+    def test_spin_360_result_realigns_vehicle_to_two_lane_state(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.control_state = "out_of_control"
+        agency.mph = 80
+        state.dice.queue = [2]
+
+        apply_spin_template(state, agency, 12, "test")
+
+        self.assertEqual(agency.direction, 1)
+        self.assertIsNone(agency.spin_facing_degrees)
+        self.assertTrue(agency.aligned_to_grid)
+        self.assertEqual(agency.occupied_lanes, agency.lane_rows)
 
     def test_bootlegger_on_straight_success_reverses_facing(self):
         state = new_game()

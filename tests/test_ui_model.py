@@ -29,6 +29,17 @@ class UiModelTests(unittest.TestCase):
         agency = next(vehicle for vehicle in model.vehicles if vehicle.id == "agency-1")
         self.assertTrue(agency.active)
         self.assertEqual(agency.lane_rows, (4, 5))
+        self.assertEqual(agency.occupied_lanes, (4, 5))
+
+    def test_tactical_board_summary_exposes_spun_vehicle_footprint(self):
+        state = new_game()
+        agency_state = vehicle_by_id(state, "agency-1")
+        agency_state.spin_facing_degrees = 135
+
+        model = build_tactical_board_model(state)
+
+        agency = next(vehicle for vehicle in model.vehicles if vehicle.id == "agency-1")
+        self.assertEqual(agency.occupied_lanes, (3, 4, 5, 6))
 
     def test_tactical_board_summary_includes_passive_markers(self):
         state = new_game()

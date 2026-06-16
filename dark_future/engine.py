@@ -109,6 +109,13 @@ class Vehicle:
     def lane_rows(self) -> tuple[int, int]:
         return self.lane_pair, self.lane_pair + 1
 
+    @property
+    def occupied_lanes(self) -> tuple[int, ...]:
+        if self.spin_facing_degrees is None or self.spin_facing_degrees % 180 == 0:
+            return self.lane_rows
+        start = min(max(self.lane_pair - 1, MIN_LANE_PAIR), LANE_COUNT - 3)
+        return tuple(range(start, start + 4))
+
 
 @dataclass
 class CampaignState:
@@ -653,7 +660,7 @@ def _overlap(a: Vehicle, section: int, space: int, lane_pair: int, other: Vehicl
     if other.section != section or other.space != space:
         return False
     lanes = {lane_pair, lane_pair + 1}
-    return bool(lanes.intersection(other.lane_rows))
+    return bool(lanes.intersection(other.occupied_lanes))
 
 
 def _bulldozer_displacement_lane_pair(target: Vehicle) -> int | None:
@@ -855,7 +862,7 @@ def _u_turn_contact_zone_clear(state: GameState, vehicle: Vehicle) -> tuple[bool
     for other in state.vehicles:
         if other.id == vehicle.id or other.destroyed:
             continue
-        other_lanes = set(other.lane_rows)
+        other_lanes = set(other.occupied_lanes)
         if other.section == forward_section and other.space == forward_space and swept_lanes.intersection(other_lanes):
             return False, "U-turn swept six-lane contact zone overlaps another vehicle."
         if other.section == vehicle.section and other.space == vehicle.space and final_lanes.intersection(other_lanes):
@@ -946,7 +953,7 @@ def check_movement_hazards(
         for marker in state.passive_markers
         if marker.section == vehicle.section
         and marker.space == vehicle.space
-        and bool(set((marker.lane_pair, marker.lane_pair + 1)).intersection(vehicle.lane_rows))
+        and bool(set((marker.lane_pair, marker.lane_pair + 1)).intersection(vehicle.occupied_lanes))
     ]
     for marker in hit_markers:
         resolve_marker_hit(state, vehicle, marker)
@@ -1172,13 +1179,19 @@ def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, r
         )
         return
     current_front = 0 if vehicle.direction == 1 else 180
-    vehicle.spin_facing_degrees = (current_front + (angle_offset or 0)) % 360
+    final_facing = (current_front + (angle_offset or 0)) % 360
+    if final_facing in {0, 180}:
+        vehicle.direction = 1 if final_facing == 0 else -1
+        vehicle.spin_facing_degrees = None
+        vehicle.aligned_to_grid = True
+    else:
+        vehicle.spin_facing_degrees = final_facing
+        vehicle.aligned_to_grid = False
     old_mph = vehicle.mph
     vehicle.mph = max(0, vehicle.mph - speed_loss)
-    vehicle.aligned_to_grid = False
     state.logs.append(
         LogEntry(
-            f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}; template {colour} applies -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and facing {vehicle.spin_facing_degrees} degrees.",
+            f"{vehicle.label} spin test for {reason}: d6 {direction_roll} gives {direction_label}; template {colour} applies -{speed_loss} mph ({old_mph} -> {vehicle.mph}) and facing {final_facing} degrees.",
             "spin",
             HAZARD_SOURCE,
         )
@@ -1226,7 +1239,7 @@ def _distance_spaces(state: GameState, a: Vehicle, b: Vehicle) -> int:
 
 
 def _lane_overlap(a: Vehicle, b: Vehicle) -> bool:
-    return bool(set(a.lane_rows).intersection(b.lane_rows))
+    return bool(set(a.occupied_lanes).intersection(b.occupied_lanes))
 
 
 def _ahead_of(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
@@ -1249,7 +1262,7 @@ def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -
         marker_pos = _track_distance_position(state, marker.section, marker.space)
         if marker.kind == "smoke" and low < marker_pos < high:
             marker_lanes = {marker.lane_pair, marker.lane_pair + 1}
-            if marker_lanes.intersection(shooter.lane_rows):
+            if marker_lanes.intersection(shooter.occupied_lanes):
                 return True
     return False
 
@@ -1267,7 +1280,7 @@ def shoot_targets(state: GameState, shooter: Vehicle) -> list[Vehicle]:
         for target in state.vehicles
         if target_side_matches(target)
         and not target.destroyed
-        and abs(target.lane_pair - shooter.lane_pair) <= 1
+        and bool(set(shooter.occupied_lanes).intersection(target.occupied_lanes))
         and _ahead_of(state, shooter, target)
         and _distance_spaces(state, shooter, target) <= 8
         and not _line_of_fire_blocked(state, shooter, target)
