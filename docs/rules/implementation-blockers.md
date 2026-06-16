@@ -93,10 +93,10 @@
 - Source to check: physical track pieces, trace images, Dark Future pp. 13-14.
 - Data rows/docs: `docs/rules/clean/curve-atlas-trace-plan.md`, `docs/rules/clean/track-geometry.md`.
 - Blocker type: diagram/grid tracing needed.
-- Missing information: exact curve contact zones, edge contacts, and lateral sideswipe zones for each lane/space on 90-degree corners and 60-degree bends. Ordinary forward movement, outward-drift lane links, and U-turn swept-lane resolution are no longer blocked.
-- Blocks implementation: exact curve contact, sideswipe, and crash checks.
-- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Contact-zone geometry remains conservative.
-- User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage.
+- Missing information: exact edge/crash cells for curve boundaries and any diagram-only special cases. Ordinary forward movement, outward-drift lane links, U-turn swept-lane resolution, and curve ram/shunt/sideswipe contact classification are no longer blocked.
+- Blocks implementation: exact curve edge/crash checks and any remaining diagram-only special cases.
+- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Shared-lane contact with another occupied vehicle space resolves as head-on/shunt, even if only one lane overlaps; adjacent front-half side contact resolves as a sideswipe.
+- User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage. Rams and shunts on curves use the two-lane vehicle width, or one lane for bikes, contacting another vehicle's occupied space in full or by a single lane. Curve sideswipes can be inward or outward, but contact must be with the front half of the vehicle; rear-only contact cannot sideswipe.
 
 ### TG-002 U-turn contact template near curves
 
@@ -210,24 +210,24 @@
 
 ### RC-001 Sideswipe draw hazard handling
 
-- Status: `blocked`
+- Status: `resolved`
 - Source to check: Dark Future rams/crashes sideswipe text.
 - Data rows: `data/rules/ram-types.json`.
-- Blocker type: rule unclear/readability issue requiring a rules decision.
-- Missing information: damage-on-draw wording is readable, but hazard-on-draw timing remains under-specified and needs a rules decision before exact implementation.
-- Blocks implementation: exact sideswipe aftermath.
-- Current code behaviour: conservative/playable ram handling is implemented.
-- User notes:
+- Blocker type: none.
+- Missing information: none.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: drawn sideswipes damage both vehicles but cause no post-ram hazard test.
+- User notes: In a draw no hazard test is required.
 
 ### RC-002 Ram damage facing mapping
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: Rams/crashes damage text and target matrices.
-- Blocker type: structured transcription needed for ram-facing mapping.
-- Missing information: crash facing is readable; ram facing still needs final mapping for head-on, shunt, sideswipe, and T-bone damage requests.
-- Blocks implementation: faithful armour-facing damage from rams.
-- Current code behaviour: ram damage exists, but final facing-specific mapping needs proofread.
-- User notes:
+- Blocker type: none.
+- Missing information: none for ram facing mapping.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: ram damage logs and damage requests carry the resolved facing: head-on hits front; shunt hits attacker front and defender rear; sideswipes hit relative sides. If the side is not obvious, the engine rolls D6: 1-2 roof, 3 left side, 4 right side, 5-6 front.
+- User notes: In a head-on ram it is front. In a shunt it is front for the attacker and rear for the defender. In a sideswipe it is the relative sides; if not obvious roll a die: 1-2 roof, 3 left side, 4 right side, 5-6 front.
 
 ### DM-001 Tyre destroyed maximum-speed wording
 

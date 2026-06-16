@@ -163,9 +163,7 @@
           "onlyIfMovingAndUnderControl": true
         }
       ],
-      "ambiguities": [
-        "Hazard handling on a draw needs proofread because the text names only the loser."
-      ],
+      "drawHazardRule": "noPostRamHazardTest",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [54, 55, 56, 57]
@@ -213,6 +211,7 @@
           "onlyIfMovingAndUnderControl": true
         }
       ],
+      "drawHazardRule": "noPostRamHazardTest",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [54, 55, 56, 57]
@@ -271,8 +270,8 @@
   "ambiguities": [
     {
       "id": "contact-zone-diagram-tracing",
-      "status": "needsProofread",
-      "notes": "Exact contact-zone sets must be traced from diagrams before implementation.",
+      "status": "partiallyResolvedByUserRuling",
+      "notes": "Curve ram/shunt contact uses any shared occupied lane; curve sideswipe uses adjacent front-half contact inward or outward. Exact road-edge/crash cells remain diagram-sensitive.",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [52, 53]
@@ -280,8 +279,8 @@
     },
     {
       "id": "neck-and-neck-draw-hazard",
-      "status": "needsRulesLeadDecision",
-      "notes": "Damage draw affects both vehicles, but hazard text only names the loser.",
+      "status": "resolvedByUserRuling",
+      "notes": "Damage draw affects both vehicles; no post-ram hazard test is required on a draw.",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [56, 57]
@@ -289,8 +288,8 @@
     },
     {
       "id": "ram-damage-facing",
-      "status": "needsCrossReference",
-      "notes": "Facing for ram damage requests needs confirmation against damage/target matrix rules.",
+      "status": "resolvedByUserRuling",
+      "notes": "Head-on hits front. Shunt hits attacker front and defender rear. Sideswipe hits relative sides; if unclear, roll D6: 1-2 roof, 3 left side, 4 right side, 5-6 front.",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [34, 56]

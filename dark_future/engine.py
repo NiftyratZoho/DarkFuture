@@ -664,7 +664,10 @@ def _overlap(a: Vehicle, section: int, space: int, lane_pair: int, other: Vehicl
     if other.section != section or other.space != space:
         return False
     lanes = {lane_pair, lane_pair + 1}
-    return bool(lanes.intersection(other.occupied_lanes))
+    other_lanes = set(other.occupied_lanes)
+    if lanes.intersection(other_lanes):
+        return True
+    return max(lanes) + 1 == min(other_lanes) or max(other_lanes) + 1 == min(lanes)
 
 
 def _bulldozer_displacement_lane_pair(target: Vehicle) -> int | None:
@@ -1739,7 +1742,7 @@ def _resolve_sideswipe_test(
         return "target"
     if target_total > rammer_total:
         return "rammer"
-    state.logs.append(LogEntry(f"{rammer.label} and {target.label} draw the {ram_type} sideswipe test.", "ram", RAM_SOURCE))
+    state.logs.append(LogEntry(f"{rammer.label} and {target.label} draw the {ram_type} test.", "ram", RAM_SOURCE))
     return "draw"
 
 
@@ -1762,25 +1765,60 @@ def _take_post_ram_hazard(
     )
 
 
+def _unclear_ram_facing(state: GameState) -> str:
+    roll = state.dice.d6()
+    if roll <= 2:
+        facing = "roof"
+    elif roll == 3:
+        facing = "left side"
+    elif roll == 4:
+        facing = "right side"
+    else:
+        facing = "front"
+    state.logs.append(LogEntry(f"Unclear ram damage facing: d6 {roll} gives {facing}.", "ram", RAM_SOURCE))
+    return facing
+
+
+def _relative_sideswipe_facings(rammer: Vehicle, target: Vehicle) -> tuple[str, str]:
+    rammer_lanes = set(rammer.occupied_lanes)
+    target_lanes = set(target.occupied_lanes)
+    if max(rammer_lanes) < min(target_lanes):
+        return "right side", "left side"
+    if max(target_lanes) < min(rammer_lanes):
+        return "left side", "right side"
+    return "unclear", "unclear"
+
+
+def _ram_damage(
+    state: GameState,
+    target: Vehicle,
+    damage_roll: int,
+    damage_modifier: int,
+    ram_type: str,
+    facing: str,
+) -> None:
+    apply_damage(state, target, damage_roll, damage_modifier, RAM_SOURCE, f"{ram_type} ram ({facing})")
+
+
 def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
     rammer_sf = speed_factor(rammer.mph)
     target_sf = speed_factor(target.mph)
-    same_lane_pair = rammer.lane_pair == target.lane_pair
-    if rammer.direction != target.direction and same_lane_pair:
+    shared_lane_contact = bool(set(rammer.occupied_lanes).intersection(target.occupied_lanes))
+    if rammer.direction != target.direction and shared_lane_contact:
         ram_type = "head-on"
         modifier = rammer_sf + target_sf
         rammer.mph = 0
         target.mph = 0
-        apply_damage(state, rammer, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
-        apply_damage(state, target, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
-    elif rammer.direction == target.direction and same_lane_pair:
+        _ram_damage(state, rammer, state.dice.d6(), modifier, ram_type, "front")
+        _ram_damage(state, target, state.dice.d6(), modifier, ram_type, "front")
+    elif rammer.direction == target.direction and shared_lane_contact:
         ram_type = "shunt"
         modifier = abs(rammer_sf - target_sf)
         if modifier == 0:
             state.logs.append(LogEntry(f"{rammer.label} shunts {target.label}; equal speed factors cause no damage.", "ram", RAM_SOURCE))
         else:
-            apply_damage(state, rammer, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
-            apply_damage(state, target, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
+            _ram_damage(state, rammer, state.dice.d6(), modifier, ram_type, "front")
+            _ram_damage(state, target, state.dice.d6(), modifier, ram_type, "rear")
         diff = abs(rammer.mph - target.mph)
         change = ceil(diff / 2)
         if rammer.mph >= target.mph:
@@ -1796,10 +1834,13 @@ def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
         ram_type = "sideswipe" if same_direction else "opposed sideswipe"
         loser = _resolve_sideswipe_test(state, rammer, target, ram_type)
         modifier = abs(rammer_sf - target_sf) if same_direction else rammer_sf + target_sf
+        rammer_facing, target_facing = _relative_sideswipe_facings(rammer, target)
+        if rammer_facing == "unclear" or target_facing == "unclear":
+            rammer_facing = target_facing = _unclear_ram_facing(state)
         if loser in {"rammer", "draw"}:
-            apply_damage(state, rammer, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
+            _ram_damage(state, rammer, state.dice.d6(), modifier, ram_type, rammer_facing)
         if loser in {"target", "draw"}:
-            apply_damage(state, target, state.dice.d6(), modifier, RAM_SOURCE, f"{ram_type} ram")
+            _ram_damage(state, target, state.dice.d6(), modifier, ram_type, target_facing)
         speed_loss = 10 if same_direction else 20
         rammer.mph = max(0, rammer.mph - speed_loss)
         target.mph = max(0, target.mph - speed_loss)
@@ -1809,8 +1850,7 @@ def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
             elif loser == "target":
                 _take_post_ram_hazard(state, target, 40, "sideswipe loser")
             else:
-                _take_post_ram_hazard(state, rammer, 40, "drawn sideswipe")
-                _take_post_ram_hazard(state, target, 40, "drawn sideswipe")
+                state.logs.append(LogEntry("Drawn sideswipe causes no post-ram hazard test.", "ram", RAM_SOURCE))
         else:
             if loser == "rammer":
                 _take_post_ram_hazard(state, target, 40, "opposed sideswipe winner")
@@ -1819,8 +1859,7 @@ def resolve_ram(state: GameState, rammer: Vehicle, target: Vehicle) -> None:
                 _take_post_ram_hazard(state, rammer, 40, "opposed sideswipe winner")
                 _take_post_ram_hazard(state, target, 20, "opposed sideswipe loser")
             else:
-                _take_post_ram_hazard(state, rammer, 20, "drawn opposed sideswipe")
-                _take_post_ram_hazard(state, target, 20, "drawn opposed sideswipe")
+                state.logs.append(LogEntry("Drawn opposed sideswipe causes no post-ram hazard test.", "ram", RAM_SOURCE))
     state.logs.append(LogEntry(f"{rammer.label} resolves a {ram_type} ram with {target.label}.", "ram", RAM_SOURCE))
 
 
