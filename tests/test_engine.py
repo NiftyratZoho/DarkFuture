@@ -454,10 +454,39 @@ class EngineTests(unittest.TestCase):
         shooter.space = 3
         shooter.lane_pair = 4
         shooter.direction = 1
-        target.section = 3
+        target.section = 2
         target.space = 2
         target.lane_pair = 4
         target.direction = -1
+
+        self.assertIn(target, shoot_targets(state, shooter))
+
+    def test_shooting_corridor_stops_at_track_edge_before_curve(self):
+        state = new_game()
+        shooter = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        shooter.section = 2
+        shooter.space = 3
+        shooter.lane_pair = 4
+        shooter.direction = 1
+        target.section = 3
+        target.space = 1
+        target.lane_pair = 4
+
+        self.assertNotIn(target, shoot_targets(state, shooter))
+
+    def test_shooting_corridor_hits_partial_four_lane_footprint(self):
+        state = new_game()
+        shooter = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        shooter.section = 1
+        shooter.space = 1
+        shooter.lane_pair = 4
+        shooter.direction = 1
+        target.section = 1
+        target.space = 2
+        target.lane_pair = 6
+        target.spin_facing_degrees = 90
 
         self.assertIn(target, shoot_targets(state, shooter))
 

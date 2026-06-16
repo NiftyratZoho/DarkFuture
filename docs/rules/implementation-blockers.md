@@ -370,6 +370,7 @@
   - Missile pod accuracy: +2.
   - Linked-weapon cool test: d6 roll must be lower than drive skill.
   - U-turn safety limit: 10 mph; 31+ mph causes immediate control-loss test.
+  - Shooting corridor: straight ruler line from the vehicle front divider, using the shooter footprint lanes, with the track edge stopping the corridor before it bends around a curve.
   - Hazard safety limit rows: debris 10 mph; bike overlap/dodge rows confirmed from DF p.38.
   - Tyre destroyed max speed: lower of current maximum minus 10 mph and 60 mph.
   - Campaign start data: `$100,000`, Op first driver free, outlaw first two drivers free, drive skill 2.

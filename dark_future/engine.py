@@ -1272,21 +1272,54 @@ def _ahead_of(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
     return (target_pos - shooter_pos) * shooter.direction > 0
 
 
+def _shooting_corridor_cells(state: GameState, shooter: Vehicle, max_spaces: int = 8) -> list[tuple[int, int, int, set[int]]]:
+    cells: list[tuple[int, int, int, set[int]]] = []
+    lanes = set(shooter.occupied_lanes)
+    current_section = shooter.section
+    current_space = shooter.space
+    current_piece = _section_type_at(state, current_section)
+    for distance in range(1, max_spaces + 1):
+        next_position = track_forward_position(
+            state.track_section_types,
+            current_section,
+            current_space,
+            shooter.lane_pair,
+            shooter.direction,
+        )
+        if next_position is None:
+            break
+        next_section, next_space = next_position
+        next_piece = _section_type_at(state, next_section)
+        if next_section != current_section and not (_is_straight_section(current_piece) and _is_straight_section(next_piece)):
+            break
+        cells.append((distance, next_section, next_space, lanes))
+        current_section, current_space, current_piece = next_section, next_space, next_piece
+    return cells
+
+
+def _shooting_corridor_range(state: GameState, shooter: Vehicle, target: Vehicle) -> int | None:
+    for distance, section, space, lanes in _shooting_corridor_cells(state, shooter):
+        if target.section == section and target.space == space and lanes.intersection(target.occupied_lanes):
+            return distance
+    return None
+
+
 def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
-    shooter_pos = _vehicle_distance_position(state, shooter)
-    target_pos = _vehicle_distance_position(state, target)
-    low, high = sorted((shooter_pos, target_pos))
+    target_distance = _shooting_corridor_range(state, shooter, target)
+    if target_distance is None:
+        return True
     for other in state.vehicles:
         if other.id in {shooter.id, target.id} or other.destroyed:
             continue
-        other_pos = _vehicle_distance_position(state, other)
-        if low < other_pos < high and _lane_overlap(shooter, other):
+        other_distance = _shooting_corridor_range(state, shooter, other)
+        if other_distance is not None and other_distance < target_distance:
             return True
-    for marker in state.passive_markers:
-        marker_pos = _track_distance_position(state, marker.section, marker.space)
-        if marker.kind == "smoke" and low < marker_pos < high:
+    for distance, section, space, lanes in _shooting_corridor_cells(state, shooter):
+        if distance >= target_distance:
+            break
+        for marker in state.passive_markers:
             marker_lanes = {marker.lane_pair, marker.lane_pair + 1}
-            if marker_lanes.intersection(shooter.occupied_lanes):
+            if marker.kind == "smoke" and marker.section == section and marker.space == space and lanes.intersection(marker_lanes):
                 return True
     return False
 
@@ -1304,9 +1337,7 @@ def shoot_targets(state: GameState, shooter: Vehicle) -> list[Vehicle]:
         for target in state.vehicles
         if target_side_matches(target)
         and not target.destroyed
-        and bool(set(shooter.occupied_lanes).intersection(target.occupied_lanes))
-        and _ahead_of(state, shooter, target)
-        and _distance_spaces(state, shooter, target) <= 8
+        and _shooting_corridor_range(state, shooter, target) is not None
         and not _line_of_fire_blocked(state, shooter, target)
     ]
 
@@ -1434,9 +1465,14 @@ def apply_shoot(state: GameState, shooter: Vehicle, *, finish_activation: bool =
         if finish_activation:
             _finish_activation(state, shooter)
         return
-    target = min(targets, key=lambda item: _distance_spaces(state, shooter, item))
+    target = min(targets, key=lambda item: _shooting_corridor_range(state, shooter, item) or 99)
     hit_roll = state.dice.d6()
-    distance = _distance_spaces(state, shooter, target)
+    distance = _shooting_corridor_range(state, shooter, target)
+    if distance is None:
+        state.logs.append(LogEntry(f"{shooter.label} has no straight shooting corridor to {target.label}.", "shoot", SHOOT_SOURCE))
+        if finish_activation:
+            _finish_activation(state, shooter)
+        return
     range_number = min(max(1, distance), 6)
     total = hit_roll + shooter.weapon_accuracy
     state.logs.append(
