@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 import json
+import math
 from math import ceil
 import random
 from pathlib import Path
@@ -25,9 +26,12 @@ from .track import (
     forward_position as track_forward_position,
     lane_pair_safety_limit,
     lane_pair_section_count,
+    piece_angle_degrees,
     piece_max_spaces,
+    straight_spaces,
 )
 from .track_generation import TrackInventory, build_initial_track
+from .track_layout import curve_lane_boundary_radii, layout_track_sections, point_on_curve, point_on_straight
 
 
 Side = Literal["agency", "outlaw"]
@@ -1272,36 +1276,223 @@ def _ahead_of(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
     return (target_pos - shooter_pos) * shooter.direction > 0
 
 
-def _shooting_corridor_cells(state: GameState, shooter: Vehicle, max_spaces: int = 8) -> list[tuple[int, int, int, set[int]]]:
-    cells: list[tuple[int, int, int, set[int]]] = []
-    lanes = set(shooter.occupied_lanes)
-    current_section = shooter.section
-    current_space = shooter.space
-    current_piece = _section_type_at(state, current_section)
-    for distance in range(1, max_spaces + 1):
-        next_position = track_forward_position(
-            state.track_section_types,
-            current_section,
-            current_space,
-            shooter.lane_pair,
-            shooter.direction,
+SHOOTING_GEOMETRY_LANE_WIDTH = 1.0
+SHOOTING_GEOMETRY_CAR_LENGTH = 1.0
+SHOOTING_MAX_SPACES = 8.0
+
+
+def _angle_unit(angle_degrees: float) -> tuple[float, float]:
+    radians = math.radians(angle_degrees)
+    return math.cos(radians), math.sin(radians)
+
+
+def _dot(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return a[0] * b[0] + a[1] * b[1]
+
+
+def _subtract(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+    return a[0] - b[0], a[1] - b[1]
+
+
+def _add_scaled(
+    point: tuple[float, float],
+    vector: tuple[float, float],
+    distance: float,
+) -> tuple[float, float]:
+    return point[0] + vector[0] * distance, point[1] + vector[1] * distance
+
+
+def _signed_angle_delta(angle: float, origin: float) -> float:
+    return (angle - origin + 180.0) % 360.0 - 180.0
+
+
+def _section_contains_point(
+    point: tuple[float, float],
+    placement,
+    *,
+    lane_width: float = SHOOTING_GEOMETRY_LANE_WIDTH,
+    car_length: float = SHOOTING_GEOMETRY_CAR_LENGTH,
+) -> bool:
+    epsilon = 0.03
+    if placement.center is None:
+        heading = _angle_unit(placement.heading_degrees)
+        lateral = _angle_unit(placement.heading_degrees + 90)
+        relative = _subtract(point, placement.entry)
+        along = _dot(relative, heading)
+        across = _dot(relative, lateral)
+        return (
+            -epsilon <= along <= straight_spaces() * car_length + epsilon
+            and -epsilon <= across <= LANE_COUNT * lane_width + epsilon
         )
-        if next_position is None:
-            break
-        next_section, next_space = next_position
-        next_piece = _section_type_at(state, next_section)
-        if next_section != current_section and not (_is_straight_section(current_piece) and _is_straight_section(next_piece)):
-            break
-        cells.append((distance, next_section, next_space, lanes))
-        current_section, current_space, current_piece = next_section, next_space, next_piece
-    return cells
+
+    relative = _subtract(point, placement.center)
+    radius = math.hypot(relative[0], relative[1])
+    boundaries = curve_lane_boundary_radii(
+        placement.piece_type,
+        lane_width=lane_width,
+        car_length=car_length,
+    )
+    if radius < boundaries[0] - epsilon or radius > boundaries[-1] + epsilon:
+        return False
+    point_angle = math.degrees(math.atan2(relative[1], relative[0]))
+    radial_start = placement.heading_degrees - placement.turn_direction * 90
+    progress = _signed_angle_delta(point_angle, radial_start) * placement.turn_direction
+    return -epsilon <= progress <= piece_angle_degrees(placement.piece_type) + epsilon
+
+
+def _point_on_any_road(state: GameState, point: tuple[float, float], placements) -> bool:
+    return any(_section_contains_point(point, placement) for placement in placements)
+
+
+def _grid_center_point(
+    state: GameState,
+    placements,
+    section: int,
+    space: int,
+    lane_pair: int,
+) -> tuple[float, float] | None:
+    if section < 0 or section >= len(placements):
+        return None
+    placement = placements[section]
+    piece_type = _section_type_at(state, section)
+    if _is_curve_section(piece_type):
+        if space > lane_pair_section_count(piece_type, lane_pair):
+            return None
+        return point_on_curve(
+            placement,
+            space=space,
+            lane_pair=lane_pair,
+            lane_width=SHOOTING_GEOMETRY_LANE_WIDTH,
+            car_length=SHOOTING_GEOMETRY_CAR_LENGTH,
+        )
+    if space > straight_spaces():
+        return None
+    return point_on_straight(
+        placement,
+        space=space,
+        lane_pair=lane_pair,
+        lane_width=SHOOTING_GEOMETRY_LANE_WIDTH,
+        car_length=SHOOTING_GEOMETRY_CAR_LENGTH,
+    )
+
+
+def _vehicle_center_point(state: GameState, placements, vehicle: Vehicle) -> tuple[float, float] | None:
+    return _grid_center_point(state, placements, vehicle.section, vehicle.space, vehicle.lane_pair)
+
+
+def _vehicle_facing_angle(state: GameState, placements, vehicle: Vehicle) -> float:
+    placement = placements[vehicle.section]
+    piece_type = _section_type_at(state, vehicle.section)
+    if _is_curve_section(piece_type):
+        count = lane_pair_section_count(piece_type, vehicle.lane_pair)
+        angle_step = (placement.exit_heading_degrees - placement.heading_degrees) / count
+        angle = placement.heading_degrees + angle_step * (vehicle.space - 0.5)
+    else:
+        angle = placement.heading_degrees
+    if vehicle.direction == -1:
+        angle += 180
+    if vehicle.spin_facing_degrees is not None:
+        angle = placement.heading_degrees + vehicle.spin_facing_degrees
+    return angle
+
+
+def _shooting_corridor_geometry(
+    state: GameState,
+    shooter: Vehicle,
+) -> tuple[tuple, tuple[float, float], tuple[float, float], tuple[float, float], float] | None:
+    if shooter.section < 0 or shooter.section >= len(state.track_section_types):
+        return None
+    placements = layout_track_sections(
+        state.track_section_types,
+        lane_width=SHOOTING_GEOMETRY_LANE_WIDTH,
+        car_length=SHOOTING_GEOMETRY_CAR_LENGTH,
+    )
+    center = _vehicle_center_point(state, placements, shooter)
+    if center is None:
+        return None
+    forward = _angle_unit(_vehicle_facing_angle(state, placements, shooter))
+    lateral = (-forward[1], forward[0])
+    origin = _add_scaled(center, forward, SHOOTING_GEOMETRY_CAR_LENGTH / 2)
+    half_width = max(1, len(shooter.occupied_lanes)) * SHOOTING_GEOMETRY_LANE_WIDTH / 2
+    return placements, origin, forward, lateral, half_width
+
+
+def _corridor_stays_on_road(
+    state: GameState,
+    placements,
+    origin: tuple[float, float],
+    forward: tuple[float, float],
+    lateral: tuple[float, float],
+    half_width: float,
+    distance: float,
+) -> bool:
+    sample_step = 0.2
+    sample = 0.05
+    while sample <= distance:
+        center = _add_scaled(origin, forward, sample)
+        left = _add_scaled(center, lateral, -half_width)
+        right = _add_scaled(center, lateral, half_width)
+        if not (
+            _point_on_any_road(state, center, placements)
+            and _point_on_any_road(state, left, placements)
+            and _point_on_any_road(state, right, placements)
+        ):
+            return False
+        sample += sample_step
+    return True
+
+
+def _corridor_range_to_point(
+    state: GameState,
+    shooter: Vehicle,
+    point: tuple[float, float],
+    target_half_width: float,
+) -> int | None:
+    geometry = _shooting_corridor_geometry(state, shooter)
+    if geometry is None:
+        return None
+    placements, origin, forward, lateral, half_width = geometry
+    relative = _subtract(point, origin)
+    forward_distance = _dot(relative, forward)
+    if forward_distance <= 0.0 or forward_distance > SHOOTING_MAX_SPACES:
+        return None
+    lateral_distance = abs(_dot(relative, lateral))
+    if lateral_distance > half_width + target_half_width + 0.03:
+        return None
+    if not _corridor_stays_on_road(
+        state,
+        placements,
+        origin,
+        forward,
+        lateral,
+        half_width,
+        min(forward_distance, SHOOTING_MAX_SPACES),
+    ):
+        return None
+    return max(1, ceil(forward_distance))
 
 
 def _shooting_corridor_range(state: GameState, shooter: Vehicle, target: Vehicle) -> int | None:
-    for distance, section, space, lanes in _shooting_corridor_cells(state, shooter):
-        if target.section == section and target.space == space and lanes.intersection(target.occupied_lanes):
-            return distance
-    return None
+    geometry = _shooting_corridor_geometry(state, shooter)
+    if geometry is None:
+        return None
+    placements = geometry[0]
+    point = _vehicle_center_point(state, placements, target)
+    if point is None:
+        return None
+    target_half_width = max(1, len(target.occupied_lanes)) * SHOOTING_GEOMETRY_LANE_WIDTH / 2
+    return _corridor_range_to_point(state, shooter, point, target_half_width)
+
+
+def _marker_corridor_range(state: GameState, shooter: Vehicle, marker: PassiveMarker) -> int | None:
+    geometry = _shooting_corridor_geometry(state, shooter)
+    if geometry is None:
+        return None
+    placements = geometry[0]
+    point = _grid_center_point(state, placements, marker.section, marker.space, marker.lane_pair)
+    if point is None:
+        return None
+    return _corridor_range_to_point(state, shooter, point, SHOOTING_GEOMETRY_LANE_WIDTH)
 
 
 def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -> bool:
@@ -1314,13 +1505,12 @@ def _line_of_fire_blocked(state: GameState, shooter: Vehicle, target: Vehicle) -
         other_distance = _shooting_corridor_range(state, shooter, other)
         if other_distance is not None and other_distance < target_distance:
             return True
-    for distance, section, space, lanes in _shooting_corridor_cells(state, shooter):
-        if distance >= target_distance:
-            break
-        for marker in state.passive_markers:
-            marker_lanes = {marker.lane_pair, marker.lane_pair + 1}
-            if marker.kind == "smoke" and marker.section == section and marker.space == space and lanes.intersection(marker_lanes):
-                return True
+    for marker in state.passive_markers:
+        if marker.kind != "smoke":
+            continue
+        marker_distance = _marker_corridor_range(state, shooter, marker)
+        if marker_distance is not None and marker_distance < target_distance:
+            return True
     return False
 
 

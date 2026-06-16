@@ -461,7 +461,7 @@ class EngineTests(unittest.TestCase):
 
         self.assertIn(target, shoot_targets(state, shooter))
 
-    def test_shooting_corridor_stops_at_track_edge_before_curve(self):
+    def test_shooting_corridor_stops_when_road_edge_crosses_curve(self):
         state = new_game()
         shooter = vehicle_by_id(state, "agency-1")
         target = vehicle_by_id(state, "outlaw-1")
@@ -474,6 +474,20 @@ class EngineTests(unittest.TestCase):
         target.lane_pair = 4
 
         self.assertNotIn(target, shoot_targets(state, shooter))
+
+    def test_shooting_corridor_can_hit_curve_when_straight_line_stays_on_road(self):
+        state = new_game()
+        shooter = vehicle_by_id(state, "agency-1")
+        target = vehicle_by_id(state, "outlaw-1")
+        shooter.section = 2
+        shooter.space = 3
+        shooter.lane_pair = 4
+        shooter.direction = 1
+        target.section = 3
+        target.space = 2
+        target.lane_pair = 6
+
+        self.assertIn(target, shoot_targets(state, shooter))
 
     def test_shooting_corridor_hits_partial_four_lane_footprint(self):
         state = new_game()
@@ -1237,6 +1251,7 @@ class EngineTests(unittest.TestCase):
         outlaw.lane_pair = 6
         outlaw.direction = -1
         outlaw.mph = 50
+        outlaw.weapon_disabled = True
         agency.section = 2
         agency.space = 1
         agency.lane_pair = 3
