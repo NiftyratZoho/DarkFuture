@@ -1198,6 +1198,30 @@ def apply_spin_template(state: GameState, vehicle: Vehicle, total: int | None, r
     )
 
 
+def apply_control_loss_result(state: GameState, vehicle: Vehicle, result, reason: str) -> bool:
+    if result.effect in {"skidThenRegainControl", "skidRemainOutOfControl", "spin", "roll"}:
+        if apply_skid_test(state, vehicle, reason):
+            return True
+    if result.effect == "skidThenRegainControl":
+        vehicle.control_state = "controlled"
+        vehicle.aligned_to_grid = True
+        vehicle.spin_facing_degrees = None
+        state.logs.append(LogEntry(f"{vehicle.label} regains control after the skid.", "control-loss", HAZARD_SOURCE))
+        return False
+    if result.effect == "spin":
+        vehicle.control_state = "out_of_control"
+        apply_spin_template(state, vehicle, result.total, reason)
+        return False
+    if result.effect == "roll":
+        vehicle.control_state = "out_of_control"
+        state.logs.append(LogEntry(f"{vehicle.label} would roll after the skid; roll template is not yet implemented.", "control-loss", HAZARD_SOURCE))
+        return False
+    vehicle.control_state = "out_of_control"
+    if result.effect != "skidRemainOutOfControl":
+        vehicle.mph = max(0, vehicle.mph - 10)
+    return False
+
+
 def apply_critical_hit(state: GameState, target: Vehicle, source: SourceRef, reason: str) -> None:
     table_roll = state.dice.d6()
     result_roll = state.dice.d6()
@@ -1644,6 +1668,86 @@ def _resolve_forced_straight_move(state: GameState, vehicle: Vehicle, reason: st
     return False
 
 
+def _resolve_skid_move(state: GameState, vehicle: Vehicle, lane_pair: int, reason: str) -> bool:
+    next_position = _forward_position_in_state(state, vehicle)
+    if next_position is None:
+        section = vehicle.section + vehicle.direction
+        space = 1
+    else:
+        section, space = next_position
+    old = (vehicle.section, vehicle.space, vehicle.lane_pair)
+
+    if section < 0 or section >= state.track_sections or lane_pair < MIN_LANE_PAIR or lane_pair > MAX_LANE_PAIR:
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+        vehicle.control_state = "out_of_control"
+        apply_damage(state, vehicle, state.dice.d6(), speed_factor(vehicle.mph), HAZARD_SOURCE, "skid crash")
+        state.logs.append(LogEntry(f"{vehicle.label} crashes during {reason}.", "crash", HAZARD_SOURCE))
+        return False
+    if space > section_space_limit(section, lane_pair, state):
+        check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+        vehicle.control_state = "out_of_control"
+        apply_damage(state, vehicle, state.dice.d6(), speed_factor(vehicle.mph), HAZARD_SOURCE, "skid crash")
+        state.logs.append(LogEntry(f"{vehicle.label} crashes during {reason}; final skid position is outside the lane grid.", "crash", HAZARD_SOURCE))
+        return False
+
+    for other in state.vehicles:
+        if _overlap(vehicle, section, space, lane_pair, other):
+            check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+            vehicle.section = section
+            vehicle.space = space
+            vehicle.lane_pair = lane_pair
+            vehicle.aligned_to_grid = True
+            vehicle.spin_facing_degrees = None
+            resolve_ram(state, vehicle, other)
+            _finish_activation(state, vehicle)
+            return True
+
+    vehicle.section = section
+    vehicle.space = space
+    vehicle.lane_pair = lane_pair
+    vehicle.aligned_to_grid = True
+    vehicle.spin_facing_degrees = None
+    state.logs.append(
+        LogEntry(
+            f"{vehicle.label} skids during {reason}: {old[0]+1}.{old[1]} LP{old[2]} -> {section+1}.{space} LP{lane_pair}.",
+            "skid",
+            HAZARD_SOURCE,
+        )
+    )
+    check_passive_markers_on_exit(state, vehicle, old[0], old[1], old[2])
+    check_movement_hazards(state, vehicle, "skid", old_section=old[0], old_lane_pair=old[2])
+    return False
+
+
+def apply_skid_test(state: GameState, vehicle: Vehicle, reason: str) -> bool:
+    skid_roll = state.dice.d6()
+    if skid_roll % 2 == 0:
+        old_mph = vehicle.mph
+        vehicle.mph = max(0, vehicle.mph - 5)
+        state.logs.append(LogEntry(f"{vehicle.label} skid test for {reason}: d6 {skid_roll} even, skids straight and loses 5 mph ({old_mph} -> {vehicle.mph}).", "skid", HAZARD_SOURCE))
+        return _resolve_skid_move(state, vehicle, vehicle.lane_pair, "straight skid")
+
+    old_mph = vehicle.mph
+    vehicle.mph = max(0, vehicle.mph - 10)
+    next_position = _forward_position_in_state(state, vehicle)
+    forward_piece = _section_type_at(state, next_position[0]) if next_position is not None else "offroad"
+    if _is_curve_section(forward_piece):
+        target_lane_pair = drift_lane_pair(forward_piece, vehicle.lane_pair, "outward")
+        direction_text = "outward onto the curve"
+    else:
+        direction_roll = state.dice.d6()
+        drift_direction = "right" if direction_roll % 2 == 0 else "left"
+        target_lane_pair = drift_lane_pair("straight", vehicle.lane_pair, drift_direction)
+        direction_text = f"{drift_direction} on d6 {direction_roll}"
+    state.logs.append(LogEntry(f"{vehicle.label} skid test for {reason}: d6 {skid_roll} odd, drift-skids {direction_text} and loses 10 mph ({old_mph} -> {vehicle.mph}).", "skid", HAZARD_SOURCE))
+    if target_lane_pair is None:
+        vehicle.control_state = "out_of_control"
+        apply_damage(state, vehicle, state.dice.d6(), speed_factor(vehicle.mph), HAZARD_SOURCE, "skid crash")
+        state.logs.append(LogEntry(f"{vehicle.label} crashes because the drift skid leaves the road.", "crash", HAZARD_SOURCE))
+        return False
+    return _resolve_skid_move(state, vehicle, target_lane_pair, "drift skid")
+
+
 def _bootlegger_lane_delta(side: str) -> int:
     if side == "left":
         return -1
@@ -1738,9 +1842,8 @@ def _resolve_bootlegger(state: GameState, vehicle: Vehicle, side: str) -> None:
     state.logs.append(LogEntry(f"{vehicle.label} bootlegger control test: table total {result.total} gives {result.effect}.", "hazard", MANOEUVRE_SOURCE))
     if not _is_straight_section(current_section_type(state, vehicle)):
         if result.control_lost:
-            vehicle.control_state = "out_of_control"
-            if result.effect == "spin":
-                apply_spin_template(state, vehicle, result.total, "curve bootlegger attempt")
+            if apply_control_loss_result(state, vehicle, result, "curve bootlegger attempt"):
+                return
             state.logs.append(LogEntry(f"{vehicle.label} loses control attempting a bootlegger on a curve.", "control-loss", MANOEUVRE_SOURCE))
         else:
             state.logs.append(LogEntry(f"{vehicle.label} cannot bootlegger on a curve and moves normally.", "illegal-action", MANOEUVRE_SOURCE))
@@ -1824,10 +1927,8 @@ def apply_action(state: GameState, action_id: str) -> None:
             if _resolve_forced_straight_move(state, vehicle, "regaining control"):
                 return
         else:
-            if result.effect == "spin":
-                apply_spin_template(state, vehicle, result.total, "control-loss test")
-            else:
-                vehicle.mph = max(0, vehicle.mph - 10)
+            if apply_control_loss_result(state, vehicle, result, "control-loss test"):
+                return
             state.logs.append(LogEntry(f"{vehicle.label} remains out of control ({result.effect}) and slows to {vehicle.mph} mph.", "control-loss", HAZARD_SOURCE))
         _finish_activation(state, vehicle)
         return
@@ -1907,9 +2008,11 @@ def apply_action(state: GameState, action_id: str) -> None:
                 handling=vehicle.handling,
                 drive_skill=vehicle.driver_skill,
             )
-            vehicle.control_state = "out_of_control" if result.control_lost else "controlled"
-            if result.effect == "spin":
-                apply_spin_template(state, vehicle, result.total, "too-fast U-turn")
+            if result.control_lost:
+                if apply_control_loss_result(state, vehicle, result, "too-fast U-turn"):
+                    return
+            else:
+                vehicle.control_state = "controlled"
             state.logs.append(
                 LogEntry(
                     f"{vehicle.label} is too fast for a U-turn at {test_mph} mph; immediate control-loss test total {result.total} gives {result.effect}.",

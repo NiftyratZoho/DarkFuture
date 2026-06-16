@@ -297,6 +297,13 @@
     ],
     "skidTest": {
       "dice": { "kind": "d6", "count": 2 },
+      "coreDice": { "kind": "d6", "count": 1 },
+      "straightSkidWhenDieEven": true,
+      "straightSkidSpeedLossMph": 5,
+      "driftSkidWhenDieOdd": true,
+      "driftSkidSpeedLossMph": 10,
+      "driftOntoCurveDirection": "outward",
+      "straightRoadDirectionDie": { "odd": "left", "even": "right" },
       "driftOccursWhenFirstDieOdd": true,
       "directionWhenDriftOccurs": {
         "oddSecondDie": "left",

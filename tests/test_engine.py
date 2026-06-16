@@ -8,6 +8,7 @@ from dark_future.engine import (
     apply_critical_effect,
     apply_hostile_system_effect,
     apply_rocket_booster_critical,
+    apply_skid_test,
     apply_spin_template,
     choose_next_actor,
     curve_safety_limit,
@@ -885,12 +886,12 @@ class EngineTests(unittest.TestCase):
         agency.mph = 40
         agency.handling = 0
         agency.driver_skill = 0
-        state.dice.queue = [2, 1]
+        state.dice.queue = [2, 2, 1]
 
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.control_state, "out_of_control")
-        self.assertEqual(agency.mph, 20)
+        self.assertEqual(agency.mph, 15)
         self.assertFalse(agency.aligned_to_grid)
         self.assertEqual(agency.spin_facing_degrees, 225)
         self.assertTrue(any(entry.kind == "spin" and "anti-clockwise" in entry.message and "-20 mph" in entry.message for entry in state.logs))
@@ -902,12 +903,12 @@ class EngineTests(unittest.TestCase):
         agency.mph = 40
         agency.handling = 0
         agency.driver_skill = 0
-        state.dice.queue = [2, 2]
+        state.dice.queue = [2, 2, 2]
 
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.control_state, "out_of_control")
-        self.assertEqual(agency.mph, 20)
+        self.assertEqual(agency.mph, 15)
         self.assertFalse(agency.aligned_to_grid)
         self.assertEqual(agency.spin_facing_degrees, 135)
         self.assertTrue(any(entry.kind == "spin" and "clockwise" in entry.message and "-20 mph" in entry.message for entry in state.logs))
@@ -920,11 +921,55 @@ class EngineTests(unittest.TestCase):
         agency.mph = 40
         agency.handling = 0
         agency.driver_skill = 0
-        state.dice.queue = [2, 2]
+        state.dice.queue = [2, 2, 2]
 
         apply_action(state, "regain_control")
 
         self.assertEqual(agency.spin_facing_degrees, 315)
+
+    def test_skid_test_even_skids_straight_and_loses_five(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.mph = 50
+        state.dice.queue = [2]
+
+        finished = apply_skid_test(state, agency, "test")
+
+        self.assertFalse(finished)
+        self.assertEqual(agency.mph, 45)
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 4))
+
+    def test_skid_test_odd_on_straight_uses_direction_die(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 1
+        agency.space = 1
+        agency.lane_pair = 4
+        agency.mph = 50
+        state.dice.queue = [1, 2]
+
+        finished = apply_skid_test(state, agency, "test")
+
+        self.assertFalse(finished)
+        self.assertEqual(agency.mph, 40)
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (1, 2, 5))
+
+    def test_skid_test_odd_onto_curve_drifts_outward_without_direction_die(self):
+        state = new_game()
+        agency = vehicle_by_id(state, "agency-1")
+        agency.section = 2
+        agency.space = 3
+        agency.lane_pair = 4
+        agency.mph = 50
+        state.dice.queue = [1]
+
+        finished = apply_skid_test(state, agency, "test")
+
+        self.assertFalse(finished)
+        self.assertEqual(agency.mph, 40)
+        self.assertEqual((agency.section, agency.space, agency.lane_pair), (3, 1, 5))
 
     def test_spin_footprint_is_two_lanes_when_aligned_and_four_when_angled(self):
         state = new_game()
