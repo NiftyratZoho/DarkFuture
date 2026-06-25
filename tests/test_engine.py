@@ -11,6 +11,7 @@ from dark_future.engine import (
     apply_skid_test,
     apply_spin_template,
     choose_next_actor,
+    check_victory,
     curve_safety_limit,
     generate_track_layout,
     initial_track_layout,
@@ -1315,13 +1316,41 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(state.campaign.current_scenario, "ambush")
 
     def test_new_game_uses_scenario_setups(self):
+        intercept = new_game("intercept")
         ambush = new_game("ambush")
         pursuit = new_game("pursuit")
 
+        self.assertEqual(len(intercept.track_section_types), 7)
+        self.assertEqual(len(ambush.track_section_types), 9)
+        self.assertEqual(len(pursuit.track_section_types), 7)
         self.assertEqual(ambush.scenario_id, "ambush")
-        self.assertEqual(vehicle_by_id(ambush, "outlaw-1").direction, -1)
+        self.assertEqual((vehicle_by_id(ambush, "agency-1").section, vehicle_by_id(ambush, "agency-1").mph), (0, 20))
+        self.assertEqual((vehicle_by_id(ambush, "outlaw-1").section, vehicle_by_id(ambush, "outlaw-1").direction), (4, 1))
         self.assertEqual(pursuit.scenario_id, "pursuit")
-        self.assertEqual(vehicle_by_id(pursuit, "outlaw-1").direction, 1)
+        self.assertEqual((vehicle_by_id(pursuit, "agency-1").section, vehicle_by_id(pursuit, "agency-1").mph), (0, 60))
+        self.assertEqual((vehicle_by_id(pursuit, "outlaw-1").section, vehicle_by_id(pursuit, "outlaw-1").direction), (3, 1))
+
+    def test_engagement_ends_when_only_one_side_has_active_vehicle(self):
+        state = new_game()
+        outlaw = vehicle_by_id(state, "outlaw-1")
+        outlaw.weapon_disabled = True
+
+        check_victory(state)
+
+        self.assertTrue(state.game_over)
+        self.assertEqual(state.winner, "agency")
+        self.assertTrue(any("salvage rights" in entry.message for entry in state.logs))
+
+    def test_engagement_without_active_vehicles_has_no_salvage_winner(self):
+        state = new_game()
+        vehicle_by_id(state, "agency-1").driver_skill = -1
+        vehicle_by_id(state, "outlaw-1").weapon_disabled = True
+
+        check_victory(state)
+
+        self.assertTrue(state.game_over)
+        self.assertIsNone(state.winner)
+        self.assertTrue(any("No salvage rights" in entry.message for entry in state.logs))
 
     def test_save_and_load_round_trip(self):
         state = new_game("pursuit")

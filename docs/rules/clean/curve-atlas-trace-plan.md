@@ -18,7 +18,7 @@ Primary pages:
 - Dark Future Rulebook p. 14: drift examples and U-turn contact zone.
 - Dark Future Rulebook p. 15: U-turns on curve/straight boundaries.
 - Dark Future Rulebook p. 52: common contact zones.
-- Dark Future Rulebook p. 53: curve contact zones and uneven lane handling.
+- Dark Future Rulebook p. 53: curve contact examples and uneven lane handling.
 - Dark Future Rulebook p. 54: head-on and shunt rams on curves.
 - Dark Future Rulebook p. 55: sideswipes on curves.
 - Dark Future Rulebook pp. 74-79: track generation and road-hazard placement.
@@ -119,8 +119,8 @@ Each example should become a test case.
 
 ### Contact Zones
 
-- Curve contact zones use curve grid anchors, not rendered car overlap.
-- Uneven curve contact zones use outside lane dividers.
+- Curve contact uses curve grid anchors, not rendered car overlap.
+- Uneven curve contact uses outside lane dividers.
 - Sideswipe legality compares front positions, not sprite angles.
 - Head-on and shunt classification on curves uses lane direction and lane overlap.
 

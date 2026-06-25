@@ -163,21 +163,28 @@ Once two units are paired:
 Approach roll inputs:
 
 - one die per side
-- drive skill bonus based on the unit's least skilled driver if that driver has sufficient drive skill; exact threshold/table needs proofread
-- information bonus purchased before the approach roll
+- drive-skill bonus from the least skilled participating driver
+- approach bonuses purchased before the approach roll
 
-Information:
+Least skilled driver approach bonus:
 
-- Ops/agencies may buy Ratcatchers data before an engagement, apparently `$10,000` per `+1` approach bonus.
-- Outlaws may buy grapevine information, apparently up to `$20,000` per engagement, with `$10,000` per `+1`.
-- The exact caps and labels need proofread from WD124 page 20.
+- drive skill `4-5`: `+1`
+- drive skill `6-7`: `+2`
+- drive skill `8-9`: `+3`
+- drive skill `10`: `+4`
+
+Purchased approach information:
+
+- Sanctioned Ops/agencies may buy Ratcatchers data before an engagement at `$15,000` per `+1`.
+- Outlaws may buy grapevine information before an engagement at `$10,000` per `+1`.
+- Either side may buy at most `+3` in approach bonuses for a single engagement.
 
 Approach result:
 
-- Low/negative result: defender may choose intercept, pursuit, or ambush.
-- Middle result: attacker may choose intercept or pursuit.
-- High result: attacker may choose intercept, pursuit, or ambush.
-- Exact difference bands need proofread from the damaged approach result table on WD124 page 20.
+- Calculate attacker total minus defender total.
+- On `<= 0`, the defender chooses intercept, pursuit, or ambush.
+- On `1-2`, the attacker chooses intercept or pursuit.
+- On `>= 3`, the attacker chooses intercept, pursuit, or ambush.
 
 Engagement types:
 
@@ -186,6 +193,12 @@ Engagement types:
 - `pursuit`: flight engagement.
 
 The chosen type affects setup and later mileage calculation.
+
+Setup summaries:
+
+- In an `intercept`, generate `7` track sections. The approach winner chooses which end they start from. The loser places vehicles at the opposite end, anywhere within the first two track sections, facing the other end and under cruising restrictions. The winner then places vehicles within the first two sections at the nominated end, heading toward the middle and without cruising restrictions.
+- In a `pursuit`, generate `7` track sections. The loser places vehicles on the fourth track section facing toward the seventh section and under cruising restrictions. The winner starts on the first track section facing along the rest of the track, at minimum `60 mph` unless on a curve where safe speed is the minimum, and no faster than vehicle top speed.
+- In an `ambush`, generate `9` track sections. The loser places vehicles on the middle track section, chooses one direction of travel for all loser vehicles, and is under cruising restrictions. The winner places vehicles on the two sections at either or both road ends, facing any direction unless behind the target, where they must face the target. The ambusher may also place vehicles in the two edge lanes of any section; these start at `20 mph` / speed factor `1` and may face either way.
 
 Cruising restrictions:
 
@@ -209,7 +222,14 @@ Failure penalties:
 - Sanctioned Ops that deliberately fail the objective forfeit pay and mileage for the engagement. A second deliberate failure causes loss of licence and removal from the campaign.
 - Outlaws that deliberately fail forfeit loot and mileage for the engagement. A second deliberate failure causes the unit to disband and be removed.
 
-Non-deliberate exceptions include severe vehicle loss, crashes before contact, defender leaving before the attacker can reach objective range, and ambush situations. These conditions need final wording proofread from WD124 page 22.
+Objective failure exceptions:
+
+- If the attacker cannot meet the objective because every attacking vehicle is destroyed, disabled, or otherwise made inactive before it can reasonably reach the defender, the failure is not deliberate.
+- If an attacking vehicle takes a critical hit before it can reasonably satisfy the objective, the failure is not deliberate.
+- If crashes, forced movement, or loss of control prevent contact before the attacker can reasonably satisfy the objective, the failure is not deliberate.
+- If the defender leaves, escapes, or is removed from play before the attacker can reasonably reach objective range, the failure is not deliberate.
+- If the setup is an ambush, the ambushed unit is not subject to the attacker objective restriction.
+- These exceptions prevent objective failure penalties; they do not change normal salvage, injury, mileage, or pay rules unless those rules separately require an active vehicle or completed objective.
 
 ## Ending Engagements and Salvage Rights
 
@@ -221,7 +241,7 @@ An active vehicle must have:
 - usable ammunition and a means to fire it, excluding passives
 - a driver who has not suffered a disabling critical result
 
-The side with the only active vehicles at the end gains salvage rights. If neither side has active vehicles, no side claims salvage and equipment is lost.
+The side with the only active vehicles at the end gains salvage rights. A player must have an active vehicle left at the end of the engagement to claim salvage. If neither side has active vehicles, no side claims salvage and equipment is lost to the desert.
 
 ## Injury, Death, and Escape
 
@@ -620,11 +640,10 @@ Required from other agents:
 |---|---|---|
 | WD124 p18 | Starting funds and free starting drivers. | Resolved from page image: `$100,000`, Op first drive-skill 2 driver free, outlaw first two drive-skill 2 drivers free. |
 | WD124 p18 | Starting vehicles and equipment. | Vehicles and equipment are bought from starting funds. |
-| WD124 p20 | Approach drive-skill bonus table is damaged. | Store approach bonus table as pending extraction. |
-| WD124 p20 | Ratcatchers/grapevine costs and caps are partly damaged. | Treat as provisional `$10,000` per `+1`, gang cap `$20,000`; verify. |
-| WD124 p20 | Approach result table bands are damaged. | JSON sequence identifies approach step only; table extraction pending. |
-| WD124 p21 | Intercept/pursuit/ambush setup details are OCR-damaged. | Leave tactical setup details to Scenario/Track agents after page-image proofread. |
-| WD124 p22 | Non-deliberate engagement-objective exceptions have OCR damage. | Candidate tests should cover each listed exception after proofread. |
+| WD124 p20 | Approach roll structure and purchased information costs. | Resolved as `d6 + least-skilled-driver bonus + purchased bonuses`; Ratcatchers cost `$15,000` per `+1`, grapevine costs `$10,000` per `+1`, maximum `+3`. |
+| WD124 p20 | Approach result table bands. | Resolved as attacker total minus defender total: `<= 0` defender chooses all types, `1-2` attacker chooses intercept/pursuit, `>= 3` attacker chooses all types. |
+| WD124 p21 | Intercept/pursuit/ambush setup details. | Summary setup rules are captured; exact diagram-level deployment geometry remains scenario/track implementation detail if needed. |
+| WD124 p22 | Non-deliberate engagement-objective exceptions. | Resolved as exceptions for unavoidable inactive/lost vehicles, critical hits, crashes or loss of control before contact, defender escape/removal before objective range, and ambushed units. |
 | WD124 p26 | Recovery clause success roll and exact psychosis wording are damaged. | Do not implement recovery odds until verified. |
 | WD124 p27 | Salvage and vehicle recovery tables have severe OCR errors. | Require page-image table extraction. |
 | WD124 p28 | Campaign Mileage Table has likely row-order OCR error around 100/120. | Verify thresholds before implementing progression. |

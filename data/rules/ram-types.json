@@ -271,7 +271,7 @@
     {
       "id": "contact-zone-diagram-tracing",
       "status": "partiallyResolvedByUserRuling",
-      "notes": "Curve ram/shunt contact uses any shared occupied lane; curve sideswipe uses adjacent front-half contact inward or outward. Exact road-edge/crash cells remain diagram-sensitive.",
+      "notes": "Curve ram/shunt contact uses any shared occupied lane; curve sideswipe uses adjacent front-half contact inward or outward. Edge handling follows the clarified lane boundary rule: leaving lanes 1-8 crashes.",
       "source": {
         "book": "Dark Future Rulebook",
         "pages": [52, 53]

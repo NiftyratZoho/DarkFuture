@@ -53,18 +53,12 @@ the final position remains on the curve, so inward curve drift is rejected unles
 - lane speed limits;
 - lane-pair section counts and safety limits.
 
-This is display/debug data only. Future tactical movement and collision checks should use explicit
-track-space graph data once the printed curve atlas is traced.
+This is display/debug data only. Tactical movement and collision checks now use the clarified
+rule-derived lane graph rather than rendered coordinates.
 
 ## Remaining Atlas Work
 
-The helper layer intentionally does not infer diagram-specific curve links from render coordinates.
-The exact curve atlas still needs traced data for:
+The helper layer intentionally does not infer diagram-specific passive/hazard placement from render
+coordinates. Remaining curve trace work is limited to:
 
-- uneven lane outside-divider alignment;
-- explicit forward and drift links;
-- curve-to-straight boundary drift exceptions;
-- contact anchors and contact zones;
-- front ordinals for curve sideswipes;
-- U-turn edge metadata;
 - road-hazard placement slots.

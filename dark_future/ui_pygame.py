@@ -293,7 +293,8 @@ class App:
             return
         if action_id == "reroll_mission_track":
             if self.pending_mission_scenario is not None:
-                self.pending_track_section_types = initial_track_layout(self.state.dice)
+                target_sections = 9 if self.pending_mission_scenario == "ambush" else 7
+                self.pending_track_section_types = initial_track_layout(self.state.dice, target_sections=target_sections)
                 self.ui_status = "Rerolled initial track."
             return
         if action_id == "accept_mission_track":
@@ -375,7 +376,8 @@ class App:
     def _prepare_mission_track_setup(self, scenario: str, *, campaign_contract: bool) -> None:
         self.pending_mission_scenario = scenario if scenario in SCENARIOS else "intercept"
         self.pending_campaign_contract = campaign_contract
-        self.pending_track_section_types = initial_track_layout(self.state.dice)
+        target_sections = 9 if self.pending_mission_scenario == "ambush" else 7
+        self.pending_track_section_types = initial_track_layout(self.state.dice, target_sections=target_sections)
         self._set_screen("mission_track_setup")
         self.ui_status = "Review the generated initial track, then accept or reroll."
 
@@ -1293,11 +1295,11 @@ class App:
 
     def _known_blocker_lines(self) -> list[str]:
         return [
-            "Curve movement links are rules-derived; exact curve contact zones still need diagram/grid encoding.",
+            "Curve movement/contact is rules-derived; exact passive marker placement slots on curves still need encoding.",
             "Roll and exact spin centre-contact diagrams still need extracting into structured movement results.",
             "TGSM tables are transcribed; remaining missile automation needs weapon-selection UI and tactical ammo flow.",
             "Scenario deployment diagrams need structured setup rows for all contracts beyond current defaults.",
-            "Campaign random tables still need complete extraction: approach, loot, disorders, psychosis, salvage.",
+            "Campaign random tables still need complete extraction: loot, disorders, psychosis, salvage.",
             "Interceptor cupola/pintle blind-spot mask still needs diagram grid encoding.",
         ]
 

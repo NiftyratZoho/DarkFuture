@@ -13,6 +13,7 @@ DriverRole = Literal["sanctioned", "outlaw", "renegade"]
 InjuryState = Literal["unhurt", "hurt", "injured", "limbDisabled", "dead"]
 EngagementType = Literal["intercept", "ambush", "pursuit"]
 BountyResult = Literal["killed", "terminal_or_crashed"]
+ApproachChoiceOwner = Literal["attacker", "defender"]
 
 REPAIR_COST_PER_DAMAGE_POINT = 250
 CRITICAL_REPAIR_COST = 250
@@ -24,6 +25,9 @@ EXPERIENCED_DRIVER_UPKEEP_RATE = 0.10
 DATA_ROOT = Path(__file__).resolve().parent.parent / "data" / "rules"
 STARTING_FUNDS = 100_000
 STARTING_DRIVER_SKILL = 2
+SANCTIONED_APPROACH_BONUS_COST = 15_000
+OUTLAW_APPROACH_BONUS_COST = 10_000
+MAX_PURCHASED_APPROACH_BONUS = 3
 
 # Extracted from docs/rules/clean/campaign.md; still marked needsProofread there.
 OUTLAW_BOUNTY_BY_DRIVE_SKILL = {
@@ -324,6 +328,7 @@ class UnitState:
     pending_media_psychosis: int = 0
     recruitment_locks: list[RecruitmentLock] = field(default_factory=list)
     expenses_due: int = 0
+    purchased_approach_bonus: int = 0
     retired: bool = False
 
     def is_sanctioned(self) -> bool:
@@ -350,6 +355,7 @@ class UnitState:
             "pendingMediaPsychosis": self.pending_media_psychosis,
             "recruitmentLocks": [lock.to_dict() for lock in self.recruitment_locks],
             "expensesDue": self.expenses_due,
+            "purchasedApproachBonus": self.purchased_approach_bonus,
             "retired": self.retired,
         }
 
@@ -374,8 +380,30 @@ class UnitState:
                 RecruitmentLock.from_dict(lock) for lock in data.get("recruitmentLocks", [])
             ],
             expenses_due=int(data.get("expensesDue", 0)),
+            purchased_approach_bonus=int(data.get("purchasedApproachBonus", 0)),
             retired=bool(data.get("retired", False)),
         )
+
+
+@dataclass(frozen=True)
+class ApproachResult:
+    attacker_unit_id: str
+    defender_unit_id: str
+    attacker_roll: int
+    defender_roll: int
+    attacker_driver_bonus: int
+    defender_driver_bonus: int
+    attacker_purchased_bonus: int
+    defender_purchased_bonus: int
+    attacker_total: int
+    defender_total: int
+    margin: int
+    choice_owner: ApproachChoiceOwner
+    allowed_engagement_types: tuple[EngagementType, ...]
+
+    @property
+    def winner_unit_id(self) -> str:
+        return self.attacker_unit_id if self.margin > 0 else self.defender_unit_id
 
 
 @dataclass(frozen=True)
@@ -415,6 +443,7 @@ class ContractOutcome:
     engagement_type: EngagementType = "intercept"
     objective_satisfied: bool = True
     deliberate_objective_failure: bool = False
+    objective_failure_exceptions: list[str] = field(default_factory=list)
     participating_driver_ids: list[str] = field(default_factory=list)
     participating_vehicle_ids: list[str] = field(default_factory=list)
     surviving_driver_ids: list[str] = field(default_factory=list)
@@ -434,6 +463,7 @@ class ContractOutcome:
             "engagementType": self.engagement_type,
             "objectiveSatisfied": self.objective_satisfied,
             "deliberateObjectiveFailure": self.deliberate_objective_failure,
+            "objectiveFailureExceptions": list(self.objective_failure_exceptions),
             "participatingDriverIds": list(self.participating_driver_ids),
             "participatingVehicleIds": list(self.participating_vehicle_ids),
             "survivingDriverIds": list(self.surviving_driver_ids),
@@ -455,6 +485,7 @@ class ContractOutcome:
             engagement_type=data.get("engagementType", "intercept"),
             objective_satisfied=bool(data.get("objectiveSatisfied", True)),
             deliberate_objective_failure=bool(data.get("deliberateObjectiveFailure", False)),
+            objective_failure_exceptions=list(data.get("objectiveFailureExceptions", data.get("ObjectiveFailureExceptions", []))),
             participating_driver_ids=list(data.get("participatingDriverIds", [])),
             participating_vehicle_ids=list(data.get("participatingVehicleIds", [])),
             surviving_driver_ids=list(data.get("survivingDriverIds", [])),
@@ -660,6 +691,105 @@ def campaign_purchase_price(unit: UnitState, item: CatalogItem) -> int:
     if unit.is_outlaw() and item.sanctioned:
         return item.cost + (item.cost * _outlaw_purchase_surcharge_percent() // 100)
     return item.cost
+
+
+def approach_driver_bonus_for_skill(drive_skill: int) -> int:
+    if drive_skill >= 10:
+        return 4
+    if drive_skill >= 8:
+        return 3
+    if drive_skill >= 6:
+        return 2
+    if drive_skill >= 4:
+        return 1
+    return 0
+
+
+def least_skilled_driver(campaign: CampaignState, unit_id: str) -> Driver | None:
+    unit = campaign.units[unit_id]
+    drivers = [campaign.drivers[driver_id] for driver_id in unit.driver_ids if not campaign.drivers[driver_id].retired]
+    if not drivers:
+        return None
+    return min(drivers, key=lambda driver: driver.drive_skill)
+
+
+def unit_approach_driver_bonus(campaign: CampaignState, unit_id: str) -> int:
+    driver = least_skilled_driver(campaign, unit_id)
+    if driver is None:
+        return 0
+    return approach_driver_bonus_for_skill(driver.drive_skill)
+
+
+def approach_bonus_cost(unit: UnitState) -> int:
+    return OUTLAW_APPROACH_BONUS_COST if unit.is_outlaw() else SANCTIONED_APPROACH_BONUS_COST
+
+
+def buy_approach_bonus(campaign: CampaignState, unit_id: str, bonus: int) -> int:
+    if bonus < 0 or bonus > MAX_PURCHASED_APPROACH_BONUS:
+        raise ValueError("approach bonus purchase must be 0-3")
+    unit = campaign.units[unit_id]
+    cost = bonus * approach_bonus_cost(unit)
+    if unit.funds < cost:
+        raise ValueError("unit cannot afford approach bonus")
+    unit.funds -= cost
+    unit.purchased_approach_bonus = bonus
+    campaign.logs.append(f"{unit.name} buys +{bonus} approach bonus for ${cost}.")
+    return cost
+
+
+def roll_approach(
+    campaign: CampaignState,
+    attacker_unit_id: str,
+    defender_unit_id: str,
+    attacker_roll: int,
+    defender_roll: int,
+) -> ApproachResult:
+    if not 1 <= attacker_roll <= 6 or not 1 <= defender_roll <= 6:
+        raise ValueError("approach rolls must be d6 values")
+    attacker = campaign.units[attacker_unit_id]
+    defender = campaign.units[defender_unit_id]
+    attacker_driver_bonus = unit_approach_driver_bonus(campaign, attacker_unit_id)
+    defender_driver_bonus = unit_approach_driver_bonus(campaign, defender_unit_id)
+    attacker_total = attacker_roll + attacker_driver_bonus + attacker.purchased_approach_bonus
+    defender_total = defender_roll + defender_driver_bonus + defender.purchased_approach_bonus
+    margin = attacker_total - defender_total
+    if margin <= 0:
+        choice_owner: ApproachChoiceOwner = "defender"
+        allowed: tuple[EngagementType, ...] = ("intercept", "pursuit", "ambush")
+    elif margin <= 2:
+        choice_owner = "attacker"
+        allowed = ("intercept", "pursuit")
+    else:
+        choice_owner = "attacker"
+        allowed = ("intercept", "pursuit", "ambush")
+    result = ApproachResult(
+        attacker_unit_id=attacker_unit_id,
+        defender_unit_id=defender_unit_id,
+        attacker_roll=attacker_roll,
+        defender_roll=defender_roll,
+        attacker_driver_bonus=attacker_driver_bonus,
+        defender_driver_bonus=defender_driver_bonus,
+        attacker_purchased_bonus=attacker.purchased_approach_bonus,
+        defender_purchased_bonus=defender.purchased_approach_bonus,
+        attacker_total=attacker_total,
+        defender_total=defender_total,
+        margin=margin,
+        choice_owner=choice_owner,
+        allowed_engagement_types=allowed,
+    )
+    campaign.logs.append(
+        f"Approach: attacker {attacker_total}, defender {defender_total}, margin {margin}; {choice_owner} chooses."
+    )
+    attacker.purchased_approach_bonus = 0
+    defender.purchased_approach_bonus = 0
+    return result
+
+
+def choose_engagement_type(result: ApproachResult, engagement_type: EngagementType) -> EngagementType:
+    if engagement_type not in result.allowed_engagement_types:
+        allowed = ", ".join(result.allowed_engagement_types)
+        raise ValueError(f"{result.choice_owner} may choose only: {allowed}")
+    return engagement_type
 
 
 def _core_mount(template_id: str, mount_id: str) -> dict[str, Any]:
@@ -1067,13 +1197,22 @@ def settle_post_engagement(
     involved_unit_ids = {outcome.attacker_unit_id, outcome.defender_unit_id}
 
     objective_forfeits = (
-        outcome.deliberate_objective_failure and not outcome.objective_satisfied
+        outcome.deliberate_objective_failure
+        and not outcome.objective_satisfied
+        and not outcome.objective_failure_exceptions
     )
     if objective_forfeits:
         attacker = campaign.units[outcome.attacker_unit_id]
         attacker.failed_engagement_objective_count += 1
         report.objective_penalties.append(outcome.attacker_unit_id)
         campaign.logs.append(f"{attacker.name} failed its engagement objective deliberately.")
+        if attacker.failed_engagement_objective_count >= 2:
+            attacker.retired = True
+            campaign.logs.append(f"{attacker.name} disbands after two deliberate objective failures.")
+    elif outcome.deliberate_objective_failure and outcome.objective_failure_exceptions:
+        campaign.logs.append(
+            f"Objective failure penalty waived for {outcome.attacker_unit_id}: {', '.join(outcome.objective_failure_exceptions)}."
+        )
 
     for driver_id in outcome.killed_driver_ids:
         driver = campaign.drivers[driver_id]

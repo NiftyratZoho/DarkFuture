@@ -89,14 +89,14 @@
 
 ### TG-001 Curve lane-link atlas
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: physical track pieces, trace images, Dark Future pp. 13-14.
 - Data rows/docs: `docs/rules/clean/curve-atlas-trace-plan.md`, `docs/rules/clean/track-geometry.md`.
-- Blocker type: diagram/grid tracing needed.
-- Missing information: exact edge/crash cells for curve boundaries and any diagram-only special cases. Ordinary forward movement, outward-drift lane links, U-turn swept-lane resolution, and curve ram/shunt/sideswipe contact classification are no longer blocked.
-- Blocks implementation: exact curve edge/crash checks and any remaining diagram-only special cases.
-- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Shared-lane contact with another occupied vehicle space resolves as head-on/shunt, even if only one lane overlaps; adjacent front-half side contact resolves as a sideswipe.
-- User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage. Rams and shunts on curves use the two-lane vehicle width, or one lane for bikes, contacting another vehicle's occupied space in full or by a single lane. Curve sideswipes can be inward or outward, but contact must be with the front half of the vehicle; rear-only contact cannot sideswipe.
+- Blocker type: none.
+- Missing information: none. Edge/crash boundaries resolved through rule clarification.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: procedural 90-degree and 60-degree curves preserve lane count/section counts/speed limits. Curve forward movement follows the lane pair. Voluntary curve drift is outward only while staying on the curve; the drift resolves after the forward move onto the next outward space line. Curve-to-straight drift may go either way after entering the straight. Shared-lane contact with another occupied vehicle space resolves as head-on/shunt, even if only one lane overlaps; adjacent front-half side contact resolves as a sideswipe. Edge movement: when reaching the edge of a tile, vehicles move onto the next section in the same two lanes they exit from (e.g., lanes 4-5 exit to lanes 4-5 on next section). Crash boundaries: moving outside lanes 1 or 8 is an immediate crash - damage roll then removed from play. Spin on curve: if a vehicle rotates due to a spin while on a curve, it crashes. No driver: immediate damage roll and removed from play.
+- User notes: Curve movement is rules-derived: drift outward only while on curves, drift either way after moving from curve to straight, and drifting into another car is a ram/sideswipe rather than legal passage. Rams and shunts on curves use the two-lane vehicle width, or one lane for bikes, contacting another vehicle's occupied space in full or by a single lane. Curve sideswipes can be inward or outward, but contact must be with the front half of the vehicle; rear-only contact cannot sideswipe. Edge rules clarified: vehicles maintain same lanes when moving between sections; lanes 1-8 are boundaries; exiting lanes 1-8 causes crash with immediate damage and removal. Spin on curve causes crash. No driver causes immediate crash.
 
 ### TG-002 U-turn contact template near curves
 
@@ -251,14 +251,14 @@
 
 ### CP-002 Approach and encounter tables
 
-- Status: `partial`
+- Status: `resolved`
 - Source to check: White Dwarf 124 pp. 20-22.
 - Data rows: `data/rules/campaign-sequence.json`, `data/rules/scenarios.json`.
-- Blocker type: structured transcription needed.
-- Missing information: page images are readable enough for extraction, but drive-skill bonus threshold/table, approach result bands, intercept/pursuit/ambush setup details, and exception wording for failed objectives still need structured transcription.
-- Blocks implementation: faithful campaign-to-tactical contract generation.
-- Current code behaviour: scenario cycling and settlement exist as playable approximations.
-- User notes:
+- Blocker type: none for approach/setup summary data.
+- Missing information: none for approach roll math, purchased bonus costs/caps, result bands, setup summaries, objective failure exceptions, or salvage/active-vehicle end condition.
+- Blocks implementation: no longer blocks campaign-to-tactical contract generation at summary level.
+- Current code behaviour: campaign sequence data now records approach as `d6 + least-skilled-driver bonus + purchased bonuses`; sanctioned `+1` approach bonuses cost `$15,000`, outlaw `+1` bonuses cost `$10,000`, and each side may buy at most `+3`. Result difference is attacker total minus defender total: `<= 0` defender chooses intercept/pursuit/ambush, `1-2` attacker chooses intercept/pursuit, `>= 3` attacker chooses intercept/pursuit/ambush. Scenario bridge data records 7-section intercept, 7-section pursuit, and 9-section ambush setup summaries. Objective exceptions and the active-vehicle salvage end condition are now structured.
+- User notes: Approach uses d6 + least-skilled-driver bonus + purchased bonuses. Least skilled driver gives +1 at drive skill 4-5, +2 at 6-7, +3 at 8-9, and +4 at 10. Sanctioned +1 costs 15000; outlaw +1 costs 10000; maximum purchased bonus is +3. Result bands are <=0 defender all choices, 1-2 attacker intercept/pursuit, >=3 attacker all choices. Intercept and pursuit use 7 sections; ambush uses 9. Include setup summaries for intercept/pursuit/ambush, objective failure exceptions including critical hits, and salvage/active-vehicle end condition.
 
 ### CP-003 Loot and bounty table proofread
 
@@ -313,13 +313,13 @@
 
 ### SC-002 Outdistancing victory rule
 
-- Status: `blocked`
+- Status: `resolved`
 - Source to check: Dark Future core p. 89.
-- Blocker type: rule unclear/readability issue.
-- Missing information: numeric distance/exit rule for outdistancing.
-- Blocks implementation: faithful scenario victory in the relevant core scenario.
-- Current code behaviour: pursuit/outlaw escape uses current playable convention.
-- User notes:
+- Blocker type: none.
+- Missing information: none. Escape rule clarified.
+- Blocks implementation: no longer blocked.
+- Current code behaviour: vehicles and characters can escape an engagement by moving off the edge of the play area. If using Rolling Road Rules, they must put at least 6 track sections between them and any other vehicle.
+- User notes: Vehicles and Characters can both Escape an Engagement if they wish, this is done by Moving off the edge of the play area, if the Game is using the Rolling Road Rules then they must put at least 6 Track Sections between them and any other Vehicle.
 
 ## Bikes and Three-Wheelers
 

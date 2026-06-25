@@ -248,7 +248,7 @@ White Line Fever missile types add or modify damage:
 - HiVAP: AP damage equal to range in spaces, maximum +15; beyond 25 spaces reduce by 1 per space; cannot hit at 40 or more spaces.
 - Shaped plastic missile: +6AP.
 - Smoke missile: no ordinary damage; creates persistent smoke.
-- TGSM: parent hit determines submunition count; each submunition is +4HE. Each submunition also has a facing roll: 1-2 roof, 3 left side, 4 right side, 5 front, 6 rear.
+- TGSM: parent hit determines submunition count; each submunition is +4HE. Each submunition also has a facing roll: 1 front/forward armour, 2-3 side armour, 4-5 rear armour, 6 roof/superstructure bypassing standard facing armour.
 
 ### Reinforced Tyres
 

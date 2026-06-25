@@ -87,6 +87,120 @@
       "defenderKind": "renegadeOp"
     }
   ],
+  "approachRules": {
+    "id": "deadMansCurve.approach",
+    "roll": {
+      "dice": { "kind": "d6", "count": 1 },
+      "formula": "d6 + leastSkilledDriverBonus + purchasedApproachBonus",
+      "resultDifference": "attackerTotalMinusDefenderTotal"
+    },
+    "leastSkilledDriverBonus": [
+      { "driveSkillRange": { "min": 4, "max": 5 }, "bonus": 1 },
+      { "driveSkillRange": { "min": 6, "max": 7 }, "bonus": 2 },
+      { "driveSkillRange": { "min": 8, "max": 9 }, "bonus": 3 },
+      { "driveSkillRange": { "min": 10 }, "bonus": 4 }
+    ],
+    "purchasedBonuses": {
+      "maximumBonusPerSide": 3,
+      "sanctioned": {
+        "label": "Ratcatchers data",
+        "costPerPlusOne": 15000
+      },
+      "outlaw": {
+        "label": "grapevine information",
+        "costPerPlusOne": 10000
+      }
+    },
+    "resultBands": [
+      {
+        "range": { "max": 0 },
+        "chooser": "defender",
+        "allowedEngagementTypes": ["intercept", "pursuit", "ambush"]
+      },
+      {
+        "range": { "min": 1, "max": 2 },
+        "chooser": "attacker",
+        "allowedEngagementTypes": ["intercept", "pursuit"]
+      },
+      {
+        "range": { "min": 3 },
+        "chooser": "attacker",
+        "allowedEngagementTypes": ["intercept", "pursuit", "ambush"]
+      }
+    ],
+    "engagementTypes": {
+      "intercept": {
+        "form": "combat",
+        "trackSections": 7,
+        "setupSummary": "Approach winner chooses which road end they start from. Approach loser places vehicles at the opposite end, anywhere within the first two track sections, facing the other end and under cruising restrictions. Approach winner then places vehicles within the first two sections at the nominated end, heading toward the middle and without cruising restrictions."
+      },
+      "pursuit": {
+        "form": "flight",
+        "trackSections": 7,
+        "setupSummary": "Approach loser places vehicles on the fourth track section facing toward the seventh section and under cruising restrictions. Approach winner starts on the first track section facing along the rest of the track, at minimum 60 mph unless on a curve where safe speed is the minimum, and no faster than vehicle top speed."
+      },
+      "ambush": {
+        "form": "combat",
+        "trackSections": 9,
+        "setupSummary": "Approach loser places vehicles on the middle track section, chooses one direction of travel for all loser vehicles, and is under cruising restrictions. Approach winner places vehicles on the two sections at either or both road ends, facing any direction unless behind the target, where they must face the target. The ambusher may also place vehicles in the two edge lanes of any section; these start at 20 mph/speed factor 1 and may face either way."
+      }
+    },
+    "source": {
+      "issue": 124,
+      "pages": [20, 21]
+    }
+  },
+  "engagementObjective": {
+    "id": "deadMansCurve.engagementObjective",
+    "requirement": {
+      "attackingVehicleWithinSpacesOfDefender": 4,
+      "qualifyingPhaseCount": 6,
+      "sameVehiclePairRequired": false
+    },
+    "deliberateFailurePenalties": {
+      "sanctioned": {
+        "firstFailure": ["forfeitPay", "forfeitMileage"],
+        "secondFailure": ["loseLicence", "removeUnitFromCampaign"]
+      },
+      "outlaw": {
+        "firstFailure": ["forfeitLoot", "forfeitMileage"],
+        "secondFailure": ["disbandUnit", "removeUnitFromCampaign"]
+      }
+    },
+    "failureExceptions": [
+      "allAttackingVehiclesDestroyedDisabledOrInactiveBeforeReasonableObjectiveAttempt",
+      "attackingVehicleTakesCriticalHitBeforeReasonableObjectiveAttempt",
+      "crashForcedMovementOrLossOfControlPreventsContactBeforeReasonableObjectiveAttempt",
+      "defenderEscapesLeavesOrIsRemovedBeforeAttackerCanReachObjectiveRange",
+      "ambushedUnit"
+    ],
+    "source": {
+      "issue": 124,
+      "pages": [22]
+    }
+  },
+  "engagementEndAndSalvage": {
+    "endCondition": "Engagement continues until only one side has active vehicles in play.",
+    "activeVehicle": {
+      "requiresWorkingEngine": true,
+      "requiresUsableNonPassiveAmmunitionAndMeansToFire": true,
+      "requiresNonDisabledDriver": true
+    },
+    "salvageRights": [
+      {
+        "condition": "exactlyOneSideHasActiveVehiclesAtEnd",
+        "result": "thatSideMayClaimSalvage"
+      },
+      {
+        "condition": "neitherSideHasActiveVehiclesAtEnd",
+        "result": "noSalvageEquipmentLostToDesert"
+      }
+    ],
+    "source": {
+      "issue": 124,
+      "pages": [22]
+    }
+  },
   "preEngagementSteps": [
     {
       "id": "attackDeclarations",
@@ -112,12 +226,7 @@
       "phase": "preEngagement",
       "required": true,
       "summary": "For each declared engagement, allocate participating drivers and vehicles, buy any information bonuses, roll approach, and choose intercept, pursuit, or ambush as allowed.",
-      "requiresProofread": [
-        "approachDriveSkillBonusTable",
-        "informationBonusCostsAndCaps",
-        "approachResultBands",
-        "engagementTypeSetup"
-      ],
+      "rulesRef": "deadMansCurve.approach",
       "source": {
         "issue": 124,
         "pages": [20, 21]
@@ -132,9 +241,11 @@
       "rules": [
         "Objective is tracked for the unit that is attacker for the engagement, not necessarily the approach winner.",
         "Different vehicle pairs may satisfy different phases.",
-        "Ambushed units are exempt.",
+        "Ambushed units are exempt from objective failure penalties.",
+        "Unavoidable inactive/lost attacking vehicles, crashes or loss of control before contact, and defender escape/removal before objective range are objective failure exceptions.",
         "Deliberate failure causes pay/mileage/loot penalties and can remove the unit after repeated failure."
       ],
+      "rulesRef": "deadMansCurve.engagementObjective",
       "source": {
         "issue": 124,
         "pages": [22]

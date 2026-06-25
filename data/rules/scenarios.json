@@ -312,7 +312,7 @@
                 "pairing": "gangVsGang",
                 "attackerWin": "entireTargetGangTakenOut",
                 "targetWin": ["allTargetVehiclesEscape", "attackersTakenOut", "attackersOutdistanced"],
-                "status": "outdistanceNeedsDefinition"
+                "outdistanceRule": "A vehicle or character may escape by moving off the edge of the play area; under rolling-road rules, it must put at least 6 track sections between itself and every other vehicle."
               }
             ]
           },
@@ -554,7 +554,7 @@
             "kind": "asymmetric",
             "renegadeWin": ["opponentDestroyed", "opponentOutdistanced"],
             "agencyOpWin": ["fugitiveDestroyed", "fugitiveImmobilized"],
-            "status": "outdistanceNeedsDefinition"
+            "outdistanceRule": "A vehicle or character may escape by moving off the edge of the play area; under rolling-road rules, it must put at least 6 track sections between itself and every other vehicle."
           },
           "aiSetup": {
             "renegade": { "priority": "escapeOrDisablePursuer" },
@@ -592,7 +592,7 @@
   ],
   "contractBridge": {
     "id": "deadMansCurve.contractToScenarioBridge",
-    "status": "draftNeedsCampaignApproachProofread",
+    "status": "campaignApproachClarified",
     "inputFromCampaign": [
       "contractId",
       "campaignSequenceId",
@@ -622,20 +622,47 @@
       {
         "engagementType": "pursuit",
         "scenarioPattern": "leadChase",
-        "notes": "Usually maps target/defender to lead and attacker to chase; final mapping depends on approach rules."
+        "engagementForm": "flight",
+        "trackSections": 7,
+        "setupSummary": "Approach loser places vehicles on the fourth track section facing toward the seventh section and under cruising restrictions. Approach winner starts on the first track section facing along the rest of the track, at minimum 60 mph unless on a curve where safe speed is the minimum, and no faster than vehicle top speed.",
+        "notes": "Usually maps target/defender to lead and attacker to chase; final mapping depends on the approach winner and chosen setup."
       },
       {
         "engagementType": "intercept",
         "scenarioPattern": "opposedFacingOrCrossing",
+        "engagementForm": "combat",
+        "trackSections": 7,
+        "setupSummary": "Approach winner chooses which road end they start from. Approach loser places vehicles at the opposite end, anywhere within the first two track sections, facing the other end and under cruising restrictions. Approach winner then places vehicles within the first two sections at the nominated end, heading toward the middle and without cruising restrictions.",
         "notes": "Core Game Eight is the nearest explicit template."
       },
       {
         "engagementType": "ambush",
         "scenarioPattern": "ambush",
-        "status": "needsProofread",
-        "notes": "Dead Man's Curve setup text is OCR-damaged."
+        "engagementForm": "combat",
+        "trackSections": 9,
+        "setupSummary": "Approach loser places vehicles on the middle track section, chooses one direction of travel for all loser vehicles, and is under cruising restrictions. Approach winner places vehicles on the two sections at either or both road ends, facing any direction unless behind the target, where they must face the target. The ambusher may also place vehicles in the two edge lanes of any section; these start at 20 mph/speed factor 1 and may face either way.",
+        "objectiveException": "ambushedUnit"
       }
     ],
+    "approachChoiceBands": [
+      {
+        "attackerMinusDefender": { "max": 0 },
+        "chooser": "defender",
+        "allowedEngagementTypes": ["intercept", "pursuit", "ambush"]
+      },
+      {
+        "attackerMinusDefender": { "min": 1, "max": 2 },
+        "chooser": "attacker",
+        "allowedEngagementTypes": ["intercept", "pursuit"]
+      },
+      {
+        "attackerMinusDefender": { "min": 3 },
+        "chooser": "attacker",
+        "allowedEngagementTypes": ["intercept", "pursuit", "ambush"]
+      }
+    ],
+    "approachRollRef": "deadMansCurve.approach",
+    "engagementObjectiveRef": "deadMansCurve.engagementObjective",
     "mustNotApplyCampaignPostEngagement": true,
     "source": {
       "book": "White Dwarf 124",
@@ -671,8 +698,8 @@
     {
       "id": "amb.contract.ambushSetup",
       "source": { "book": "White Dwarf 124", "pages": [20, 21, 22] },
-      "issue": "Dead Man's Curve ambush/intercept/pursuit setup details are damaged.",
-      "handling": "Keep campaign bridge draft until proofread."
+      "issue": "Dead Man's Curve ambush/intercept/pursuit exact deployment geometry may still need tactical diagram/layout decisions.",
+      "handling": "Use captured setup summaries for campaign bridge; trace or formalize exact grid placement only if tactical implementation requires it."
     }
   ],
   "candidateTests": [

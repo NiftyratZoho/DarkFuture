@@ -216,7 +216,7 @@ HACK_SOURCE = SourceRef(
 CURVE_SOURCE = SourceRef(
     "Dark Future Rulebook",
     (10, 13, 74, 78),
-    "Provisional curve section placeholder; exact curve atlas still needs trace.",
+    "Procedural curve sections preserve lanes, section counts, speed markings, and clarified edge/crash handling.",
 )
 MANOEUVRE_SOURCE = SourceRef(
     "Dark Future Rulebook",
@@ -327,11 +327,11 @@ def make_vehicle(
     return vehicle
 
 
-def initial_track_layout(dice: Dice) -> list[str]:
+def initial_track_layout(dice: Dice, target_sections: int = 10) -> list[str]:
     inventory = TrackInventory.from_rule_inventory(track_inventory())
-    track = build_initial_track(dice, inventory=inventory)
+    track = build_initial_track(dice, inventory=inventory, target_sections=target_sections)
     if not track.sections:
-        return provisional_track_layout()
+        return provisional_track_layout(target_sections)
     return track.piece_types
 
 
@@ -342,15 +342,16 @@ def new_game(
     track_section_types: list[str] | None = None,
 ) -> GameState:
     scenario_id = scenario_id if scenario_id in SCENARIOS else "intercept"
-    track_types = list(track_section_types) if track_section_types is not None else provisional_track_layout()
+    target_sections = 9 if scenario_id == "ambush" else 7
+    track_types = list(track_section_types) if track_section_types is not None else provisional_track_layout(target_sections)
     agency_section, agency_space, agency_lane, agency_mph = 1, 1, 4, 60
     outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = 6, 3, 4, -1, 40
     if scenario_id == "ambush":
-        agency_section, agency_space, agency_lane, agency_mph = 2, 1, 4, 50
-        outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = 3, 2, 3, -1, 60
+        agency_section, agency_space, agency_lane, agency_mph = 0, 1, 4, 20
+        outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = min(4, len(track_types) - 1), 2, 3, 1, 60
     elif scenario_id == "pursuit":
-        agency_section, agency_space, agency_lane, agency_mph = 1, 1, 4, 70
-        outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = 4, 2, 4, 1, 50
+        agency_section, agency_space, agency_lane, agency_mph = 0, 1, 4, 60
+        outlaw_section, outlaw_space, outlaw_lane, outlaw_direction, outlaw_mph = min(3, len(track_types) - 1), 2, 4, 1, 50
     state = GameState(
         turn=1,
         phase=1,
@@ -379,7 +380,7 @@ def new_game(
     return state
 
 
-def provisional_track_layout() -> list[str]:
+def provisional_track_layout(target_sections: int = 7) -> list[str]:
     inventory = track_inventory()["visibleInventory"]
     straight_count = int(inventory["straight"]["count"])
     curve_count = int(inventory["curvesTotal"]["count"])
@@ -388,7 +389,9 @@ def provisional_track_layout() -> list[str]:
         layout.extend(["curve50to80_left", "straight"])
     if curve_count >= 2:
         layout.extend(["curve30to60_right", "straight"])
-    return layout[: min(7, straight_count + curve_count)]
+    while len(layout) < target_sections:
+        layout.append("straight")
+    return layout[:target_sections]
 
 
 def generate_track_layout(state: GameState) -> None:
@@ -2566,6 +2569,13 @@ def apply_ai_turn_if_needed(state: GameState) -> bool:
     return True
 
 
+def is_active_for_engagement(vehicle: Vehicle) -> bool:
+    has_driver = vehicle.driver_skill >= 0
+    engine_working = not vehicle.destroyed and vehicle.damage > 0 and vehicle.acceleration_mph > 0
+    can_fire_non_passive = bool(vehicle.weapon_label) and not vehicle.weapon_disabled
+    return has_driver and engine_working and can_fire_non_passive
+
+
 def settle_campaign(state: GameState) -> None:
     if not state.campaign.settlement_pending:
         state.logs.append(LogEntry("No campaign settlement is pending.", "campaign", CAMPAIGN_SOURCE))
@@ -2599,14 +2609,14 @@ def start_new_contract(state: GameState) -> None:
 
 
 def check_victory(state: GameState) -> None:
-    living_sides = {vehicle.side for vehicle in state.vehicles if not vehicle.destroyed}
-    if len(living_sides) == 1:
+    active_sides = {vehicle.side for vehicle in state.vehicles if is_active_for_engagement(vehicle)}
+    if len(active_sides) == 1:
         state.game_over = True
-        state.winner = next(iter(living_sides))
+        state.winner = next(iter(active_sides))
         state.campaign.settlement_pending = True
-        state.logs.append(LogEntry(f"{state.winner.title()} side wins the engagement.", "victory"))
-    elif not living_sides:
+        state.logs.append(LogEntry(f"{state.winner.title()} side has the only active vehicles and salvage rights.", "victory"))
+    elif not active_sides:
         state.game_over = True
         state.winner = None
         state.campaign.settlement_pending = True
-        state.logs.append(LogEntry("Both sides are destroyed. No winner.", "victory"))
+        state.logs.append(LogEntry("Neither side has active vehicles. No salvage rights are claimed.", "victory"))

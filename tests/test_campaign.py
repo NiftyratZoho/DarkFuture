@@ -8,12 +8,16 @@ from dark_future.campaign import (
     create_starting_unit,
     create_unit,
     fit_store_item_to_vehicle,
+    approach_driver_bonus_for_skill,
+    buy_approach_bonus,
+    choose_engagement_type,
     purchase_chassis,
     purchase_equipment_to_store,
     recruit_experienced_driver_stub,
     recruit_novice_driver,
     repair_cost,
     repair_vehicle,
+    roll_approach,
     sell_store_item,
     settle_post_engagement,
     strip_vehicle_item_to_store,
@@ -143,6 +147,7 @@ class CampaignBackendTests(unittest.TestCase):
 
     def test_campaign_serializes_to_plain_dict_and_loads_back(self):
         campaign, agency, gang, op_driver, _, car = self.make_campaign()
+        agency.purchased_approach_bonus = 2
         car.current_damage = 20
         car.critical_hits.append("engine damaged")
         stored = purchase_equipment_to_store(campaign, agency.id, "machineGun6mm", "store-mg")
@@ -169,6 +174,97 @@ class CampaignBackendTests(unittest.TestCase):
         self.assertEqual(loaded.vehicles[car.id].installed_items[0].source_id, "machineGun6mm")
         self.assertEqual(loaded.vehicles[car.id].payload_used, 175)
         self.assertEqual(loaded.contracts[0].id, "contract-3")
+        self.assertEqual(loaded.units[agency.id].purchased_approach_bonus, 2)
+
+    def test_approach_uses_least_skilled_driver_and_purchased_bonuses(self):
+        campaign, agency, gang, op_driver, outlaw_driver, _ = self.make_campaign()
+        agency.funds = 50_000
+        op_driver.drive_skill = 8
+        recruit = recruit_experienced_driver_stub(
+            campaign,
+            agency.id,
+            "Low Wheel",
+            drive_skill=4,
+            own_vehicle_value=0,
+            driver_id="driver-low",
+        )
+        recruit.retired = False
+        outlaw_driver.drive_skill = 6
+        gang.funds = 50_000
+
+        self.assertEqual(approach_driver_bonus_for_skill(3), 0)
+        self.assertEqual(approach_driver_bonus_for_skill(4), 1)
+        self.assertEqual(approach_driver_bonus_for_skill(6), 2)
+        self.assertEqual(approach_driver_bonus_for_skill(8), 3)
+        self.assertEqual(approach_driver_bonus_for_skill(10), 4)
+
+        self.assertEqual(buy_approach_bonus(campaign, agency.id, 2), 30_000)
+        self.assertEqual(buy_approach_bonus(campaign, gang.id, 3), 30_000)
+        result = roll_approach(campaign, agency.id, gang.id, attacker_roll=4, defender_roll=3)
+
+        self.assertEqual(result.attacker_driver_bonus, 1)
+        self.assertEqual(result.defender_driver_bonus, 2)
+        self.assertEqual(result.attacker_total, 7)
+        self.assertEqual(result.defender_total, 8)
+        self.assertEqual(result.margin, -1)
+        self.assertEqual(result.choice_owner, "defender")
+        self.assertEqual(result.allowed_engagement_types, ("intercept", "pursuit", "ambush"))
+        self.assertEqual(result.winner_unit_id, gang.id)
+        self.assertEqual(agency.purchased_approach_bonus, 0)
+        self.assertEqual(gang.purchased_approach_bonus, 0)
+
+    def test_approach_choice_bands_restrict_engagement_selection(self):
+        campaign, agency, gang, op_driver, outlaw_driver, _ = self.make_campaign()
+        op_driver.drive_skill = 4
+        outlaw_driver.drive_skill = 4
+
+        narrow = roll_approach(campaign, agency.id, gang.id, attacker_roll=5, defender_roll=3)
+        self.assertEqual(narrow.margin, 2)
+        self.assertEqual(narrow.choice_owner, "attacker")
+        self.assertEqual(choose_engagement_type(narrow, "pursuit"), "pursuit")
+        with self.assertRaisesRegex(ValueError, "may choose only"):
+            choose_engagement_type(narrow, "ambush")
+
+        free = roll_approach(campaign, agency.id, gang.id, attacker_roll=6, defender_roll=2)
+        self.assertEqual(free.margin, 4)
+        self.assertEqual(free.allowed_engagement_types, ("intercept", "pursuit", "ambush"))
+        self.assertEqual(choose_engagement_type(free, "ambush"), "ambush")
+
+    def test_objective_failure_exceptions_waive_penalty_but_repeat_failures_disband(self):
+        campaign, agency, gang, op_driver, _, _ = self.make_campaign()
+
+        waived = ContractOutcome(
+            id="contract-waived",
+            attacker_unit_id=agency.id,
+            defender_unit_id=gang.id,
+            objective_satisfied=False,
+            deliberate_objective_failure=True,
+            objective_failure_exceptions=["crashed"],
+            participating_driver_ids=[op_driver.id],
+            surviving_driver_ids=[op_driver.id],
+            mileage_awards={op_driver.id: 2},
+        )
+        settle_post_engagement(campaign, waived)
+
+        self.assertEqual(campaign.units[agency.id].failed_engagement_objective_count, 0)
+        self.assertFalse(campaign.units[agency.id].retired)
+        self.assertEqual(campaign.drivers[op_driver.id].mileage_points, 2)
+
+        for number in (1, 2):
+            failed = ContractOutcome(
+                id=f"contract-failed-{number}",
+                attacker_unit_id=agency.id,
+                defender_unit_id=gang.id,
+                objective_satisfied=False,
+                deliberate_objective_failure=True,
+                participating_driver_ids=[op_driver.id],
+                surviving_driver_ids=[op_driver.id],
+                mileage_awards={op_driver.id: 2},
+            )
+            settle_post_engagement(campaign, failed)
+
+        self.assertEqual(campaign.units[agency.id].failed_engagement_objective_count, 2)
+        self.assertTrue(campaign.units[agency.id].retired)
 
     def test_purchase_uses_extracted_costs_and_outlaw_surcharge(self):
         campaign = CampaignState()
